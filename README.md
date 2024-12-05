@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # Obtain MATLAB license for a computer from this (link)[https://www.mathworks.com/licensecenter/licenses/40638624/4628136/activations]
 Step 1: Access to License Center
@@ -43,3 +44,7 @@ docker run -it \
   doi     = {*.*}
 }
 ```   
+=======
+# tandem-dimple
+Transfer-leArNing-ready and Dynamics-Empowered Model for DIsease-specific Missense Pathogenicity Level Estimation
+>>>>>>> 931a28ebac40e06574efb8c08e582c39debb7d8e
