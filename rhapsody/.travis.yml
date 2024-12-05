@@ -1,0 +1,51 @@
+# sudo false implies containerized builds
+sudo: false
+
+language: python
+
+python:
+  - 3.6
+#  - 3.7 # Travis does not have python 3.7 at the moment...
+
+# env:
+#   global:
+#     # List package dependencies for conda
+#     - CONDA_DEPS="pytest numpy scipy scikit-learn"
+#     # package name for test invocation
+#     - PACKAGENAME="run_test"
+
+before_install:
+  - sudo apt-get install dssp
+  # install miniconda
+  - export MINICONDA=$HOME/miniconda
+  - export PATH="$MINICONDA/bin:$PATH"
+  - hash -r
+  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+      -O miniconda.sh;
+    else
+      exit 1;
+    fi
+  - bash miniconda.sh -b -f -p $MINICONDA
+  - conda config --set always_yes yes
+  - conda update conda
+  - conda info -a
+  - conda create -n testenv python=$TRAVIS_PYTHON_VERSION
+  - source activate testenv
+  # install prody
+  - conda install pip numpy pyparsing biopython
+  - pip install -U prody
+  # install dependencies for rhapsody
+  - conda install requests numpy scikit-learn
+  - conda install matplotlib
+  - pip install tqdm
+
+install:
+  # - python setup.py install
+  - source activate testenv
+
+script:
+  # - pytest test1.py
+  - cd test/test-1; python test-1.py
+  - cd ../test-2; python test-2.py
+

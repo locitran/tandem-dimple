@@ -1,0 +1,14 @@
+Logging started at 2023-12-02 02:28:52.179629
+Imported feature set:
+   'wt_PSIC'* 
+   'Delta_PSIC'* 
+   'SASA'* 
+   'ANM_MSF-chain'* 
+   'ANM_effectiveness-chain'* 
+   'ANM_sensitivity-chain'* 
+   'stiffness-chain'* 
+   'entropy' 
+   'ranked_MI' 
+   'BLOSUM'* 
+   (* auxiliary feature set)
+Submitting query to PolyPhen-2...

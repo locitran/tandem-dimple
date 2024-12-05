@@ -1,0 +1,8 @@
+matlabengineforpython @ file:///opt/matlab/R2023a/extern/engines/python
+OpenMM==8.1.1
+ProDy==2.4.1
+propka==3.5.1
+numpy==1.23.5
+pandas==2.2.3
+tensorflow==2.17.1
+requests==2.32.3
