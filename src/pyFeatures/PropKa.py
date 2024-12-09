@@ -25,7 +25,3 @@ def getPropKa(pdbPath, pHCondition=7.0, write_pka=False):
     propkaData = pd.DataFrame(propkaData, columns=['resName','resID', 'iCode', 'chainID','pKa','pka_charge'])
     propkaData = propkaData.groupby(['resName', 'chainID', 'resID', 'iCode'])['pka_charge'].sum().reset_index(level=None)
     return propkaData
-
-# pdbPath = '1G0D.pdb'
-# propkaData = getPropKa(pdbPath, pHCondition=7.0, write_pka=False)
-# print(propkaData)

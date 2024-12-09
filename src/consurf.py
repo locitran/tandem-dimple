@@ -143,7 +143,7 @@ def align2Sequence(target, query, fileName='alignment.aln'):
             f.write(aln)
     return aln
 
-def getConsurf(PDB_coords):
+def getConsurf(PDB_coords, to_file='consurf.tsv'):
     """Retrieve consurf and ACNR scores for the target and contact residues
     Loop through the PDB_coords and do the following:
     1. Load the PDB file
@@ -221,7 +221,9 @@ def getConsurf(PDB_coords):
         featM['consurf'][i] = np.nanmean(consurf_score['target'])
         featM['ACNR'][i] = np.nanmean(consurf_score['contacts'])
     os.chdir(workingDir) # Change directory back to currentDir
-    return featM, df
+    if to_file:
+        df.to_csv(to_file, sep='\t', index=False)
+    return featM
 
 def _parse(unique_chain):
     url = f'{CONSURFDB_URL}DB/{unique_chain}/{unique_chain}_consurf_summary.txt'

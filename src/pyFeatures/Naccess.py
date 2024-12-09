@@ -15,10 +15,11 @@ from subprocess import Popen
 import re, os, logging
 import traceback
 from pathlib import Path
+from ..utils.settings import ROOT_DIR
 
 logger = logging.getLogger(__name__)
-NACCESSEXE = Path(__file__).parent / 'bin' / 'naccess'
-tempFolder = Path(__file__).parent / 'temp'
+NACCESSEXE = ROOT_DIR / 'src' / 'pyFeatures' / 'bin' / 'naccess'
+tempFolder = ROOT_DIR / 'src' / 'pyFeatures' / 'temp'
 
 def getSASA(pdbPath, tempFolder=tempFolder):  
     "Get SASA data from PDB file"
@@ -72,8 +73,3 @@ def getSASA(pdbPath, tempFolder=tempFolder):
         if os.path.isfile(file):
             os.remove(file)
     return sasaData                   
-
-# pdbPath = '1G0D.pdb' 
-# pdbPath = '/improve/pdbfile/fix/1B0F-1_A_S111L.pdb'
-# sasaData = getSASA(pdbPath)
-# print(sasaData)

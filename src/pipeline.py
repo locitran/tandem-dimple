@@ -4,20 +4,22 @@ import numpy as np
 import pandas as pd
 from .features import Features, getFeatures
 from .consurf import getConsurf
-from .utils import timer
+from .utils.timer import execution_timer
+from .utils.settings import ROOT_DIR
 from . import download
 from .LociFixer import LociFixer
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOWNLOAD_DIR = ROOT_DIR / 'pdbfile' / 'raw'
+FIX_DIR = ROOT_DIR / 'pdbfile' / 'fix'
+CURRENT_DIR = ROOT_DIR / 'src'
 
 class Pipeline:
     def __init__(self, 
         SAV_coords: list, 
-        download_dir: str = os.path.join(parent_dir, 'pdbfile/raw'), 
-        fix_dir: str = os.path.join(parent_dir, 'pdbfile/fix'),
+        download_dir: str = DOWNLOAD_DIR, 
+        fix_dir: str = FIX_DIR,
         refresh: bool = False,
         file_format: str = 'opm', # Either 'opm', 'asu, or 'bas'
         fix_loop: bool = False,
@@ -26,18 +28,12 @@ class Pipeline:
         ):
         
         # Calculate Rhapsody features
-
         (PDB_coords, PDB_IDs, PDB_sizes), rhapsody_featMatrix = self.getRhapsody(SAV_coords)
-        extension = self._form_extension(SAV_coords, PDB_coords, PDB_IDs, PDB_sizes)
+        extension = self._form_extension(SAV_coords, PDB_coords, PDB_IDs, PDB_sizes, to_file=output_dir / 'extension.txt')
 
         # Calculate Consurf features
-        extension['PDB_coords'].to_csv(os.path.join(output_dir, 'PDB_coords.csv'), index=False)
-
-        cs, cs_map = getConsurf(extension['PDB_coords']) # Get consurf features
+        cs = getConsurf(extension['PDB_coords'], to_file=Path(output_dir) / 'consurf_map.tsv' ) # Get consurf features
         consurf_featMatrix = cs.view(float).reshape(len(cs), 2)
-
-        # Save cs_map as json file
-        cs_map.to_csv(os.path.join(output_dir, 'consurf_map.csv'), index=False)
 
         self.start_matlab_engine(eng=None)
         gf = getFeatures(eng=self.eng)
@@ -80,33 +76,31 @@ class Pipeline:
         featSet = list(self.rhapsody_featSet) + list(cs.dtype.names) + list(gf._get_feat_dtype().names)
         featM = np.concatenate((rhapsody_featMatrix, consurf_featMatrix, features), axis=1)
 
+        # Save features to text file with 'tab' delimiter
+        fileName = output_dir / 'features.txt'
+        np.savetxt(fileName, self.featM, fmt='%.3e', delimiter='\t', header='\t'.join(featSet), comments='')
+
         self.extension = extension
         self.featM = featM
         self.featSet = featSet
         self.stop_matlab_engine()
 
-    def _get_features(self, fileName=None):
+    def _get_features(self):
         # Save features to text file with 'tab' delimiter
         featSet = self._get_featSet()
-        if fileName:
-            np.savetxt(fileName, self.featM, fmt='%.3e', delimiter='\t', header='\t'.join(featSet), comments='')
         return pd.DataFrame(self.featM, columns=featSet)
     
-    def _get_extension(self, fileName=None):
-        extension = self.extension
-        if fileName:
-            np.savetxt(fileName, extension, fmt='%s', delimiter='\t', header='\t'.join(extension.columns), comments='')
-        return pd.DataFrame(extension, columns=extension.columns)
-        # return self.extension
+    def _get_extension(self):
+        return self.extension
     
     def _get_featSet(self):
         return self.featSet
 
-    @timer.execution_timer
+    @execution_timer
     def getRhapsody(self, SAV_coords, custom_PDB=None):
         import rhapsody as rd
         self.rhapsody_featSet = ['wt_PSIC', 'Delta_PSIC', 'BLOSUM', 'entropy', 'ranked_MI', 'ANM_effectiveness-chain', 'stiffness-chain']
-        os.chdir(os.path.join(parent_dir, 'pdbfile/raw'))
+        os.chdir(DOWNLOAD_DIR)
         r = rd.Rhapsody(query=SAV_coords)
         r.setCustomPDB(custom_PDB) if custom_PDB else None
         r.setFeatSet(self.rhapsody_featSet)
@@ -122,12 +116,11 @@ class Pipeline:
         PDB_coords = pdb['PDB SAV coords']
         PDB_sizes = pdb['PDB size']
 
-        os.chdir(current_dir)
+        os.chdir(CURRENT_DIR)
         return (PDB_coords, PDB_IDs, PDB_sizes), rhapsody_featMatrix
 
-
-    def _form_extension(self, SAV_coords, PDB_coords, PDB_IDs, PDB_sizes):
-        return pd.DataFrame({
+    def _form_extension(self, SAV_coords, PDB_coords, PDB_IDs, PDB_sizes, to_file=None):
+        extention = pd.DataFrame({
             'SAV_coords': SAV_coords,
             'PDB_coords': PDB_coords,
             'PDB_IDs': PDB_IDs,
@@ -136,26 +129,29 @@ class Pipeline:
             'indices': False,
             'PDB_size': PDB_sizes
         })
+        if to_file:
+            extention.to_csv(to_file, sep='\t', index=False)
+        return extention
 
-    @timer.execution_timer
+    @execution_timer
     def start_matlab_engine(self, eng):
         import matlab.engine
         eng = Features.start_matlab_engine(eng)
         self.eng = eng
 
-    @timer.execution_timer
+    @execution_timer
     def stop_matlab_engine(self):
         logger.info('> Stopping MATLAB engine...')
         self.eng.quit()
     
-@timer.execution_timer
+@execution_timer
 class ProcessPDB:
     def __init__(
             self, 
             pdbID: str,
             extension: pd.DataFrame,
-            download_dir: str = os.path.join(parent_dir, 'pdbfile/raw'),
-            fix_dir: str = os.path.join(parent_dir, 'pdbfile/fix'),
+            download_dir: str = DOWNLOAD_DIR,
+            fix_dir: str = FIX_DIR,
             refresh: bool = False,
             file_format: str = 'opm', # Either 'opm', 'asu, or 'bas'
             fix_loop: bool = False,
@@ -228,7 +224,7 @@ class ProcessPDB:
                 msg = f'> IMPROVE:pipeline: cannot find structure for {self.pdbID}!'
                 logger.error(msg)
 
-    @timer.execution_timer
+    @execution_timer
     def _process_file(
             self, 
             pdb_path: str,

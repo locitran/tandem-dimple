@@ -1,0 +1,13 @@
+PDB_coords	info	chainID	resID	resIndex	resName	score
+4JKQ A 261 H	contacts	A	246	208	THR	-0.608
+4JKQ A 261 H	contacts	A	245	207	LEU	-0.586
+4JKQ A 261 H	contacts	A	263	225	GLU	-0.564
+4JKQ A 261 H	contacts	A	262	224	TYR	-0.393
+4JKQ A 261 H	contacts	A	388	342	GLN	-0.28
+4JKQ A 261 H	target	A	261	223	HIS	0.663
+4JKQ A 261 H	contacts	A	391	345	ALA	-0.497
+4JKQ A 261 H	contacts	A	247	209	VAL	0.226
+4JKQ A 261 H	contacts	A	259	221	THR	1.719
+4JKQ A 261 H	contacts	A	260	222	VAL	-0.045
+4JKQ A 261 H	contacts	A	390	344	LYS	-0.115
+4JKQ A 261 H	contacts	A	389	343	ARG	-0.885

@@ -254,7 +254,7 @@ class LociFixer(object):
             PDB_coord_splitting = row['PDB_coords'].split() # pdbID, chainID, resID, wt
             SAV_coord_splitting = row['SAV_coords'].split() # uniprotACC, resID, wt, mt
             if str(PDB_coord_splitting[3]) != str(SAV_coord_splitting[2]):
-                msg = (f"> IMPROVE:LociFixer: {self.name}: {row.PDB_coords}, {row.SAV_coords} "
+                msg = (f"> TANDEM:LociFixer: {self.name}: {row.PDB_coords}, {row.SAV_coords} "
                         f"have different wt residues. {PDB_coord_splitting[3]} and {SAV_coord_splitting[2]}")
                 _LOGGER.error(msg)
             else:
@@ -274,7 +274,7 @@ class LociFixer(object):
                         e = traceback.format_exc()
                         extension.at[i, 'indices'] = False
                         extension.at[i, 'file_format'] = 'Cannot mutate'
-                        msg = f"> IMPROVE:LociFixer: {self.name}: {row.PDB_coords}, {row.SAV_coords} cannot be mutated. {e}"
+                        msg = f"> TANDEM:LociFixer: {self.name}: {row.PDB_coords}, {row.SAV_coords} cannot be mutated. {e}"
                         _LOGGER.error(msg)
         return extension
 
@@ -292,7 +292,7 @@ class LociFixer(object):
             with gzip.open(self.pdbPath, 'rb') as in_f:
                 self.fixer = PDBFixer(pdbfile=in_f)
         else:
-            _LOGGER.error('> IMPROVE:LociFixer: Invalid file format. Only .cif, .pdb, .cif.gz, and .pdb.gz are supported.')
+            _LOGGER.error('> TANDEM:LociFixer: Invalid file format. Only .cif, .pdb, .cif.gz, and .pdb.gz are supported.')
             raise ValueError('Invalid file format. Only .cif, .pdb, .cif.gz, and .pdb.gz are supported.')
 
     def fix(self, fix_loop=True, replaceNonstandard=True, keepElement=[]):
@@ -480,7 +480,7 @@ class LociFixer(object):
             with gzip.open(self.pdbPath, 'rt') as in_f:
                 mmcif_dict = MMCIF2Dict(in_f)
         else:
-            _LOGGER.error('> IMPROVE:LociFixer: Invalid file format. Only .cif and .cif.gz are supported.')
+            _LOGGER.error('> TANDEM:LociFixer: Invalid file format. Only .cif and .cif.gz are supported.')
             raise ValueError('Invalid file format. Only .cif and .cif.gz are supported.')
         
         asym_id         = mmcif_dict["_pdbx_poly_seq_scheme.asym_id"]  # {'A', 'B'}
@@ -512,10 +512,6 @@ def cif2pdb(pdbID, keepIds=True, assemblyID: int = None, cifPath=None, pdbPath=N
         raise ValueError('Invalid file format. Only .cif and .cif.gz are supported.')
     fixer.saveTopology(pdbPath, keepIds=keepIds)
     return print(f'> {pdbPath} created.')
-
-
-
-# current_dir = os.path.dirname(os.path.realpath(__file__))
 
 def buildNE1(OPM_file, NE1_file, tempFolder=None):
     if tempFolder is None:

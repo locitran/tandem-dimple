@@ -12,10 +12,11 @@ from uuid import uuid1
 import os, logging
 import traceback
 from pathlib import Path
+from ..utils.settings import ROOT_DIR
 
 logger = logging.getLogger(__name__)
-HBPLUSEXE = Path(__file__).parent / 'bin' / 'hbplus'
-tempFolder = Path(__file__).parent / 'temp'
+HBPLUSEXE = ROOT_DIR / 'src' / 'pyFeatures' / 'bin' / 'hbplus'
+tempFolder = ROOT_DIR / 'src' / 'pyFeatures' / 'temp'
 
 class HBplus:
     """
@@ -117,9 +118,3 @@ class HBplus:
         Hbond = pd.DataFrame([(key[0], key[1], key[2], key[3], val) for key, val in Hbond.items()],
                              columns=['resName', 'chainID', 'resID', 'iCode', 'h_bond_group'])
         return Hbond
-    
-# pdbPath = '1G0D.pdb'
-# hbplus = HBplus(pdbPath, hbplusDisCutOff=3.5)
-# hbPdb = hbplus.getPDB()
-# hbondData = hbplus.getHbond(hbPdb, skipNeighbor=1)
-# print(hbondData)

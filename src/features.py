@@ -183,7 +183,7 @@ class getFeatures(Features):
             WT_pdbPath = os.path.join(fix_dir, f'{pdbID}{assemblyID}.pdb')
             addFile = None
         if not os.path.exists(WT_pdbPath):
-            raise FileNotFoundError(f'IMPROVE:Features.valid_indices: Error {WT_pdbPath} not exists')
+            raise FileNotFoundError(f'TANDEM:Features.valid_indices: Error {WT_pdbPath} not exists')
         
         wt_features = self.WT_Features(pdbID, WT_pdbPath, addFile=addFile)
 
@@ -192,7 +192,7 @@ class getFeatures(Features):
         n_features = len(self._get_feat_dtype())
         features = np.zeros((n_samples, n_features))
         for i, SAV_coord, PDB_coord in zip(range(n_samples), SAV_coords, PDB_coords):
-            print(f'> Computing valid {i} {SAV_coord} {PDB_coord}...')
+            print(f'> Computing valid {i} {SAV_coord} {PDB_coord} ...')
             PDB_coord_splitting = PDB_coord.split()
             SAV_coord_splitting = SAV_coord.split()
             assert len(PDB_coord_splitting) == 4 and len(SAV_coord_splitting) == 4
@@ -201,7 +201,7 @@ class getFeatures(Features):
             mt                  = SAV_coord_splitting[3]
             MT_pdbPath = os.path.join(fix_dir, f'{pdbID}{assemblyID}_{chainID}_{wt}{pos}{mt}.pdb')
             if not os.path.exists(MT_pdbPath):
-                logger.error(f'IMPROVE:Features.valid_indices: Error {SAV_coord} {PDB_coord}\n{MT_pdbPath} not exists')
+                logger.error(f'TANDEM:Features.valid_indices: Error {SAV_coord} {PDB_coord}\n{MT_pdbPath} not exists')
                 features[i] = np.nan
             else:
                 try:
@@ -211,7 +211,7 @@ class getFeatures(Features):
                 except Exception as e:
                     e = traceback.format_exc()
                     features[i] = np.nan
-                    logger.error(f'IMPROVE:Features.valid_indices: Error {SAV_coord} {PDB_coord}\n{e}')
+                    logger.error(f'TANDEM:Features.valid_indices: Error {SAV_coord} {PDB_coord}\n{e}')
                     continue
         return features
     
@@ -265,7 +265,7 @@ class getFeatures(Features):
         PDB_coord_splitting = PDB_coord.split()
         SAV_coord_splitting = SAV_coord.split()
         if len(PDB_coord_splitting) != 4 or len(SAV_coord_splitting) != 4:
-            msg = '> IMPROVE:getFeatures: Invalid PDB_coord or SAV_coord!'
+            msg = '> TANDEM:getFeatures: Invalid PDB_coord or SAV_coord!'
             raise Exception(msg)
         
         _, chainID, resID, WT_resName   = PDB_coord_splitting # 6CXI A 318 A
@@ -294,7 +294,7 @@ class getFeatures(Features):
         mt_features_i = mt_features_i.reset_index(drop=True)
         wt_features_i = wt_features_i.reset_index(drop=True)
         if len(mt_features_i) == 0 or len(wt_features_i) == 0:
-            msg = (f'> IMPROVE:getFeatures: Fail in locating'
+            msg = (f'> TANDEM:getFeatures: Fail in locating'
                     f'resID-{resID} chainID-{chainID} wt-{WT_resName} mt-{MT_resName} iCode-{iCode} '
                      'in mt_features_i or wt_features_i!')
             raise Exception(msg)

@@ -37,8 +37,8 @@ class Tandem:
         tandem_logger.error(f"Starting log error Tandem job: {self.job_name}")
 
         p = self.run()
-        featMatrix = p._get_features(fileName=self.output_dir / 'features.txt')
-        featExtention = p._get_extension(fileName=self.output_dir / 'extension.txt')
+        featMatrix = p._get_features()
+        featExtention = p._get_extension()
 
         mi = ModelInference(models)
         preds = mi(featMatrix)

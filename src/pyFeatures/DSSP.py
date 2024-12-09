@@ -7,13 +7,13 @@ Date: 2023-09-07
 """
 import pandas as pd
 import subprocess, logging
-# from . import version
 import traceback, logging
 from pathlib import Path
+from ..utils.settings import ROOT_DIR
 
 logger = logging.getLogger(__name__)
-DSSPEXE = Path(__file__).parent / 'bin' / 'mkdssp'
-tempFolder = Path(__file__).parent / 'temp'
+DSSPEXE = ROOT_DIR / 'src' / 'pyFeatures' / 'bin' / 'mkdssp'
+tempFolder = ROOT_DIR / 'src' / 'pyFeatures' / 'temp'
 
 class DSSP:
     """Get DSSP data from PDB file
@@ -77,16 +77,8 @@ class DSSP:
             return None
         n_residues = len(dsspData)
         secondary2score = {'H':0.5, 'I':0.5, 'G':0.5, 'P': 0.5, 'T':1, 'S':1, 'B':0, 'E':0, '':1}
-        # dsspData.replace({'type':secondary2score}, inplace=True)
         dsspData = dsspData.replace({'type': secondary2score})
-        # dsspData = dsspData.copy()
         dsspData.loc[:, 'loop_percent'] = (sum(dsspData['type'] == 1) * 100) / float(n_residues)
         dsspData.loc[:, 'sheet_percent'] = (sum(dsspData['type'] == 0) * 100) / float(n_residues)
         dsspData.loc[:, 'helix_percent'] = (sum(dsspData['type'] == 0.5) * 100) / float(n_residues)
         return dsspData
-
-# pdbPath = '1G0D.pdb'
-# dssp = DSSP(pdbPath)
-# dsspPdb = dssp.getPDB()
-# dsspData = dssp.getDSSP(dsspPdb)
-# print(dsspData)
