@@ -16,11 +16,14 @@ import re, os, logging
 import traceback
 from pathlib import Path
 from ..utils.settings import ROOT_DIR
+from ..utils.timer import getTimer
 
+timer = getTimer('tandem', verbose=True)
 logger = logging.getLogger(__name__)
 NACCESSEXE = ROOT_DIR / 'src' / 'pyFeatures' / 'bin' / 'naccess'
 tempFolder = ROOT_DIR / 'src' / 'pyFeatures' / 'temp'
 
+@timer.track
 def getSASA(pdbPath, tempFolder=tempFolder):  
     "Get SASA data from PDB file"
     

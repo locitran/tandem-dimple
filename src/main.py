@@ -1,8 +1,8 @@
 from pathlib import Path
 from .pipeline import Pipeline
 from .utils.logger import Logger
-from .utils.settings import ROOT_DIR
 from .predict.modules import ModelInference
+from .utils.timer import getTimer
 
 SAV_col_width = 20
 PDB_col_width = 20
@@ -22,7 +22,7 @@ class Tandem:
             ):
 
         if model_names is None and models is None:
-            model_names = [f'TANDEM_{i}' for i in range(1, 6)]
+            self.model_names = [f'TANDEM_{i}' for i in range(1, 6)]
         
         self.SAV_coords = SAV_coords
         self.job_name = job_name
@@ -36,7 +36,9 @@ class Tandem:
         tandem_logger.warning(f"Starting log warning Tandem job: {self.job_name}")
         tandem_logger.error(f"Starting log error Tandem job: {self.job_name}")
 
-        p = self.run()
+        timer = getTimer('tandem', verbose=True)
+
+        p = Pipeline(SAV_coords=self.SAV_coords, output_dir=self.output_dir, timer=timer)
         featMatrix = p._get_features()
         featExtention = p._get_extension()
 
@@ -45,39 +47,41 @@ class Tandem:
 
         tandem_logger.info(f"Finished Tandem job: {self.job_name}")
 
-        # Save predictions as text file
-        # First column: SAV coordinates
-        # Second column: PDB coordinates
-        # Third column: Predictions of the model 1
-        # Fourth column: Predictions of the model 2
-        # ...
-        # Last column: Predictions of the model 5
-        output_file = self.output_dir / 'predictions.txt'
+        self.featMatrix = featMatrix
+        self.featExtention = featExtention
+        self.preds = preds
+        self.save_predictions(self.output_dir / 'predictions.txt')
+        timer.report(to_file=self.output_dir / 'timing.log')
+
+    def save_predictions(self, output_file):
+        """
+        Save predictions as text file
+        First column: SAV coordinates
+        Second column: PDB coordinates
+        Third column: Predictions of the model 1
+        Fourth column: Predictions of the model 2
+        ...
+        Last column: Predictions of the model 5
+        """
         with open(output_file, 'w') as f:
-            for i, sav in enumerate(SAV_coords):
-                SAV_coord = sav
-                PDB_coord = featExtention['PDB_coords'][i]
-                pred = preds[i]
+            # for i, sav in enumerate(self.SAV_coords):
+            for i in range(len(self.SAV_coords)):
                 
-                # Header
-                f.write(
-                    f"{'Uniprot/pos/wt/mt':<{SAV_col_width}}{'PDB/chain/pos/wt':<{PDB_col_width}}"
-                    f"{''.join(f'{name:<{model_col_width}}' for name in model_names)}\n"
-                )
+                if i == 0:
+                    f.write(f"{'SAV coordinates':<{SAV_col_width}}{'PDB coordinates':<{PDB_col_width}}")
+                    f.write(''.join(f'{name:<{model_col_width}}' for name in self.model_names))
+                    f.write('\n')
 
-                # Data
-                f.write(
-                    f"{SAV_coord:<{SAV_col_width}}{PDB_coord:<{PDB_col_width}}"
-                    f"{''.join(f'{x:<{model_col_width}.3f}' for x in pred)}\n"
-                )
-
-
-    def run(self):
-        p = Pipeline(SAV_coords=self.SAV_coords, output_dir=self.output_dir)
-        return p
+                SAV_coord = self.SAV_coords[i]
+                PDB_coord = self.featExtention['PDB_coords'][i]
+                pred = self.preds[i]
+                
+                f.write(f"{SAV_coord:<{SAV_col_width}}{PDB_coord:<{PDB_col_width}}")
+                f.write(''.join(f'{x:<{model_col_width}.3f}' for x in pred))
+                f.write('\n')
 
 if __name__ == '__main__':
-    SAV_coords = ['Q92736 261 H R']
-    job = Tandem(SAV_coords, job_name='Nov-13')
+    SAV_coords = ['Q92736 261 H R', 'Q92736 507 V I']
+    job = Tandem(SAV_coords, job_name='Dec-09')
 
 

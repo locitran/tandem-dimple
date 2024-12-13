@@ -1,5 +1,6 @@
 #o_acc               	 o_pos	o_aa1	o_aa2	rsid      	acc       	   pos	aa1	aa2	        prediction	 pph2_prob	  pph2_FPR	  pph2_TPR
 Q92736              	   261	    H	    R	         ?	Q92736    	   261	  H	  R	 possibly damaging	     0.928	     0.058	     0.806
+Q92736              	   507	    V	    I	rs16835270	Q92736    	   507	  V	  I	 possibly damaging	     0.464	    0.0994	     0.888
 ## Sources:
 ##   Predictions: PolyPhen-2 v2.2.3r406
 ##   Sequences:   UniProtKB/UniRef100 Release 2011_12 (14-Dec-2011)

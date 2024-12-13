@@ -10,11 +10,14 @@ import subprocess, logging
 import traceback, logging
 from pathlib import Path
 from ..utils.settings import ROOT_DIR
+from ..utils.timer import getTimer
 
+timer = getTimer('tandem', verbose=True)
 logger = logging.getLogger(__name__)
 DSSPEXE = ROOT_DIR / 'src' / 'pyFeatures' / 'bin' / 'mkdssp'
 tempFolder = ROOT_DIR / 'src' / 'pyFeatures' / 'temp'
 
+@timer.track
 class DSSP:
     """Get DSSP data from PDB file
     Example:

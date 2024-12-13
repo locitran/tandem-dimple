@@ -1,2 +1,3 @@
 # SAV coords           Uniprot coords         PDB/ch/res/aa/size 
 Q92736 261 H R,        Q92736 261 H R,        4JKQ A 261 H 499
+Q92736 507 V I,        Q92736 507 V I,        4JKQ A 507 V 499

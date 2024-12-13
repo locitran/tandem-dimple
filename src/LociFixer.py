@@ -13,7 +13,9 @@ import subprocess
 from pathlib import Path
 from .mpdbfile import PDBFile
 from .utils.settings import one2three, three2one, standard_aa, ROOT_DIR
+from .utils.timer import getTimer
 
+timer = getTimer('tandem', verbose=True)
 download_dir = ROOT_DIR / 'pdbfile/raw'
 fix_dir = ROOT_DIR / 'pdbfile/fix'
 _LOGGER = logging.getLogger(__name__)
@@ -399,6 +401,7 @@ class LociFixer(object):
         """
         return self.fixer.missingTerminals
 
+    @timer.track
     def mutate(self, point_mutation, chainID, fix_loop=True):
         """Mutate a residue
         GLY-6-GLU

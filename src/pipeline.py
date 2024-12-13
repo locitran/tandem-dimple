@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from .features import Features, getFeatures
 from .consurf import getConsurf
-from .utils.timer import execution_timer
+from .utils.timer import getTimer
 from .utils.settings import ROOT_DIR
 from . import download
 from .LociFixer import LociFixer
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 DOWNLOAD_DIR = ROOT_DIR / 'pdbfile' / 'raw'
 FIX_DIR = ROOT_DIR / 'pdbfile' / 'fix'
 CURRENT_DIR = ROOT_DIR / 'src'
+timer = getTimer('tandem', verbose=True)
 
 class Pipeline:
     def __init__(self, 
@@ -24,9 +25,9 @@ class Pipeline:
         file_format: str = 'opm', # Either 'opm', 'asu, or 'bas'
         fix_loop: bool = False,
         keepIds: bool = True,
-        output_dir: str = None
+        output_dir: str = None,
+        timer=None
         ):
-        
         # Calculate Rhapsody features
         (PDB_coords, PDB_IDs, PDB_sizes), rhapsody_featMatrix = self.getRhapsody(SAV_coords)
         extension = self._form_extension(SAV_coords, PDB_coords, PDB_IDs, PDB_sizes, to_file=output_dir / 'extension.txt')
@@ -78,7 +79,7 @@ class Pipeline:
 
         # Save features to text file with 'tab' delimiter
         fileName = output_dir / 'features.txt'
-        np.savetxt(fileName, self.featM, fmt='%.3e', delimiter='\t', header='\t'.join(featSet), comments='')
+        np.savetxt(fileName, featM, fmt='%.3e', delimiter='\t', header='\t'.join(featSet), comments='')
 
         self.extension = extension
         self.featM = featM
@@ -96,7 +97,7 @@ class Pipeline:
     def _get_featSet(self):
         return self.featSet
 
-    @execution_timer
+    @timer.track
     def getRhapsody(self, SAV_coords, custom_PDB=None):
         import rhapsody as rd
         self.rhapsody_featSet = ['wt_PSIC', 'Delta_PSIC', 'BLOSUM', 'entropy', 'ranked_MI', 'ANM_effectiveness-chain', 'stiffness-chain']
@@ -133,18 +134,18 @@ class Pipeline:
             extention.to_csv(to_file, sep='\t', index=False)
         return extention
 
-    @execution_timer
+    @timer.track
     def start_matlab_engine(self, eng):
         import matlab.engine
         eng = Features.start_matlab_engine(eng)
         self.eng = eng
 
-    @execution_timer
+    @timer.track
     def stop_matlab_engine(self):
         logger.info('> Stopping MATLAB engine...')
         self.eng.quit()
     
-@execution_timer
+@timer.track
 class ProcessPDB:
     def __init__(
             self, 
@@ -224,7 +225,7 @@ class ProcessPDB:
                 msg = f'> IMPROVE:pipeline: cannot find structure for {self.pdbID}!'
                 logger.error(msg)
 
-    @execution_timer
+    @timer.track
     def _process_file(
             self, 
             pdb_path: str,

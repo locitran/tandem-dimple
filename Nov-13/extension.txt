@@ -1,2 +1,0 @@
-SAV_coords	PDB_coords	PDB_IDs	mapping_PDB_coords	file_format	indices	PDB_size
-Q92736 261 H R	4JKQ A 261 H	4JKQ			False	499

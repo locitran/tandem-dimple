@@ -13,11 +13,14 @@ import os, logging
 import traceback
 from pathlib import Path
 from ..utils.settings import ROOT_DIR
+from ..utils.timer import getTimer
 
+timer = getTimer('tandem', verbose=True)
 logger = logging.getLogger(__name__)
 HBPLUSEXE = ROOT_DIR / 'src' / 'pyFeatures' / 'bin' / 'hbplus'
 tempFolder = ROOT_DIR / 'src' / 'pyFeatures' / 'temp'
 
+@timer.track
 class HBplus:
     """
     Get HBplus data from PDB file

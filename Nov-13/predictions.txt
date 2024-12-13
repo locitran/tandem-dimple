@@ -1,2 +1,0 @@
-Uniprot/pos/wt/mt   PDB/chain/pos/wt    TANDEM_1       TANDEM_2       TANDEM_3       TANDEM_4       TANDEM_5       
-Q92736 261 H R      4JKQ A 261 H        0.259          0.294          0.362          0.327          0.268          

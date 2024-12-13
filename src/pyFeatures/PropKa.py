@@ -2,8 +2,12 @@ from propka import run
 import pandas as pd
 import logging
 import traceback
+from ..utils.timer import getTimer
+
+timer = getTimer('tandem', verbose=True)
 logger = logging.getLogger(__name__)
 
+@timer.track
 def getPropKa(pdbPath, pHCondition=7.0, write_pka=False):
     "Get pKa data from PDB file"
     try:

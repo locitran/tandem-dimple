@@ -6,10 +6,12 @@ import traceback
 import logging
 from .LociFixer import one2three, standard_aa
 from .pyFeatures import PropKa, DSSP, HBplus, Naccess
+from .utils.timer import getTimer
 
 logger = logging.getLogger(__name__)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 matFeatures_dir = os.path.join(dir_path, 'matFeatures')
+timer = getTimer('tandem', verbose=True)
 
 class Features:
     """
@@ -64,10 +66,7 @@ class Features:
         eng = Features.start_matlab_engine(eng)
         eng.eval(f'data = data.get_GVecs_GVals({cutOff});', nargout=0)
 
-    def matFeatures(self, 
-                    residue_features: bool = True,
-                    protein_features: bool = True,
-    ):
+    def matFeatures(self, residue_features: bool = True, protein_features: bool = True):
         """
         Compute features from MATLAB scripts: ./matFeatures/getFeatures
 
@@ -161,6 +160,7 @@ class Features:
         features = pd.merge(self.matfeatures, self.pyfeatures, how='outer', on=['resName', 'chainID', 'resID', 'iCode'])
         self.features = features
 
+@timer.track
 class getFeatures(Features):
     def __init__(self, eng=None, **kwargs):
         self.eng = eng
@@ -215,6 +215,7 @@ class getFeatures(Features):
                     continue
         return features
     
+    @timer.track
     def WT_Features(self, pdbID, WT_pdbPath, GJB2=False, **kwargs):
         """
         """
@@ -236,6 +237,7 @@ class getFeatures(Features):
 
         return self.wt_features
     
+    @timer.track
     def MT_Features(self, pdbID, MT_pdbPath=None, **kwargs):
         """
         """
