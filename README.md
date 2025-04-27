@@ -4,7 +4,7 @@ Github repository: https://github.com/locitran/tandem-dimple.git. Fetch the code
 ```bash
 mkdir tandem
 cd tandem
-git clone https://github.com/locitran/tandem-dimple.git
+git clone https://github.com/locitran/tandem-dimple.git .
 ```
 
 # Installation dependencies
