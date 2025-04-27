@@ -1,0 +1,12 @@
+package:
+  name: pyronn
+  version: 4.0rc0
+
+build:
+  number: 4
+
+requirements:
+  run:
+    - python
+about:
+  summary: This fork of RONN v3.2 with a significant rewriting of the code without changing the scores to identify disordered residues/regions.

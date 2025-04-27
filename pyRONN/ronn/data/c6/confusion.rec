@@ -1,0 +1,5 @@
+		Negative	Positive
+Negative	4398		1174		78.93%(Specificity)
+Positive	1273		3870		75.24%(Sensitivity)
+		77.55%(NNP)	76.72%(PPP)	77.16%(Accuracy)
+MCC=0.54
