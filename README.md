@@ -1,0 +1,77 @@
+This repository contains the source code for the TANDEM-DIMPLE project. 
+
+Github repository: https://github.com/locitran/tandem-dimple.git. Fetch the code from the repository:
+```bash
+mkdir tandem
+cd tandem
+git clone https://github.com/locitran/tandem-dimple.git
+```
+
+# Installation dependencies
+
+We assume you have already installed Anaconda or Miniconda. If not, please install it first.
+
+```bash
+conda create -n tandem python=3.11.11
+conda activate tandem
+pip install -r requirements.txt
+```
+
+## ConSurf database
+
+We have precomputed the [ConSurf database](https://consurfdb.tau.ac.il/) and stored it in my Google Drive accessible [here](https://drive.google.com/file/d/17IFFwGVHrJuUET3J8kEM9sqq2D0Z6Fco/view?usp=drive_link).
+
+```bash
+bash scripts/download_consurf_db.sh data/consurf/db # 2.5G, ~2m
+```
+
+## ConSurf Tool
+
+In case user provides customed structure or no records found in ConSurf database, we need to use ConSurf tool. And to run ConSurf tool we need genetic (sequence) database, e.g. UniRef90 (default).
+
+### 1. ConSurf Tool dependencies
+
+```bash
+conda install -c conda-forge -c bioconda mmseqs2
+sudo apt install cd-hit
+sudo apt install prottest 
+sudo apt install ncbi-blast+
+sudo apt install hmmer
+sudo apt install mafft
+sudo apt install clustalw
+sudo apt install muscle
+```
+
+### 2. Download genetic database
+
+```bash
+bash scripts/download_uniref90.sh data/consurf # 47G
+```
+
+## Pfam database
+
+To generate Entropy and ranked_MI, we need Pfam database.
+
+```bash
+bash scripts/download_pfam.sh data/pfamdb # 1.5G, ~1.5m
+```
+
+# Test the installation
+```bash
+python test/input_as_list_SAVs.py
+python test/input_as_uniprot_position.py
+python test/input_as_uniprot.py
+```
+
+```bibtex
+@article{Loci2025,
+  author  = {Loci Tran, Chen-Hua Lu, Pei-Lung Chen, Lee-Wei Yang},
+  journal = {Bioarchiv},
+  title   = {Predicting the pathogenicity of SAVs Transfer-leArNing-ready and Dynamics-Empowered Model for DIsease-specific Missense Pathogenicity Level Estimation},
+  year    = {2025},
+  volume  = {*.*},
+  number  = {*.*},
+  pages   = {*.*},
+  doi     = {*.*}
+}
+```   

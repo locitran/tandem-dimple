@@ -1,0 +1,61 @@
+
+Unzip stand_alone_consurf.zip
+
+Install python module biopython: pip install biopython
+Install python module fpdf: pip install fpdf
+Install cd-hit: sudo apt install cd-hit
+Install prottest (optional): sudo apt install prottest 
+Install jmodeltest2 (optional): download jmodeltest2 from https://github.com/ddarriba/jmodeltest2/releases and, in the file GENERAL_CONSTANTS.py, change JMODELTEST2 = "/path/jModelTest.jar" to the path in your computer. Make sure that the program has permission to execute the file jmodeltest-2.1.10/exe/phyml/PhyML_3.0_linux64
+Install chimerax: download chimerax from https://www.cgl.ucsf.edu/chimerax/ and install it.
+Install pymol:  conda install -c conda-forge -c schrodinger pymol-bundle 
+Get font DejaVuSans.ttf (from https://www.fontsquirrel.com/fonts/dejavu-sans for example) and, in the file GENERAL_CONSTANTS.py, change FONTS = "/path/DejaVuSans.ttf" to the path in your computer.
+
+When running the program without an input MSA, you need at least one homolog searching tool  
+
+Install blast: sudo apt install ncbi-blast+
+Install HMMER: sudo apt install hmmer
+install mmseqs2: conda install -c conda-forge -c bioconda mmseqs2
+
+and one MSA building tool 
+
+Install mafft: sudo apt install mafft
+Install clustalw: sudo apt install clustalw
+Install muscle: sudo apt install muscle
+Install prank: download prank from https://github.com/ariloytynoja/prank-msa and install it. In the file GENERAL_CONSTANTS.py change PRANK="/path/prank-msa-master/src" to the path in your computer.
+
+The HMMER database should be in fasta format. The MMseqs2 and BLAST databases need to be compiled. 
+
+mmseqs createdb DB.fasta DB_compiled
+makeblastdb -in DB.fasta -dbtype prot -out DB_compiled
+
+When running the program without an input MSA, choose the database with the flag -db.
+
+For HMMER -db DB.fasta
+For BLAST or MMseqs2 -db DB_compiled
+
+Here is an example of a consurf run
+
+python3 stand_alone_consurf.py --dir . --msa msa_fasta.aln --query Input_seq --structure 4xr8.pdb --chain A
+python3 stand_alone_consurf.py --dir . --DB /home/newloci/alphafold3/db/uniref90_2022_05.fa --query Input_seq --structure fold_1xpkd1_model_0_A.pdb --chain A
+fold_1xpkd1_model_0_A.pdb
+The ouput consists of:
+
+A matrix of the sequence positions and their conservation grades                                          - 4xr8_consurf_grades.txt
+The pdb file with the conservation grades in the b-factor column                                          - 4xr8_ATOMS_section_With_ConSurf.pdb
+The pdb file with the conservation grades in the b-factor column (insufficient data is colored by yellow) - 4xr8_ATOMS_section_With_ConSurf_isd.pdb
+The pdb file with the consurf scores in the b-factor column                                               - 4xr8_With_Conservation_Scores.pdb
+A pdf file of the sequence colored according to the consurf grades                                        - consurf_colored_seq.pdf
+A pdf file of the sequence colored according to the consurf grades (color blind)                          - consurf_colored_seq_CBS.pdf
+A saved ChimeraX session                                                                                  - 4xr8_consurf_chimerax_session.cxs
+A saved ChimeraX session (color blind)                                                                    - 4xr8_consurf_CBS_chimerax_session.cxs
+A saved PyMol session                                                                                     - 4xr8_consurf_pymol_session.pse
+A saved PyMol session (color blind)                                                                       - 4xr8_consurf_CBS_pymol_session.pse
+First glance file                                                                                         - 4xr8_consurf_firstglance.pdb
+First glance file (color blind)                                                                           - 4xr8_consurf_firstglance_CBS.pdb
+Jmol coloring script                                                                                      - 4xr8_jmol_consurf_colors.spt
+Jmol coloring script (color blind)                                                                        - 4xr8_jmol_consurf_colors_CBS.spt
+Jmol coloring script (insufficient data is colored by yellow)                                             - 4xr8_jmol_consurf_colors_isd.spt
+Jmol coloring script (color blind) (insufficient data is colored by yellow)                               - 4xr8_jmol_consurf_colors_CBS_isd.spt
+
+
+

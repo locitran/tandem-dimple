@@ -1,0 +1,154 @@
+anSAV_coords,Unique_SAV_coords,Uniprot_sequence_length,Asymmetric_PDB_coords,Asymmetric_PDB_length,Asymmetric_PDB_resolved_length,PDB_resolution,BioUnit_PDB_coords,OPM_PDB_coords,AF2
+P21817 35 C R,P21817 35 C R,5038,7M6L A 36 C,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 36 C,None
+P21817 44 R C,P21817 44 R C,5038,7M6L A 45 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 45 R,None
+P21817 163 R C,P21817 163 R C,5038,7M6L A 164 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 164 R,None
+P21817 163 R L,P21817 163 R L,5038,7M6L A 164 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 164 R,None
+P21817 248 G R,P21817 248 G R,5038,7M6L A 249 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 249 G,None
+P21817 248 G R,P21817 248 G R,5038,7M6L A 249 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 249 G,None
+P21817 328 R W,P21817 328 R W,5038,7M6L A 329 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 329 R,None
+P21817 341 G R,P21817 341 G R,5038,7M6L A 342 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 342 G,None
+P21817 341 G R,P21817 341 G R,5038,7M6L A 342 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 342 G,None
+P21817 401 R C,P21817 401 R C,5038,7M6L A 402 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 402 R,None
+P21817 403 I M,P21817 403 I M,5038,7M6L A 404 I,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 404 I,None
+P21817 522 Y S,P21817 522 Y S,5038,7M6L A 523 Y,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 523 Y,None
+P21817 530 R H,P21817 530 R H,5038,7M6L A 531 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 531 R,None
+P21817 533 R C,P21817 533 R C,5038,7M6L A 534 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 534 R,None
+P21817 533 R H,P21817 533 R H,5038,7M6L A 534 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 534 R,None
+P21817 552 R W,P21817 552 R W,5038,7M6L A 553 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 553 R,None
+P21817 614 R C,P21817 614 R C,5038,7M6L A 615 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 615 R,None
+P21817 614 R L,P21817 614 R L,5038,7M6L A 615 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 615 R,None
+P21817 2163 R C,P21817 2163 R C,5038,7M6L A 2163 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2163 R,None
+P21817 2163 R H,P21817 2163 R H,5038,7M6L A 2163 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2163 R,None
+P21817 2168 V M,P21817 2168 V M,5038,7M6L A 2168 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2168 V,None
+P21817 2206 T R,P21817 2206 T R,5038,7M6L A 2206 T,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2206 T,None
+P21817 2206 T M,P21817 2206 T M,5038,7M6L A 2206 T,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2206 T,None
+P21817 2336 R H,P21817 2336 R H,5038,7M6L A 2336 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2336 R,None
+Glu2348del,"Cannot map, unable to run",0,"Cannot map, unable to run Glu2348del",0,0,0.0,None,None,None
+P21817 2350 A T,P21817 2350 A T,5038,7M6L A 2350 A,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2350 A,None
+P21817 2355 R W,P21817 2355 R W,5038,7M6L A 2355 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2355 R,None
+P21817 2375 G A,P21817 2375 G A,5038,7M6L A 2375 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2375 G,None
+P21817 2428 A T,P21817 2428 A T,5038,7M6L A 2428 A,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2428 A,None
+P21817 2434 G R,P21817 2434 G R,5038,7M6L A 2434 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2434 G,None
+P21817 2435 R H,P21817 2435 R H,5038,7M6L A 2435 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2435 R,None
+P21817 2452 R W,P21817 2452 R W,5038,7M6L A 2452 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2452 R,None
+P21817 2454 R C,P21817 2454 R C,5038,7M6L A 2454 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2454 R,None
+P21817 2454 R H,P21817 2454 R H,5038,7M6L A 2454 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2454 R,None
+P21817 2458 R C,P21817 2458 R C,5038,7M6L A 2458 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2458 R,None
+P21817 2458 R H,P21817 2458 R H,5038,7M6L A 2458 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2458 R,None
+P21817 2508 R C,P21817 2508 R C,5038,7M6L A 2508 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2508 R,None
+P21817 2508 R G,P21817 2508 R G,5038,7M6L A 2508 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2508 R,None
+P21817 2508 R H,P21817 2508 R H,5038,7M6L A 2508 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2508 R,None
+P21817 3104 E K,P21817 3104 E K,5038,7M6L A 3104 E,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3104 E,None
+P21817 3990 G V,P21817 3990 G V,5038,7M6L A 3991 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3991 G,None
+P21817 4796 Y C,P21817 4796 Y C,5038,7M6L A 4795 Y,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4795 Y,None
+P21817 4826 T I,P21817 4826 T I,5038,7M6L A 4825 T,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4825 T,None
+P21817 4833 H Y,P21817 4833 H Y,5038,7M6L A 4832 H,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4832 H,None
+P21817 4838 L V,P21817 4838 L V,5038,7M6L A 4837 L,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4837 L,None
+P21817 4849 V I,P21817 4849 V I,5038,7M6L A 4848 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4848 V,None
+P21817 4861 R H,P21817 4861 R H,5038,7M6L A 4860 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4860 R,None
+P21817 4898 I T,P21817 4898 I T,5038,7M6L A 4897 I,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4897 I,None
+P21817 933 A T,P21817 933 A T,5038,7M6L A 934 A,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 934 A,None
+P21817 1342 S G,P21817 1342 S G,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1352 A G,P21817 1352 A G,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1393 K R,P21817 1393 K R,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1667 R C,P21817 1667 R C,5038,7M6L A 1668 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1668 R,None
+P21817 1773 P S,P21817 1773 P S,5038,7M6L A 1773 P,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1773 P,None
+P21817 1787 P L,P21817 1787 P L,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2060 G C,P21817 2060 G C,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2321 I V,P21817 2321 I V,5038,7M6L A 2321 I,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2321 I,None
+P21817 2787 T S,P21817 2787 T S,5038,7M6L A 2787 T,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2787 T,None
+P21817 3118 A V,P21817 3118 A V,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 3583 E Q,P21817 3583 E Q,5038,7M6L A 3583 E,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3583 E,None
+P21817 3756 Q E,P21817 3756 Q E,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 4294 T M,P21817 4294 T M,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 4295 A V,P21817 4295 A V,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 4501 P L,P21817 4501 P L,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 4505 D H,P21817 4505 D H,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1316 P T,P21817 1316 P T,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2727 A T,P21817 2727 A T,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1832 G A,P21817 1832 G A,5038,7M6L A 1832 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1832 G,None
+P21817 2550 L V,P21817 2550 L V,5038,7M6L A 2550 L,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2550 L,None
+P21817 140 A T,P21817 140 A T,5038,7M6L A 141 A,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 141 A,None
+P21817 816 P L,P21817 816 P L,5038,7M6L A 817 P,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 817 P,None
+P21817 1075 R Q,P21817 1075 R Q,5038,7M6L A 1076 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1076 R,None
+P21817 1571 I V,P21817 1571 I V,5038,7M6L A 1572 I,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1572 I,None
+P21817 1679 R H,P21817 1679 R H,5038,7M6L A 1680 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1680 R,None
+P21817 2224 R C,P21817 2224 R C,5038,7M6L A 2224 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2224 R,None
+P21817 2342 N S,P21817 2342 N S,5038,7M6L A 2342 N,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2342 N,None
+P21817 2606 C S,P21817 2606 C S,5038,7M6L A 2606 C,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2606 C,None
+P21817 2776 S F,P21817 2776 S F,5038,7M6L A 2776 S,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2776 S,None
+P21817 3366 R H,P21817 3366 R H,5038,7M6L A 3366 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3366 R,None
+P21817 3367 K R,P21817 3367 K R,5038,7M6L A 3367 K,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3367 K,None
+P21817 3539 R H,P21817 3539 R H,5038,7M6L A 3539 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3539 R,None
+P21817 4104 G R,P21817 4104 G R,5038,7M6L A 4105 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4105 G,None
+P21817 4136 R S,P21817 4136 R S,5038,7M6L A 4137 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4137 R,None
+P21817 4723 R H,P21817 4723 R H,5038,7M6L A 4722 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4722 R,None
+P21817 893 G S,P21817 893 G S,5038,7M6L A 894 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 894 G,None
+P21817 1109 R K,P21817 1109 R K,5038,7M6L A 1110 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1110 R,None
+P21817 1878 E D,P21817 1878 E D,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2943 D N,P21817 2943 D N,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 3647 H Q,P21817 3647 H Q,5038,7M6L A 3647 H,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3647 H,None
+P21817 3981 H Y,P21817 3981 H Y,5038,7M6L A 3982 H,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3982 H,None
+P21817 4283 E K,P21817 4283 E K,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 851 V M,P21817 851 V M,5038,7M6L A 852 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 852 V,None
+P21817 4616 A D,P21817 4616 A D,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 27 V M,P21817 27 V M,5038,7M6L A 28 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 28 V,None
+P21817 114 R H,P21817 114 R H,5038,7M6L A 115 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 115 R,None
+P21817 370 V L,P21817 370 V L,5038,7M6L A 371 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 371 V,None
+P21817 440 V I,P21817 440 V I,5038,7M6L A 441 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 441 V,None
+P21817 751 V M,P21817 751 V M,5038,7M6L A 752 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 752 V,None
+P21817 1061 Q R,P21817 1061 Q R,5038,7M6L A 1062 Q,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1062 Q,None
+P21817 1342 S R,P21817 1342 S R,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1364 G R,P21817 1364 G R,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1503 G R,P21817 1503 G R,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 1880 E K,P21817 1880 E K,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2071 R Q,P21817 2071 R Q,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2252 D E,P21817 2252 D E,5038,7M6L A 2252 D,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2252 D,None
+P21817 2558 V M,P21817 2558 V M,5038,7M6L A 2558 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2558 V,None
+P21817 2781 I T,P21817 2781 I T,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2834 T R,P21817 2834 T R,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 2838 K N,P21817 2838 K N,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 3028 G S,P21817 3028 G S,5038,7M6L A 3028 G,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3028 G,None
+P21817 3234 N S,P21817 3234 N S,5038,7M6L A 3234 N,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3234 N,None
+P21817 3342 A V,P21817 3342 A V,5038,7M6L A 3342 A,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3342 A,None
+P21817 3495 K N,P21817 3495 K N,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 3815 M L,P21817 3815 M L,5038,7M6L A 3816 M,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3816 M,None
+P21817 4034 V M,P21817 4034 V M,5038,7M6L A 4035 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4035 V,None
+P21817 4063 M V,P21817 4063 M V,5038,7M6L A 4064 M,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4064 M,None
+P21817 4084 R H,P21817 4084 R H,5038,7M6L A 4085 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4085 R,None
+P21817 4590 E K,P21817 4590 E K,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 4617 G R,P21817 4617 G R,5038,"Cannot map, no hits found",0,0,0.0,Cannot map,Cannot map,
+P21817 4753 A T,P21817 4753 A T,5038,7M6L A 4752 A,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4752 A,None
+P21817 4868 E K,P21817 4868 E K,5038,7M6L A 4867 E,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4867 E,None
+P21817 160 E G,P21817 160 E G,5038,7M6L A 161 E,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 161 E,None
+P21817 177 R C,P21817 177 R C,5038,7M6L A 178 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 178 R,None
+P21817 214 T M,P21817 214 T M,5038,7M6L A 215 T,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 215 T,None
+P21817 401 R H,P21817 401 R H,5038,7M6L A 402 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 402 R,None
+P21817 522 Y C,P21817 522 Y C,5038,7M6L A 523 Y,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 523 Y,None
+P21817 533 R H,P21817 533 R H,5038,7M6L A 534 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 534 R,None
+P21817 539 F V,P21817 539 F V,5038,7M6L A 540 F,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 540 F,None
+P21817 1056 D H,P21817 1056 D H,5038,7M6L A 1057 D,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1057 D,None
+P21817 1588 P L,P21817 1588 P L,5038,7M6L A 1589 P,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1589 P,None
+P21817 1675 L P,P21817 1675 L P,5038,7M6L A 1676 L,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1676 L,None
+P21817 1728 S F,P21817 1728 S F,5038,7M6L A 1729 S,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 1729 S,None
+P21817 2163 R L,P21817 2163 R L,5038,7M6L A 2163 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2163 R,None
+P21817 2204 H Q,P21817 2204 H Q,5038,7M6L A 2204 H,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2204 H,None
+P21817 2237 C Y,P21817 2237 C Y,5038,7M6L A 2237 C,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2237 C,None
+P21817 2321 I V,P21817 2321 I V,5038,7M6L A 2321 I,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2321 I,None
+P21817 2362 E K,P21817 2362 E K,5038,7M6L A 2362 E,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2362 E,None
+P21817 2363 C W,P21817 2363 C W,5038,7M6L A 2363 C,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2363 C,None
+P21817 2364 F V,P21817 2364 F V,5038,7M6L A 2364 F,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2364 F,None
+P21817 2431 D Y,P21817 2431 D Y,5038,7M6L A 2431 D,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2431 D,None
+P21817 2627 V M,P21817 2627 V M,5038,7M6L A 2627 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2627 V,None
+P21817 2676 R W,P21817 2676 R W,5038,7M6L A 2676 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 2676 R,None
+P21817 3051 R H,P21817 3051 R H,5038,7M6L A 3051 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3051 R,None
+P21817 3418 N D,P21817 3418 N D,5038,7M6L A 3418 N,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3418 N,None
+P21817 3903 R Q,P21817 3903 R Q,5038,7M6L A 3904 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3904 R,None
+P21817 3772 R Q,P21817 3772 R Q,5038,7M6L A 3773 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3773 R,None
+P21817 3986 D E,P21817 3986 D E,5038,7M6L A 3987 D,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 3987 D,None
+P21817 4050 S Y,P21817 4050 S Y,5038,7M6L A 4051 S,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4051 S,None
+P21817 4234 V L,P21817 4234 V L,5038,7M6L A 4235 V,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4235 V,None
+P21817 4737 R Q,P21817 4737 R Q,5038,7M6L A 4736 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4736 R,None
+P21817 4824 L P,P21817 4824 L P,5038,7M6L A 4823 L,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4823 L,None
+P21817 4893 R Q,P21817 4893 R Q,5038,7M6L A 4892 R,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4892 R,None
+P21817 4973 P L,P21817 4973 P L,5038,7M6L A 4972 P,4299,4299,-999.0,"Cannot map, Too many C-alphas: 17624. Max. allowed: 17000",7M6L A 4972 P,None

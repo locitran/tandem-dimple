@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# Get directory of this script (EXE_PATH)
+EXE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Check if at least one argument (PDB file) is provided
+if [ "$#" -lt 1 ]; then
+    echo "Usage: naccess pdb_file [-p probe_size] [-r vdw_file] [-s stdfile] [-z zslice] -[hwyfaclqb]"
+    return 1
+fi
+
+# Default parameters
+PDBFILE=""
+VDWFILE=""
+STDFILE=""
+probe=1.40
+zslice=0.05
+hets=0
+wats=0
+hyds=0
+full=0
+asao=0
+cont=0
+oldr=0
+nbac=0
+
+# Process command-line arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -q|-Q)
+            echo "Naccess2.1 S.J.Hubbard June 1996"
+            echo "Usage: naccess pdb_file [-p probe_size] [-r vdw_file] [-s stdfile] [-z zslice] -[hwyfaclq]"
+            return 1
+            ;;
+        -p|-P)
+            shift; probe="$1"
+            ;;
+        -z|-Z)
+            shift; zslice="$1"
+            ;;
+        -h|-H)
+            hets=1
+            ;;
+        -w|-W)
+            wats=1
+            ;;
+        -y|-Y)
+            hyds=1
+            ;;
+        -r|-R)
+            shift; VDWFILE="$1"
+            ;;
+        -s|-S)
+            shift; STDFILE="$1"
+            ;;
+        -f|-F)
+            full=1
+            ;;
+        -a|-A)
+            asao=1
+            ;;
+        -c|-C)
+            cont=1
+            ;;
+        -l|-L)
+            oldr=1
+            ;;
+        -b|-B)
+            nbac=1
+            ;;
+        *)
+            if [[ -f "$1" && -z "$PDBFILE" ]]; then
+                PDBFILE="$1"
+            fi
+            ;;
+    esac
+    shift
+done
+
+# Ensure PDB file is provided
+if [[ -z "$PDBFILE" ]]; then
+    echo "Error: You must supply a PDB format file."
+    return 1
+fi
+
+# Determine the VDW radii file
+if [[ -n "$VDWFILE" && ! -f "$VDWFILE" ]]; then
+    echo "Error: VDW FILE '$VDWFILE' not found."
+    VDWFILE=""
+fi
+if [[ -z "$VDWFILE" && -f "vdw.radii" ]]; then
+    VDWFILE="vdw.radii"
+    echo "Using vdw.radii in local directory."
+fi
+if [[ -z "$VDWFILE" && -f "$EXE_PATH/vdw.radii" ]]; then
+    echo "Using default vdw.radii."
+    VDWFILE="$EXE_PATH/vdw.radii"
+fi
+if [[ -z "$VDWFILE" ]]; then
+    echo "FATAL ERROR: Unable to assign a VDW radii file."
+    return 1
+fi
+
+# Determine the standard data file
+if [[ -n "$STDFILE" && ! -f "$STDFILE" ]]; then
+    echo "Error: STD FILE '$STDFILE' not found."
+    STDFILE=""
+fi
+if [[ -z "$STDFILE" && -f "standard.data" ]]; then
+    STDFILE="standard.data"
+    echo "Using STD FILE in local directory."
+fi
+if [[ -z "$STDFILE" && -f "$EXE_PATH/standard.data" ]]; then
+    STDFILE="$EXE_PATH/standard.data"
+    echo "Using default STD FILE."
+fi
+if [[ -z "$STDFILE" ]]; then
+    echo "Warning: No STD FILE found! Proceeding without it."
+fi
+
+# Write input file
+cat <<EOF > accall.input
+PDBFILE $PDBFILE
+VDWFILE $VDWFILE
+STDFILE $STDFILE
+PROBE $probe
+ZSLICE $zslice
+EOF
+if [[ $hets -eq 1 ]]; then echo "HETATOMS" >> accall.input; fi
+if [[ $wats -eq 1 ]]; then echo "WATERS" >> accall.input; fi
+if [[ $hyds -eq 1 ]]; then echo "HYDROGENS" >> accall.input; fi
+if [[ $full -eq 1 ]]; then echo "FULL" >> accall.input; fi
+if [[ $asao -eq 1 ]]; then echo "ASAONLY" >> accall.input; fi
+if [[ $cont -eq 1 ]]; then echo "CONTACT" >> accall.input; fi
+if [[ $oldr -eq 1 ]]; then echo "OLDRSA" >> accall.input; fi
+if [[ $nbac -eq 1 ]]; then echo "CSIDE" >> accall.input; fi
+
+# Run accessibility calculations
+"$EXE_PATH/accall" < accall.input
+
+# Delete temporary input file
+rm -f accall.input

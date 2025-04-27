@@ -1,0 +1,154 @@
+﻿Nucleotide change,Protein change,Classification,Note
+c.103T>C,p.Cys35Arg,P/LP,use
+c.130C>T,p.Arg44Cys,P/LP,use
+c.487C>T,p.Arg163Cys,P/LP,use
+c.488G>T,p.Arg163Leu,P/LP,use
+c.742G>C,p.Gly248Arg,P/LP,use
+c.742G>A,p.Gly248Arg,P/LP,Dupplicate
+c.982C>T,p.Arg328Trp,P/LP,use
+c.1021G>A,p.Gly341Arg,P/LP,use
+c.1021G>C,p.Gly341Arg,P/LP,Dupplicate
+c.1201C>T,p.Arg401Cys,P/LP,use
+c.1209C>G,p.Ile403Met,P/LP,use
+c.1565A>C,p.Tyr522Ser,P/LP,use
+c.1589G>A,p.Arg530His,P/LP,use
+c.1597C>T,p.Arg533Cys,P/LP,use
+c.1598G>A,p.Arg533His,P/LP,use
+c.1654C>T,p.Arg552Trp,P/LP,use
+c.1840C>T,p.Arg614Cys,P/LP,use
+c.1841G>T,p.Arg614Leu,P/LP,use
+c.6487C>T,p.Arg2163Cys,P/LP,use
+c.6488G>A,p.Arg2163His,P/LP,use
+c.6502G>A,p.Val2168Met,P/LP,use
+c.6617C>G,p.Thr2206Arg,P/LP,use
+c.6617C>T,p.Thr2206Met,P/LP,use
+c.7007G>A,p.Arg2336His,P/LP,use
+c.7042_7044del,p.Glu2348del,P/LP,"in-frame deletion, not missense variant"
+c.7048G>A,p.Ala2350Thr,P/LP,use
+c.7063C>T,p.Arg2355Trp,P/LP,use
+c.7124G>C,p.Gly2375Ala,P/LP,use
+c.7282G>A,p.Ala2428Thr,P/LP,use
+c.7300G>A,p.Gly2434Arg,P/LP,use
+c.7304G>A,p.Arg2435His,P/LP,use
+c.7354C>T,p.Arg2452Trp,P/LP,use
+c.7360C>T,p.Arg2454Cys,P/LP,use
+c.7361G>A,p.Arg2454His,P/LP,use
+c.7372C>T,p.Arg2458Cys,P/LP,use
+c.7373G>A,p.Arg2458His,P/LP,use
+c.7522C>T,p.Arg2508Cys,P/LP,use
+c.7522C>G,p.Arg2508Gly,P/LP,use
+c.7523G>A,p.Arg2508His,P/LP,use
+c.9310G>A,p.Glu3104Lys,P/LP,use
+c.11969G>T,p.Gly3990Val,P/LP,use
+c.14387A>G,p.Tyr4796Cys,P/LP,use
+c.14477C>T,p.Thr4826Ile,P/LP,use
+c.14497C>T,p.His4833Tyr,P/LP,use
+c.14512C>G,p.Leu4838Val,P/LP,use
+c.14545G>A,p.Val4849Ile,P/LP,use
+c.14582G>A,p.Arg4861His,P/LP,use
+c.14693T>C,p.Ile4898Thr,P/LP,use
+c.2797G>A,p.Ala933Thr,B,use
+c.4024A>G,p.Ser1342Gly,B,Unable to map SAV to PDB
+c.4055C>G,p.Ala1352Gly,B,Unable to map SAV to PDB
+c.4178A>G,p.Lys1393Arg,B,Unable to map SAV to PDB
+c.4999C>T,p.Arg1667Cys,B,use
+c.5317C>T,p.Pro1773Ser,B,use
+c.5360C>T,p.Pro1787Leu,B,Unable to map SAV to PDB
+c.6178G>T,p.Gly2060Cys,B,Unable to map SAV to PDB
+c.6961A>G,p.Ile2321Val,B,use
+c.8360C>G,p.Thr2787Ser,B,use
+c.9353C>T,p.Ala3118Val,B,Unable to map SAV to PDB
+c.10747G>C,p.Glu3583Gln,B,use
+c.11266C>G,p.Gln3756Glu,B,Unable to map SAV to PDB
+c.12881C>T,p.Thr4294Met,B,Unable to map SAV to PDB
+c.12884C>T,p.Ala4295Val,B,Unable to map SAV to PDB
+c.13502C>T,p.Pro4501Leu,B,Unable to map SAV to PDB
+c.13513G>C,p.Asp4505His,B,Unable to map SAV to PDB
+c.3946C>A,p.Pro1316Thr,B,Unable to map SAV to PDB
+c.8179G>A,p.Ala2727Thr,B,Unable to map SAV to PDB
+c.5495G>C,p.Gly1832Ala,B,use
+c.7648C>G,p.Leu2550Val,B,use
+c.418G>A,p.Ala140Thr,LB,use
+c.2447C>T,p.Pro816Leu,LB,use
+c.3224G>A,p.Arg1075Gln,LB,use
+c.4711A>G,p.Ile1571Val,LB,use
+c.5036G>A,p.Arg1679His,LB,use
+c.6670C>T,p.Arg2224Cys,LB,use
+c.7025A>G,p.Asn2342Ser,LB,use
+c.7816T>A,p.Cys2606Ser,LB,use
+c.8327C>T,p.Ser2776Phe,LB,use
+c.10097G>A,p.Arg3366His,LB,use
+c.10100A>G,p.Lys3367Arg,LB,use
+c.10616G>A,p.Arg3539His,LB,use
+c.12310G>C,p.Gly4104Arg,LB,use
+c.12406C>A,p.Arg4136Ser,LB,use
+c.14168G>A,p.Arg4723His,LB,use
+c.2677G>A,p.Gly893Ser,B/LB,use
+c.3326G>A,p.Arg1109Lys,B/LB,use
+c.5634G>C,p.Glu1878Asp,B/LB,Unable to map SAV to PDB
+c.8827G>A,p.Asp2943Asn,B/LB,Unable to map SAV to PDB
+c.10941C>G,p.His3647Gln,B/LB,use
+c.11941C>T,p.His3981Tyr,B/LB,use
+c.12847G>A,p.Glu4283Lys,B/LB,Unable to map SAV to PDB
+c.2551G>A,p.Val851Met,LB,use
+c.13847C>A,p.Ala4616Asp,LB,Unable to map SAV to PDB
+c.79G>A,p.Val27Met,LB,use
+c.341G>A,p.Arg114His,LB,use
+c.1108G>C,p.Val370Leu,LB,use
+c.1318G>A,p.Val440Ile,LB,use
+c.2251G>A,p.Val751Met,LB,use
+c.3182A>G,p.Gln1061Arg,LB,use
+c.4026C>A,p.Ser1342Arg,LB,Unable to map SAV to PDB
+c.4090G>C,p.Gly1364Arg,LB,Unable to map SAV to PDB
+c.4507G>A,p.Gly1503Arg,LB,Unable to map SAV to PDB
+c.5638G>A,p.Glu1880Lys,LB,Unable to map SAV to PDB
+c.6212G>A,p.Arg2071Gln,LB,Unable to map SAV to PDB
+c.6756C>A,p.Asp2252Glu,LB,use
+c.7672G>A,p.Val2558Met,LB,use
+c.8342T>C,p.Ile2781Thr,LB,Unable to map SAV to PDB
+c.8501C>G,p.Thr2834Arg,LB,Unable to map SAV to PDB
+c.8514A>C,p.Lys2838Asn,LB,Unable to map SAV to PDB
+c.9082G>A,p.Gly3028Ser,LB,use
+c.9701A>G,p.Asn3234Ser,LB,use
+c.10025C>T,p.Ala3342Val,LB,use
+c.10485G>C,p.Lys3495Asn,LB,Unable to map SAV to PDB
+c.11443A>T,p.Met3815Leu,LB,use
+c.12100G>A,p.Val4034Met,LB,use
+c.12187A>G,p.Met4063Val,LB,use
+c.12251G>A,p.Arg4084His,LB,use
+c.13768G>A,p.Glu4590Lys,LB,Unable to map SAV to PDB
+c.13849G>A,p.Gly4617Arg,LB,Unable to map SAV to PDB
+c.14256_14257delinsCA,p.Ala4753Thr,LB,use
+c.14602G>A,p.Glu4868Lys,LB,use
+c.479A>G,p.Glu160Gly,VUS,use
+c.529C>T,p.Arg177Cys,VUS,use
+c.641C>T,p.Thr214Met,VUS,use
+c.1202G>T,p.Arg401His,VUS,use
+c.1565A>G,p.Tyr522Cys,VUS,use
+c.1598G>A,p.Arg533His,VUS,"Appear in P/LP variant (c.1598G>A), then we re-label as P/LP"
+c.1615T>G,p.Phe539Val,VUS,use
+c.3166G>C,p.Asp1056His,VUS,use
+c.4763C>T,p.Pro1588Leu,VUS,use
+c.5024T>C,p.Leu1675Pro,VUS,use
+c.5183C>T,p.Ser1728Phe,VUS,use
+c.6488G>T,p.Arg2163Leu,VUS,use
+c.6612C>G,p.His2204Gln,VUS,use
+c.6710G>A,p.Cys2237Tyr,VUS,use
+c.6961A>G,p.Ile2321Val,VUS,"Appear in B/LB variant (c.6961A>G), then we re-label as B/LB"
+c.7084G>A,p.Glu2362Lys,VUS,use
+c.7089C>G,p.Cys2363Trp,VUS,use
+c.7090T>G,p.Phe2364Val,VUS,use
+c.7291G>T,p.Asp2431Tyr,VUS,use
+c.7879G>A,p.Val2627Met,VUS,use
+c.8026C>T,p.Arg2676Trp,VUS,use
+c.9152G>A,p.Arg3051His,VUS,use
+c.10252A>G,p.Asn3418Asp,VUS,use
+c.11708G>A,p.Arg3903Gln,VUS,use
+c.11315G>A,p.Arg3772Gln,VUS,use
+c.11958C>G,p.Asp3986Glu,VUS,use
+c.12149C>A,p.Ser4050Tyr,VUS,use
+c.12700G>T,p.Val4234Leu,VUS,use
+c.14210G>A,p.Arg4737Gln,VUS,use
+c.14471T>C,p.Leu4824Pro,VUS,use
+c.14678G>A,p.Arg4893Gln,VUS,use
+c.14918C>T,p.Pro4973Leu,VUS,use
