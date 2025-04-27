@@ -1,37 +1,43 @@
-# Build TANDEM-DIMPLE container
-# This container is built over the mathworks/matlab:r2023a image
-# This container is used to run the TANDEM-DIMPLE software
+# =========================
+# Dockerfile for TANDEM-DIMPLE
+# =========================
 
-# Build the TANDEM-DIMPLE container
 # docker build -t tandem -f docker/Dockerfile .
 
-USER root
+# Base image
+FROM continuumio/miniconda3
 
-# Install required dependencies, git
-RUN apt update --quiet \
-    && apt install --yes --quiet software-properties-common \
-    && apt install --yes --quiet git wget gcc g++ make \
-    && apt install --yes --quiet csh libboost-all-dev \
-    && apt install --yes --quiet git 
+# Set working directory
+WORKDIR /app
 
-# Install python 3.9
-# Dependencies for python 3.9: openmm=8.1.0 prody propka3 matlab engine numpy pandas tensorflow biopython requests
-RUN apt install --yes --quiet python3.11 python3-pip python3.11-venv python3.11-dev
+# Copy source code into container
+COPY . /app
 
-# Create a virtual environment for the TANDEM-DIMPLE software
-RUN python3.11 -m venv /tandem_venv 
-ENV PATH="/tandem_venv/bin:$PATH"
+# Install system dependencies (for ConSurf tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cd-hit \
+    prottest \
+    ncbi-blast+ \
+    hmmer \
+    mafft \
+    clustalw \
+    muscle \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Update pip to the latest version
-RUN pip3 install --upgrade pip
+# Create conda environment and install Python dependencies
+RUN conda create -n tandem python=3.11.11 \
+    && echo "source activate tandem" > ~/.bashrc \
+    && /bin/bash -c "source activate tandem && pip install -r requirements.txt"
 
-# Copy the TANDEM-DIMPLE source code to the container
-# And set the working directory to the source code
-COPY . /app/tandem
-WORKDIR /app/tandem
+# Download ConSurf database (optional step: comment out if not needed inside container)
+# RUN bash scripts/download_consurf_db.sh data/consurf/db
 
-# Install the Python dependencies TANDEM-DIMPLE 
-RUN pip3 install -r requirements.txt
+# Download UniRef90 genetic database (optional step: huge file ~47GB; probably better to mount externally)
+# RUN bash scripts/download_uniref90.sh data/consurf
 
-# Test the installation : run /app/tandem/main.py
-CMD ["python3", "/app/tandem/main.py"]
+# Download Pfam database
+# RUN bash scripts/download_pfam.sh data/pfamdb
+
+# Default command: activate conda environment and show help
+CMD ["/bin/bash"]

@@ -103,18 +103,6 @@ class PDBfeatures:
             self.refresh()
         return
 
-    # # Read the PDB file
-    # if os.path.isfile(pdb):
-    #     pdbID = os.path.basename(pdb).split('.')[0]
-    #     pdb = parsePDB(pdb, model=1)
-    # else:
-    #     pdbID = pdb
-    #     pdbpath = fetchPDB(pdbID, format='pdb', folder=RAW_PDB_DIR)
-    #     if pdbpath is not None:
-    #         pdb = parsePDB(pdbpath, model=1)
-    #     else:
-    #         raise ValueError(f'Cannot download {pdbID}')
-
     def getPDB(self):
         """Returns the parsed PDB structure as an :class:`AtomGroup` object."""
         if self._pdb is None:
