@@ -2,6 +2,7 @@ import os
 import logging
 import requests
 import urllib.request
+import traceback
 from prody import LOGGER
 
 __all__ = ['pdb_summary', 'fetchPDB', 'fetchPDB_BiologicalAssembly']
@@ -132,16 +133,25 @@ def fetchPDB(pdbID, **kwargs):
         url = f"https://opm-assets.storage.googleapis.com/pdb/{pdbID}.pdb"
     
     outpath = os.path.abspath(outpath)
-    # Check if the file already exists
-    if (format == 'opm' or compressed) and not refresh:
-        if os.path.exists(outpath):
-            return outpath
-    else:
-        # Remove the '.gz' extension
+    # Check compressed
+    if not compressed and format != 'opm':
         outpath = outpath[:-3] 
         url = url[:-3]
-        if os.path.exists(outpath) and not refresh:
+    # Check refresh
+    if not refresh:
+        if os.path.exists(outpath):
             return outpath
+        
+    # Check if the file already exists
+    # if (format == 'opm' or compressed) and not refresh:
+    #     if os.path.exists(outpath):
+    #         return outpath
+    # else:
+    #     # Remove the '.gz' extension
+    #     outpath = outpath[:-3] 
+    #     url = url[:-3]
+    #     if os.path.exists(outpath) and not refresh:
+    #         return outpath
     
     # Fetch the file
     try:
@@ -173,6 +183,8 @@ def fetchPDB(pdbID, **kwargs):
                 file.writelines(lines)
         return outpath
     except Exception as e:
+        msg = traceback.format_exc()
+        LOGGER.error(msg)
         LOGGER.info(f"Failed to fetch {pdbID} from RCSB PDB database {e}.")
         if format != 'cif':
             LOGGER.info(f"Fetch cif file instead.")

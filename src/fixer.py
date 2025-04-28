@@ -195,11 +195,12 @@ def fixPDB(pdb, format='asu',
         if os.path.isfile(out) and not refresh:
             LOGGER.info(f"File {out} already exists")
             return out
-        pdbpath = fetchPDB(pdb, format='opm', refresh=refresh, folder=RAW_PDB_DIR)
+        pdbpath = fetchPDB(pdb, format=format, refresh=refresh, folder=RAW_PDB_DIR)
         f = LociFixer(pdbpath)
         f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
-        f.saveTopology(savePath=out)
-        out = buildNE1(os.path.join(folder, f'{pdb}.pdb'), folder=folder) # Build NE1 model
+        opm_path = os.path.join(folder, f'{pdb}-opm.pdb')
+        f.saveTopology(savePath=opm_path)
+        out = buildNE1(opm_path, folder=folder, filename=pdb)
 
     elif format == 'asu':
         out = os.path.join(folder, f'{pdb}.pdb')
@@ -301,7 +302,7 @@ def createMutationfile(pdbpath, chid, mutation, out=None):
         PDBFile.writeFile(f.topology, f.positions, out_f, keepIds=True)
     return out
 
-def buildNE1(opm_file, folder='.', radius_node=3.1, thick=15.7, 
+def buildNE1(opm_file, folder='.', filename=None, radius_node=3.1, thick=15.7, 
              rr=15, radius_membrane=55, remove=True):
     """Build NE1 model from OPM file using cgmembrane.
 
@@ -320,7 +321,8 @@ def buildNE1(opm_file, folder='.', radius_node=3.1, thick=15.7,
     except FileNotFoundError:
         raise FileNotFoundError('Error: input file not found')
     # filename = os.path.basename(opm_file)
-    filename = opm_file.split('/')[-1].split('.')[0]
+    if filename is None:
+        filename = opm_file.split('/')[-1].split('.')[0]
     ne1_file = os.path.join(folder, f'{filename}-ne1.pdb')
     # check if DUM is present
     for line in lines:

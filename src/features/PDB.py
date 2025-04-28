@@ -74,9 +74,6 @@ class PDBfeatures:
         else:
             self.pdbID = basename[:4]
         
-        LOGGER.info(self.pdbID)
-        LOGGER.info(basename)
-        LOGGER.info(format)
         self.format = format
         self.n_modes = n_modes
         self.chids = None
@@ -96,8 +93,7 @@ class PDBfeatures:
             try:
                 self.recoverPickle(**kwargs)
             except Exception as e:
-                msg = traceback.format_exc()
-                LOGGER.warning(f'Unable to recover pickle: {e} {msg}')
+                LOGGER.warning(f'Unable to recover pickle: {e}')
                 self.refresh()
         else:
             self.refresh()
@@ -148,7 +144,6 @@ class PDBfeatures:
         pickle_path = os.path.join(folder, filename)
         if not os.path.isfile(pickle_path):
             raise IOError("File '{}' not found".format(filename))
-        LOGGER.info(f"Recovering pickle '{filename}', path: {pickle_path}")
         recovered_self = pickle.load(open(pickle_path, "rb"))
         
         # check consistency of recovered data
@@ -696,7 +691,6 @@ class PDBfeatures:
 
     def calcDSSPfeatures(self, chain='all'):
         features = ['loop_percent', 'helix_percent', 'sheet_percent', 'dssp']
-        pdb = self.getPDB()
         if chain == 'all':
             chain_list = self.chids
         else:
@@ -835,7 +829,7 @@ class PDBfeatures:
             return features
 
     def calcDELTA_Rg_SASA_ACR_Hbond_DSS_features(self, chids, resids, wt_aas, mut_aas, 
-            sel_feats=['DELTA_Rg', 'DELTA_Dcom', 'DELTA_SASA', 'DELTA_ACR', 
+        sel_feats=['DELTA_Rg', 'DELTA_Dcom', 'DELTA_SASA', 'DELTA_ACR', 
                        'DELTA_Hbond', 'DELTA_DSS', 'DELTA_charge_pH7']):
         # Merge if either DELTA_Rg or DELTA_Dcom is selected
         if {'DELTA_Rg', 'DELTA_Dcom'}.intersection(set(sel_feats)):

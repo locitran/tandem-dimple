@@ -7,28 +7,33 @@
 # Base image
 FROM continuumio/miniconda3
 
-# Set working directory
-WORKDIR /app
+# # Set working directory
+# WORKDIR /app
 
-# Copy source code into container
-COPY . /app
+# # Copy source code into container
+# COPY . /app
+
+# Mount . to /tandem
+VOLUME /tandem
+WORKDIR /tandem
+# Copy requirements file
+COPY requirements.txt /tandem/requirements.txt
+COPY pyRONN /tandem/pyRONN
 
 # Install system dependencies (for ConSurf tools)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cd-hit \
-    prottest \
-    ncbi-blast+ \
-    hmmer \
-    mafft \
-    clustalw \
-    muscle \
+RUN apt update --quiet \
+    && apt install --yes --quiet software-properties-common \
+    && apt install --yes --quiet cd-hit prottest ncbi-blast+ \ 
+    && apt install --yes --quiet hmmer mafft clustalw muscle \ 
+    && apt install --yes --quiet gcc g++ python3.11-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Create conda environment and install Python dependencies
 RUN conda create -n tandem python=3.11.11 \
     && echo "source activate tandem" > ~/.bashrc \
-    && /bin/bash -c "source activate tandem && pip install -r requirements.txt"
+    && /bin/bash -c "source activate tandem && pip install -r requirements.txt" \
+    && conda install -c conda-forge -c bioconda mmseqs2
 
 # Download ConSurf database (optional step: comment out if not needed inside container)
 # RUN bash scripts/download_consurf_db.sh data/consurf/db

@@ -27,7 +27,7 @@ bash scripts/download_consurf_db.sh data/consurf/db # 2.5G, ~2m
 
 ## ConSurf Tool
 
-In case user provides customed structure or no records found in ConSurf database, we need to use ConSurf tool. And to run ConSurf tool we need genetic (sequence) database, e.g. UniRef90 (default).
+In case user provides custom structure or no records found in ConSurf database, we need to use ConSurf tool. And to run ConSurf tool we need genetic (sequence) database, e.g. UniRef90 (default).
 
 ### 1. ConSurf Tool dependencies
 
@@ -45,7 +45,7 @@ sudo apt install muscle
 ### 2. Download genetic database
 
 ```bash
-bash scripts/download_uniref90.sh data/consurf # 47G
+bash scripts/download_uniref90.sh data/consurf # 90G, ~127m
 ```
 
 ## Pfam database
@@ -61,6 +61,19 @@ bash scripts/download_pfam.sh data/pfamdb # 1.5G, ~1.5m
 python test/input_as_list_SAVs.py
 python test/input_as_uniprot_position.py
 python test/input_as_uniprot.py
+```
+
+# Docker 
+
+We have provided a Dockerfile to build the docker image. 
+
+```bash
+docker build -t tandem -f docker/Dockerfile .
+docker run -it \
+    -v tandem:/tandem \
+    -w /tandem \
+    tandem:latest \
+    python test/input_as_list_SAVs.py
 ```
 
 ```bibtex

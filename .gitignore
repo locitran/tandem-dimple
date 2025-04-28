@@ -170,3 +170,10 @@ jobs/
 logs/
 data/pickles/
 pdbfile/
+notebooks/
+data/SAVs.tsv
+data/c30_clstr_May13_full_rhd.csv
+data/mapped_SAVs_with_chain_length_labels.csv
+data/mapped_SAVs_with_chain_length.npy
+data/precomputed_features-ID_opt.csv
+data/precomputed_features-ID_opt.npy

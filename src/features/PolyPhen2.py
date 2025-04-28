@@ -295,6 +295,7 @@ def calcPolyPhen2(SAV_coords, filename='SAVs.txt', dump=False,
     LOGGER.timeit('_pph2')
     PolyPhen2output = queryPolyPhen2(SAV_file, dump=dump, prefix=prefix,
                                      folder=folder, **kwargs)
+    os.remove(SAV_file)
     # parse PolyPhen-2 output
     parsed_lines = parsePolyPhen2output(PolyPhen2output)
     # Extract features from PolyPhen-2 output   

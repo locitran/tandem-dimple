@@ -230,9 +230,8 @@ class SEQfeatures(UniprotMapping):
         features = ['wtPSIC', 'deltaPSIC']
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
-
         try:
-            f = calcPolyPhen2(self.SAV_coords)
+            f = calcPolyPhen2(self.SAV_coords, folder=self.folder, filename='_temp_PolyPhen2.txt')
         except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(msg)

@@ -88,8 +88,7 @@ class UniprotMapping:
             try:
                 self.recoverPickle(**kwargs)
             except Exception as e:
-                msg = traceback.format_exc()
-                LOGGER.warn(f'Unable to recover pickle: {e} {msg}')
+                LOGGER.warn(f'Unable to recover pickle: {e}')
                 self.refresh()
         else:
             self.refresh()
