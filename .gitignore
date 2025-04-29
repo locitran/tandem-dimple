@@ -177,3 +177,6 @@ data/mapped_SAVs_with_chain_length_labels.csv
 data/mapped_SAVs_with_chain_length.npy
 data/precomputed_features-ID_opt.csv
 data/precomputed_features-ID_opt.npy
+models/tf.ipynb
+models/feature_importance.ipynb
+models/comparison.ipynb
