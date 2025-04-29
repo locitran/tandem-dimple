@@ -178,7 +178,7 @@ def fixPDB(pdb, format='asu',
     if format == 'custom' and os.path.isfile(pdb):
         # Take the filename from the custom_PDB
         filename = pdb.split('/')[-1].split('.')[0]
-        out = os.path.join(folder, f'{filename}-fixed.pdb')
+        out = os.path.join(folder, f'{filename}.pdb')
         f = LociFixer(pdb)
         # Check pdb has DUM atoms
         has_dum_atom = any(atom.residue.name == 'DUM' for atom in f.topology.atoms())

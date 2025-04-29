@@ -59,8 +59,6 @@ bash scripts/download_pfam.sh data/pfamdb # 1.5G, ~1.5m
 # Test the installation
 ```bash
 python test/input_as_list_SAVs.py
-python test/input_as_uniprot_position.py
-python test/input_as_uniprot.py
 ```
 
 # Docker 
