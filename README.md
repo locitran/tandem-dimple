@@ -70,7 +70,7 @@ We have provided a Dockerfile to build the docker image.
 ```bash
 docker build -t tandem -f docker/Dockerfile .
 docker run -it \
-    -v tandem:/tandem \
+    -v .:/tandem \
     -w /tandem \
     tandem:latest \
     python test/input_as_list_SAVs.py

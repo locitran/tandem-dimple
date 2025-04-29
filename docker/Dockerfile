@@ -1,24 +1,16 @@
 # =========================
 # Dockerfile for TANDEM-DIMPLE
 # =========================
-# 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
+
 # docker build -t tandem -f docker/Dockerfile .
 
 # Base image
 FROM continuumio/miniconda3
 
-# # Set working directory
-# WORKDIR /app
-
-# # Copy source code into container
-# COPY . /app
-
-# Mount . to /tandem
-VOLUME /tandem
-WORKDIR /tandem
-# Copy requirements file
-COPY requirements.txt /tandem/requirements.txt
-COPY pyRONN /tandem/pyRONN
+# Set working directory
+WORKDIR /temp
+COPY requirements.txt /temp/requirements.txt
+COPY pyRONN /temp/pyRONN
 
 # Install system dependencies (for ConSurf tools)
 RUN apt update --quiet \

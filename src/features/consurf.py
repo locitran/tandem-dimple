@@ -154,25 +154,6 @@ def _parse(unique_chain):
         LOGGER.warning(f'Error parsing {unique_chain}, {e}')
         return None
 
-# import pandas as pd 
-# consufilerffile = '4xr8_consurf_grades.txt'
-# data = []
-# with open(consufilerffile, 'r') as f:
-#     lines = f.readlines()
-#     lines = [line.strip() for line in lines if line.strip() != '']
-#     for i, line in enumerate(lines):
-#         if line.startswith('POS'):
-#             cols = lines[i]
-#             lines = lines[i+1:]
-#             break
-#     cols = [col.strip() for col in cols.split('\t') if col != '']
-#     for line in lines:
-#         line = line.split('\t')
-#         line = [txt.strip() for txt in line if txt.strip() != '']
-#         if len(line) == 10 and line[0].isdigit():
-#             data.append(line)
-# df = pd.DataFrame(data, columns=cols)
-
 def get_consurf(unique_chain, folder='.') -> pd.DataFrame:
     """Run the Consurf database for a protein.
 
@@ -190,18 +171,6 @@ def get_consurf(unique_chain, folder='.') -> pd.DataFrame:
             return None
         df.to_csv(outpath, sep='\t', index=False)
         return df
-
-def _verify(pdbID, chid):
-    if chid not in consurfLookup[pdbID]:
-        raise ValueError(f'{chid} not in consurfLookup')
-    uniqueChain = consurfLookup[pdbID][chid]
-    if len(uniqueChain) == 0:
-        raise ValueError(f'{pdbID} {chid} has no unique chain')
-    df = get_consurf(uniqueChain, dataDir)
-    if df is None:
-        raise ValueError(f'{pdbID} {chid} has no consurf file')
-    return df, uniqueChain
-
 
 def getConSurffile(pdb, chid, folder='.'):
     """Get the consurf file for a given PDB ID and chain ID.
@@ -268,7 +237,6 @@ def getConSurffile(pdb, chid, folder='.'):
         cols = [col.strip() for col in cols.split('\t') if col != '']
         for line in lines:
             line = line.split('\t')
-            line = [txt.strip() for txt in line if txt.strip() != '']
             if len(line) == 10 and line[0].isdigit():
                 data.append(line)
     df = pd.DataFrame(data, columns=cols)

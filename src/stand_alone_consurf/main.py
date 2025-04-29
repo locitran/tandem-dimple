@@ -34,9 +34,6 @@ def run(
     cwd = os.getcwd()
     work_dir = os.path.abspath(work_dir)
     os.makedirs(work_dir, exist_ok=True)
-    logfile = os.path.join(work_dir, 'consurf.log')
-    LOGGER.start(logfile)
-
     os.chdir(work_dir)
 
     # Set up
@@ -203,9 +200,7 @@ def run(
         conseq_create_output(form, vars)
 
     # zip_all_outputs(vars)
-
     LOGGER.report('ConSurf tool computed in %.2fs.', '_ConSurf_tool')
-    LOGGER.close(logfile)
 
     os.chdir(cwd)
     return vars['gradesPE']
