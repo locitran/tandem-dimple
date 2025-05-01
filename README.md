@@ -91,15 +91,3 @@ docker run -it \
   doi     = {*.*}
 }
 ```   
-
-
-
-
- File "/tandem/src/features/SEQ.py", line 65, in _searchPfam
-    hmmscan_file = run_hmmscan(fasta_file)
-                   ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/tandem/src/features/Pfam.py", line 117, in run_hmmscan
-    stdout=open(out, 'w'), # Redirect standard output to the file
-           ^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: '/tandem/src/features/tmp/a6ddb390-2651-11f0-94b2-0242ac110006_hmmscan_out'
-
