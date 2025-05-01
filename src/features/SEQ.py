@@ -37,6 +37,11 @@ class SEQfeatures(UniprotMapping):
         self.resids = list(map(int, self.resids))
         self.full_SAVs = self.seqScanning()
         self.folder = kwargs.get('folder', '.')
+
+        if "job_directory" in kwargs:
+            self.job_directory = kwargs["job_directory"]
+        else:
+            self.job_directory = '.'
         
     def seqScanning(self):
         """
@@ -58,11 +63,11 @@ class SEQfeatures(UniprotMapping):
     
     def _searchPfam(self,):
         LOGGER.info('Searching Pfam...')    
-        fasta_file = f'{self.folder}/{self.acc}.fasta'
+        fasta_file = os.path.join(self.job_directory, f'{self.acc}.fasta')
         with open(fasta_file, 'w') as f:
             f.write(f'>{self.acc}\n{self.sequence}\n')
         try: # run hmmscan
-            hmmscan_file = run_hmmscan(fasta_file)
+            hmmscan_file = run_hmmscan(fasta_file, folder=self.job_directory)
             pfam_data = read_pfam_data()
             Pfam = parse_hmmscan(hmmscan_file, pfam_data)
             self.Pfam = Pfam[self.acc]
@@ -231,7 +236,7 @@ class SEQfeatures(UniprotMapping):
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
         try:
-            f = calcPolyPhen2(self.SAV_coords, folder=self.folder, filename='_temp_PolyPhen2.txt')
+            f = calcPolyPhen2(self.SAV_coords, folder=self.job_directory, filename='_temp_PolyPhen2.txt')
         except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(msg)

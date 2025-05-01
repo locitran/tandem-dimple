@@ -31,7 +31,7 @@ def tandem_dimple(
     LOGGER.info(f"Job directory: {job_directory}")
 
     ## Additional arguments
-    kwargs['consurf_output'] = job_directory
+    kwargs['job_directory'] = job_directory
     if 'folder' not in kwargs:
         kwargs['folder'] = os.path.join(ROOT_DIR, 'data') 
     os.makedirs(kwargs['folder'], exist_ok=True)

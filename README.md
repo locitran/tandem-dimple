@@ -69,12 +69,9 @@ The image is lack of databases, so you need to mount the databases to the contai
 Also, scripts are mounted to the container. 
 
 ```bash
-docker run -it \
-    -v .:/tandem \
-    -w /tandem \
-    tandem:latest \
-    python test/input_as_list_SAVs.py
-
+# cwd: path/to/tandem
+# pfamdb: path/to/tandem/data/pfamdb
+# consurf: path/to/tandem/data/consurf
 docker run -it \
   -v .:/tandem \
   -w /tandem \
@@ -94,3 +91,15 @@ docker run -it \
   doi     = {*.*}
 }
 ```   
+
+
+
+
+ File "/tandem/src/features/SEQ.py", line 65, in _searchPfam
+    hmmscan_file = run_hmmscan(fasta_file)
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tandem/src/features/Pfam.py", line 117, in run_hmmscan
+    stdout=open(out, 'w'), # Redirect standard output to the file
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tandem/src/features/tmp/a6ddb390-2651-11f0-94b2-0242ac110006_hmmscan_out'
+

@@ -83,11 +83,10 @@ class PDBfeatures:
         self._anm = None
         self.timestamp = None
 
-        # consurf output in **kwargs
-        if "consurf_output" in kwargs:
-            self.consurf_output = kwargs["consurf_output"]
+        if "job_directory" in kwargs:
+            self.job_directory = kwargs["job_directory"]
         else:
-            self.consurf_output = '.'
+            self.job_directory = '.'
 
         if recover_pickle:
             try:
@@ -819,9 +818,9 @@ class PDBfeatures:
             if self.format == 'custom' or self.format == 'af':
                 # If the format is custom or af, we need to use the pdbPath
                 # And calculate ConSurf based on stand_alone_consurf
-                f = calcConSurf(self.pdbPath, chids, resids, wt_aas, folder=self.consurf_output)  
+                f = calcConSurf(self.pdbPath, chids, resids, wt_aas, folder=self.job_directory)  
             else:
-                f = calcConSurf(self.pdbID, chids, resids, wt_aas, folder=self.consurf_output)
+                f = calcConSurf(self.pdbID, chids, resids, wt_aas, folder=self.job_directory)
             return f
         except:
             msg = traceback.format_exc()
