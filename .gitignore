@@ -169,7 +169,6 @@ pdbfile/
 notebooks/
 pending_task.txt
 train_test.py
-
 # data
 data/SAVs.tsv
 data/c30_clstr_May13_full_rhd.csv
@@ -179,6 +178,7 @@ data/precomputed_features-ID_opt.csv
 data/precomputed_features-ID_opt.npy
 data/PKD1/
 data/consurf/db/
+data/consurf/uniref90.fasta
 data/pfamdb/
 data/pickles/
 

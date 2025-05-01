@@ -63,10 +63,12 @@ python test/input_as_list_SAVs.py
 
 # Docker 
 
-We have provided a Dockerfile to build the docker image. 
+We have provided a Dockerfile to build the docker image `docker build -t tandem -f docker/Dockerfile`. 
+
+The image is lack of databases, so you need to mount the databases to the container. 
+Also, scripts are mounted to the container. 
 
 ```bash
-docker build -t tandem -f docker/Dockerfile .
 docker run -it \
     -v .:/tandem \
     -w /tandem \
