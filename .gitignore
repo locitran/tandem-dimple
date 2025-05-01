@@ -163,22 +163,31 @@ cython_debug/
 
 
 # Ignore large or generated data folders
-data/PKD1/
-data/consurf/db/
-data/pfamdb/
 jobs/
 logs/
-data/pickles/
 pdbfile/
 notebooks/
+pending_task.txt
+train_test.py
+
+# data
 data/SAVs.tsv
 data/c30_clstr_May13_full_rhd.csv
 data/mapped_SAVs_with_chain_length_labels.csv
 data/mapped_SAVs_with_chain_length.npy
 data/precomputed_features-ID_opt.csv
 data/precomputed_features-ID_opt.npy
+data/PKD1/
+data/consurf/db/
+data/pfamdb/
+data/pickles/
+
+# models
 models/tf.ipynb
 models/feature_importance.ipynb
 models/comparison.ipynb
-pending_task.txt
-train_test.py
+models/different_batch_size
+models/different_number_of_neurons
+models/different_ranking_methods
+models/transfer_learning_GJB2
+models/TransferLearning_RYR1

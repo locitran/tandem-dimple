@@ -72,6 +72,12 @@ docker run -it \
     -w /tandem \
     tandem:latest \
     python test/input_as_list_SAVs.py
+
+docker run -it \
+  -v .:/tandem \
+  -w /tandem \
+  tandem:latest bash \
+  -c "source activate tandem && python test/input_as_list_SAVs.py"
 ```
 
 ```bibtex
