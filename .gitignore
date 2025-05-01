@@ -177,10 +177,10 @@ data/mapped_SAVs_with_chain_length.npy
 data/precomputed_features-ID_opt.csv
 data/precomputed_features-ID_opt.npy
 data/PKD1/
+data/pickles/
+data/pfamdb/
 data/consurf/db/
 data/consurf/uniref90.fasta
-data/pfamdb/
-data/pickles/
 
 # models
 models/tf.ipynb
