@@ -164,7 +164,7 @@ cython_debug/
 
 # Ignore large or generated data folders
 data/PKD1/
-data/consurf/
+data/consurf/db/
 data/pfamdb/
 jobs/
 logs/
@@ -180,3 +180,5 @@ data/precomputed_features-ID_opt.npy
 models/tf.ipynb
 models/feature_importance.ipynb
 models/comparison.ipynb
+pending_task.txt
+train_test.py
