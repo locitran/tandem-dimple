@@ -171,6 +171,9 @@ pending_task.txt
 train_test.py
 slurm_jupyter.sh
 
+._.DS_Store
+.DS_Store
+
 # data
 data/SAVs.tsv
 data/c30_clstr_May13_full_rhd.csv
