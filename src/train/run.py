@@ -129,15 +129,16 @@ def plot_label_ratio(folds, folder):
     plt.close()
     _LOGGER.error("Label ratio plot saved to %s", out) # Write to log
 
-def get_config(input_shape, n_hidden=5, patience=50, dropout_rate=0.):
+def get_config(input_shape, n_hidden=5, patience=50, dropout_rate=0., 
+               n_neuron_per_hidden=None, n_neuron_last_hidden=None):
     cfg = model_config()
     cfg.model.input.n_neurons = input_shape
     _LOGGER.error("Input Layer: %d", cfg.model.input.n_neurons) # Write to log
     cfg['model']['input']['dropout_rate'] = dropout_rate
 
     # No. of neurons in the output layer
-    n_neuron_per_hidden = input_shape
-    n_neuron_last_hidden = 10
+    n_neuron_per_hidden = input_shape if n_neuron_per_hidden is None else n_neuron_per_hidden
+    n_neuron_last_hidden = 10 if n_neuron_last_hidden is None else n_neuron_last_hidden
     
     for item in cfg.model.hidden:
         del cfg['model']['hidden'][item]

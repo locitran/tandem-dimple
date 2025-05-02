@@ -169,6 +169,8 @@ pdbfile/
 notebooks/
 pending_task.txt
 train_test.py
+slurm_jupyter.sh
+
 # data
 data/SAVs.tsv
 data/c30_clstr_May13_full_rhd.csv

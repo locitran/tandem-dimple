@@ -320,44 +320,74 @@ def plot_acc_loss(folds, title, labels=[r'R20000$_{train}$', r'R20000$_{val}$'])
         ax.grid(axis='y')
     plt.show()
     return fig
-def plot_acc_loss_3fold_CV(folds, title, gene='GJB2'):
+
+def plot_acc_loss_3fold_CV(folds, title, name='GJB2'):
     # Row 1: Loss, Row 2: Accuracy
     # 5 folds for each
     fig, axes = plt.subplots(2, 3, figsize=(25, 10))
     fig.suptitle(title, fontsize=35)
 
-    if gene == 'GJB2':
-        labels = [r'GJB2$_{train}$', r'GJB2$_{val}$']
-    elif gene == 'RYR1':
-        labels = [r'RYR1$_{train}$', r'RYR1$_{val}$']
-    else:
-        labels = [r'train', r'val']
+
+    # labels=[r'GJB2$_{train}$', r'GJB2$_{val}$']
+    labels = [f'{name}$_{{train}}$', f'{name}$_{{val}}$']
 
     for i, ax in enumerate(axes[0]):
-        ax.plot(folds[i][f'{gene}train_loss'], color='blue', linestyle='dashed', linewidth=2, label=labels[0])
-        ax.plot(folds[i][f'{gene}val_loss'], color='red', linestyle='solid', linewidth=2, label=labels[1])
-
+        ax.plot(folds[i]['train_loss'], color='blue', linestyle='dashed', linewidth=2, label=labels[0])
+        ax.plot(folds[i]['val_loss'], color='red', linestyle='solid', linewidth=2, label=labels[1])
         ax.set_title('Fold ' + str(i + 1), fontsize=20)
 
     for i, ax in enumerate(axes[1]):
-        ax.plot(folds[i][f'{gene}train_accuracy'], color='blue', linestyle='dashed', linewidth=2, label=labels[0])
-        ax.plot(folds[i][f'{gene}val_accuracy'], color='red', linestyle='solid', linewidth=2, label=labels[1])
+        ax.plot(folds[i]['train_accuracy'], color='blue', linestyle='dashed', linewidth=2, label=labels[0])
+        ax.plot(folds[i]['val_accuracy'], color='red', linestyle='solid', linewidth=2, label=labels[1])
 
-    # Set y labels
     axes[0, 0].set_ylabel('Loss', fontsize=25)
     axes[1, 0].set_ylabel('Accuracy', fontsize=25)
     axes[1, 2].legend(fontsize=25, loc='best') # Set legends
-    # for ax in axes[0]: # y-loss range
-        # ax.set_ylim([0.4, 0.65])
-    # for ax in axes[1]: # y-accuracy range
-        # ax.set_ylim([0.4, 0.9])
     for ax in axes.flatten(): # Size of tick labels
         ax.tick_params(labelsize=15)
     for ax in axes.flatten(): # Grid y
         ax.grid(axis='y')
-    plt.show()
     return fig
 
-def main():
-    pass
+
+# def plot_acc_loss_3fold_CV(folds, title, gene='GJB2'):
+#     # Row 1: Loss, Row 2: Accuracy
+#     # 5 folds for each
+#     fig, axes = plt.subplots(2, 3, figsize=(25, 10))
+#     fig.suptitle(title, fontsize=35)
+
+#     if gene == 'GJB2':
+#         labels = [r'GJB2$_{train}$', r'GJB2$_{val}$']
+#     elif gene == 'RYR1':
+#         labels = [r'RYR1$_{train}$', r'RYR1$_{val}$']
+#     else:
+#         labels = [r'train', r'val']
+
+#     for i, ax in enumerate(axes[0]):
+#         ax.plot(folds[i][f'{gene}train_loss'], color='blue', linestyle='dashed', linewidth=2, label=labels[0])
+#         ax.plot(folds[i][f'{gene}val_loss'], color='red', linestyle='solid', linewidth=2, label=labels[1])
+
+#         ax.set_title('Fold ' + str(i + 1), fontsize=20)
+
+#     for i, ax in enumerate(axes[1]):
+#         ax.plot(folds[i][f'{gene}train_accuracy'], color='blue', linestyle='dashed', linewidth=2, label=labels[0])
+#         ax.plot(folds[i][f'{gene}val_accuracy'], color='red', linestyle='solid', linewidth=2, label=labels[1])
+
+#     # Set y labels
+#     axes[0, 0].set_ylabel('Loss', fontsize=25)
+#     axes[1, 0].set_ylabel('Accuracy', fontsize=25)
+#     axes[1, 2].legend(fontsize=25, loc='best') # Set legends
+#     # for ax in axes[0]: # y-loss range
+#         # ax.set_ylim([0.4, 0.65])
+#     # for ax in axes[1]: # y-accuracy range
+#         # ax.set_ylim([0.4, 0.9])
+#     for ax in axes.flatten(): # Size of tick labels
+#         ax.tick_params(labelsize=15)
+#     for ax in axes.flatten(): # Grid y
+#         ax.grid(axis='y')
+#     plt.show()
+#     return fig
+
+# def main():
+#     pass
 
