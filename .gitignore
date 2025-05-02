@@ -178,6 +178,7 @@ data/mapped_SAVs_with_chain_length_labels.csv
 data/mapped_SAVs_with_chain_length.npy
 data/precomputed_features-ID_opt.csv
 data/precomputed_features-ID_opt.npy
+data/rhapsody_SAVs_mapped.npy
 data/PKD1/
 data/pickles/
 data/pfamdb/

@@ -1,2 +1,0 @@
-1. Mutagenesis mode -> Save the features 
-2. Update core.py to have better printFeatures text
