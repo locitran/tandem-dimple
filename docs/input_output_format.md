@@ -2,8 +2,8 @@
 
 ## `query`
 
-We could query a SAV, a batch of SAVs, a UniPort ID, or UniProt ID with mutation site. 
-SAV format should be formatted as `UniPort ID`, `position`, `wt aa`, `mut aa` ("wt" and "mut" refer to wild-type and mutant), where `position` is the place that mutated amino acid (aa) is introduced.
+We could query a SAV, a batch of SAVs, a UniPort ID, or UniProt ID with mutation site. A
+SAV should be formatted as `UniPort ID`, `position`, `wt aa`, `mut aa` ("wt" and "mut" refer to wild-type and mutant), where `position` is the place that mutated amino acid (aa) is introduced.
 
 *   One SAV: 
     ```python

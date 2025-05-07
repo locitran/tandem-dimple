@@ -4,6 +4,8 @@ Github repository: https://github.com/locitran/tandem-dimple.git.
 
 TANDEM-DIMPLE is a DNN model designed to predict the pathogenicity of missense variants. The model is trained on R20000 set obtained from the [Rhapsody](https://academic.oup.com/bioinformatics/article/36/10/3084/5758260?login=true) study, using a wide range of features, including sequence&chemical, structural, and dynamics features.
 
+![Summary of Results](docs/images/result_summary.jpg)
+
 This repository contains:
 1. The code to produce the features
 2. [TANDEM-DIMPLE model](models/different_number_of_layers/20250423-1234-tandem/n_hidden-5)
