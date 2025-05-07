@@ -258,7 +258,7 @@ class Tandem:
 
         if filename is not None:
             cols = ['SAVs', 'Probability', 'Decision', 'Voting']
-            report = filename + '_report.txt'
+            report = filename + '-report.txt'
             filepath = os.path.join(folder, report)
             with open(filepath, 'w') as f:
                 # Write the header
@@ -276,7 +276,7 @@ class Tandem:
 
             cols = ['SAVs']
             cols += [f'{model_names[:6]}_{i}' for i in range(len(mi.models))]
-            full_preds = filename + '_full_predictions.txt'
+            full_preds = filename + '-full_predictions.txt'
             filepath = os.path.join(folder, full_preds)
             with open(filepath, 'w') as f:
                 # Write the header

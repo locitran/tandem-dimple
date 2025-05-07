@@ -1,0 +1,153 @@
+Start Time = 20250502-1540
+Num GPUs Available: 0
+GPUs: []
+**************************************************
+Feature selection based on ttest rank
+/mnt/nas_1/YangLab/loci/tandem/data/R20000/stats/features_stats.csv
+Feature set: ['GNM_co_rank_full', 'ANM_stiffness_chain', 'GNM_V2_full', 'GNM_V1_full', 'GNM_Eigval1_full', 'GNM_rankV2_full', 'GNM_Eigval2_full', 'GNM_rankV1_full', 'ANM_effectiveness_chain', 'SASA', 'loop_percent', 'AG1', 'Dcom', 'AG5', 'AG3', 'SSbond', 'Hbond', 'DELTA_Hbond', 'sheet_percent', 'helix_percent', 'Rg', 'IDRs', 'Lside', 'deltaLside', 'entropy', 'wtPSIC', 'deltaPSIC', 'consurf', 'ACNR', 'BLOSUM', 'ranked_MI', 'deltaPolarity', 'deltaCharge']
+**************************************************
+Missing values in the dataframe:
+consurf: 		 2
+ACNR: 		 2
+deltaPSIC: 		 1
+SF1: 		 11
+SF2: 		 11
+SF3: 		 11
+entropy: 		 3769
+ranked_MI: 		 3769
+Assigning the mean value of feature to the missing values
+Assigning mean value to consurf: -0.23
+Assigning mean value to ACNR: -0.18
+Assigning mean value to deltaPSIC: 1.83
+Assigning mean value to SF1: 0.50
+Assigning mean value to SF2: 0.67
+Assigning mean value to SF3: 0.76
+Assigning mean value to entropy: 1.65
+Assigning mean value to ranked_MI: 0.48
+**************************************************
+1 members: 1428 clusters
+2 members: 226 clusters
+3 members: 57 clusters
+4 members: 24 clusters
+5 members: 18 clusters
+7 members: 8 clusters
+6 members: 6 clusters
+9 members: 3 clusters
+8 members: 2 clusters
+36 members: 1 clusters
+10 members: 1 clusters
+No. UniProtID: 2423, No. SAVs: 20361, and No. clusters: 1774
+No. pathogenic SAVs: 13626 and benign SAVs: 6735
+**************************************************
+> Deleting cluster P29033 from data_sorted
+No. clusters: 1773
+No. SAVs after deleting P29033: 20295
+**************************************************
+> Adding cluster P29033 to the test set
+Test set percent = 10.03% is larger than 10%: Breaking the loop
+No. adding to test set: 34
+Cluster IDs added to the test set: [67, 5, 11, 17, 23, 29, 35, 41, 47, 53, 59, 65, 72, 78, 84, 90, 96, 102, 108, 114, 120, 126, 132, 138, 144, 150, 156, 162, 168, 174, 180, 186, 192, 198]
+Member IDs added to the test set: ['P29033', 'P07101', 'Q8IWU9', 'P00439', 'Q9UHC9', 'O15118', 'P22304', 'P30613', 'P14618', 'P35520', 'P11509', 'Q16696', 'P05181', 'P20813', 'P11712', 'P10632', 'P33261', 'P00966', 'P11413', 'Q93099', 'P15848', 'P54802', 'P60484', 'Q06124', 'P09619', 'P16234', 'P10721', 'P07333', 'P78504', 'Q9NR61', 'P52701', 'Q15831', 'P08559', 'P06400', 'P00156', 'P78527', 'Q14353', 'Q13224', 'Q12879', 'Q9H251', 'P51648', 'P30838', 'P18074', 'O94759', 'Q8TD43', 'P00813', 'O14733', 'P36507', 'P45985', 'Q02750', 'Q96L73', 'O43240', 'P06870', 'P07288', 'P20151', 'O60259', 'Q9Y5K2', 'P23946', 'P07477', 'Q92876', 'P46597', 'P03891']
+> Delete test indices from data_sorted
+No. clusters after deleting test indices: 1740
+No. SAVs after deleting test indices: 18596
+**************************************************
+> Adding cluster Q16874 P55735 P57740 Q12769 Q9BW27 to the training set
+Q16874 SAVs: 71
+Q16874 SAV coords: P55735 172 S L
+Q16874 SAV labels: 0
+**************************************************
+> Adding cluster P04745 to the validation set
+Fold 0: 
+         Train: n_SAVs = 14651, % SAVs = 71.96%, n_pathogenic = 8967, n_benign = 5684, ratio = 1.58:1, n_clusters = 1652, n_members = 2189
+         Val: n_SAVs = 3667, % SAVs = 18.01%, n_pathogenic = 3010, n_benign = 657, ratio = 4.58:1, n_clusters = 88, n_members = 168
+         Test: n_SAVs = 2043, % SAVs = 10.03%, n_pathogenic = 1649, n_benign = 394, ratio = 4.19:1, n_clusters = 34, n_members = 62
+Fold 1: 
+         Train: n_SAVs = 14652, % SAVs = 71.96%, n_pathogenic = 9287, n_benign = 5365, ratio = 1.73:1, n_clusters = 1541, n_members = 2039
+         Val: n_SAVs = 3666, % SAVs = 18.01%, n_pathogenic = 2690, n_benign = 976, ratio = 2.76:1, n_clusters = 199, n_members = 318
+         Test: n_SAVs = 2043, % SAVs = 10.03%, n_pathogenic = 1649, n_benign = 394, ratio = 4.19:1, n_clusters = 34, n_members = 62
+Fold 2: 
+         Train: n_SAVs = 14653, % SAVs = 71.97%, n_pathogenic = 10113, n_benign = 4540, ratio = 2.23:1, n_clusters = 1403, n_members = 1861
+         Val: n_SAVs = 3665, % SAVs = 18.00%, n_pathogenic = 1864, n_benign = 1801, ratio = 1.03:1, n_clusters = 337, n_members = 496
+         Test: n_SAVs = 2043, % SAVs = 10.03%, n_pathogenic = 1649, n_benign = 394, ratio = 4.19:1, n_clusters = 34, n_members = 62
+Fold 3: 
+         Train: n_SAVs = 14653, % SAVs = 71.97%, n_pathogenic = 9852, n_benign = 4801, ratio = 2.05:1, n_clusters = 1255, n_members = 1733
+         Val: n_SAVs = 3665, % SAVs = 18.00%, n_pathogenic = 2125, n_benign = 1540, ratio = 1.38:1, n_clusters = 485, n_members = 624
+         Test: n_SAVs = 2043, % SAVs = 10.03%, n_pathogenic = 1649, n_benign = 394, ratio = 4.19:1, n_clusters = 34, n_members = 62
+Fold 4: 
+         Train: n_SAVs = 14663, % SAVs = 72.02%, n_pathogenic = 9689, n_benign = 4974, ratio = 1.95:1, n_clusters = 1109, n_members = 1606
+         Val: n_SAVs = 3655, % SAVs = 17.95%, n_pathogenic = 2288, n_benign = 1367, ratio = 1.67:1, n_clusters = 631, n_members = 751
+         Test: n_SAVs = 2043, % SAVs = 10.03%, n_pathogenic = 1649, n_benign = 394, ratio = 4.19:1, n_clusters = 34, n_members = 62
+**************************************************
+Missing values in the dataframe:
+labels: 		 83
+entropy: 		 6
+ranked_MI: 		 6
+No. Unknown SAVs 25 (benign), 22 (pathogenic), and 83 (NaN)
+Input Layer: 33
+Model Configuration: 
++-----------+------------+------------+--------------+----------------+----+--------+-----------+
+|   Layer   | Activation | Batch Norm | Dropout Rate |  Initializer   | L1 |   L2   | N Neurons |
++-----------+------------+------------+--------------+----------------+----+--------+-----------+
+|   Input   |     -      |     -      |     0.0      |       -        | -  |   -    |     33    |
+| hidden_00 |    gelu    |   False    |     0.0      | glorot_uniform | 0  | 0.0001 |     16    |
+| hidden_01 |    gelu    |   False    |     0.0      | glorot_uniform | 0  | 0.0001 |     16    |
+|   Output  |  softmax   |     -      |      -       |       -        | -  |   -    |     2     |
++-----------+------------+------------+--------------+----------------+----+--------+-----------+
+Training Configuration: 
++-----------+------------+----------+--------------------------+---------------------+
+|  Training | Batch Size | N Epochs |           Loss           |       Metrics       |
++-----------+------------+----------+--------------------------+---------------------+
+|  Training |    300     |   300    | categorical_crossentropy | ['accuracy', 'AUC'] |
+| Optimizer |   5e-05    |  Nadam   |            -             |          -          |
++-----------+------------+----------+--------------------------+---------------------+
+Start from epoch: 50
+Fold 1 - Train: 14pos + 14neg, Val: 6pos + 8neg, Test: 2pos + 3neg
+Train: ['P29033 4 G D' 'P29033 34 M T' 'P29033 203 I T' 'P29033 37 V I'
+ 'P29033 165 R W' 'P29033 170 N S' 'P29033 206 N S' 'P29033 16 H Y'
+ 'P29033 111 I T' 'P29033 59 G A' 'P29033 75 R Q' 'P29033 205 L V'
+ 'P29033 83 F L' 'P29033 121 I V' 'P29033 184 R Q' 'P29033 210 L V'
+ 'P29033 163 M T' 'P29033 143 R W' 'P29033 95 V M' 'P29033 202 C F'
+ 'P29033 195 M T' 'P29033 143 R Q' 'P29033 214 L V' 'P29033 123 T N'
+ 'P29033 170 N K' 'P29033 107 I L' 'P29033 197 A T' 'P29033 44 W C']
+Val: ['P29033 156 V I' 'P29033 161 F S' 'P29033 215 I M' 'P29033 197 A S'
+ 'P29033 179 D N' 'P29033 153 V I' 'P29033 27 V I' 'P29033 114 E G'
+ 'P29033 168 K R' 'P29033 217 Y D' 'P29033 127 R H' 'P29033 90 L P'
+ 'P29033 75 R W' 'P29033 84 V L']
+Test: ['P29033 100 H Q' 'P29033 50 D N' 'P29033 115 F V' 'P29033 44 W S'
+ 'P29033 4 G V']
+Fold 2 - Train: 13pos + 15neg, Val: 7pos + 7neg, Test: 2pos + 3neg
+Train: ['P29033 156 V I' 'P29033 161 F S' 'P29033 215 I M' 'P29033 34 M T'
+ 'P29033 197 A S' 'P29033 203 I T' 'P29033 37 V I' 'P29033 170 N S'
+ 'P29033 206 N S' 'P29033 179 D N' 'P29033 111 I T' 'P29033 75 R Q'
+ 'P29033 153 V I' 'P29033 27 V I' 'P29033 121 I V' 'P29033 184 R Q'
+ 'P29033 114 E G' 'P29033 210 L V' 'P29033 168 K R' 'P29033 217 Y D'
+ 'P29033 127 R H' 'P29033 143 R Q' 'P29033 123 T N' 'P29033 197 A T'
+ 'P29033 90 L P' 'P29033 75 R W' 'P29033 84 V L' 'P29033 44 W C']
+Val: ['P29033 4 G D' 'P29033 165 R W' 'P29033 16 H Y' 'P29033 59 G A'
+ 'P29033 205 L V' 'P29033 83 F L' 'P29033 163 M T' 'P29033 143 R W'
+ 'P29033 95 V M' 'P29033 202 C F' 'P29033 195 M T' 'P29033 214 L V'
+ 'P29033 170 N K' 'P29033 107 I L']
+Test: ['P29033 100 H Q' 'P29033 50 D N' 'P29033 115 F V' 'P29033 44 W S'
+ 'P29033 4 G V']
+Fold 3 - Train: 13pos + 15neg, Val: 7pos + 7neg, Test: 2pos + 3neg
+Train: ['P29033 156 V I' 'P29033 4 G D' 'P29033 161 F S' 'P29033 215 I M'
+ 'P29033 197 A S' 'P29033 165 R W' 'P29033 179 D N' 'P29033 16 H Y'
+ 'P29033 59 G A' 'P29033 205 L V' 'P29033 83 F L' 'P29033 153 V I'
+ 'P29033 27 V I' 'P29033 114 E G' 'P29033 168 K R' 'P29033 163 M T'
+ 'P29033 143 R W' 'P29033 95 V M' 'P29033 202 C F' 'P29033 217 Y D'
+ 'P29033 127 R H' 'P29033 195 M T' 'P29033 214 L V' 'P29033 170 N K'
+ 'P29033 107 I L' 'P29033 90 L P' 'P29033 75 R W' 'P29033 84 V L']
+Val: ['P29033 34 M T' 'P29033 203 I T' 'P29033 37 V I' 'P29033 170 N S'
+ 'P29033 206 N S' 'P29033 111 I T' 'P29033 75 R Q' 'P29033 121 I V'
+ 'P29033 184 R Q' 'P29033 210 L V' 'P29033 143 R Q' 'P29033 123 T N'
+ 'P29033 197 A T' 'P29033 44 W C']
+Test: ['P29033 100 H Q' 'P29033 50 D N' 'P29033 115 F V' 'P29033 44 W S'
+ 'P29033 4 G V']
+Fold 1 - val_loss: 0.4, val_accuracy: 78.6%, val_auc: 0.9, val_precision: 0.8, val_recall: 0.8, test_loss: 0.2, test_accuracy: 80.0%, test_auc: 1.0, test_precision: 0.8, test_recall: 0.8
+Fold 2 - val_loss: 0.4, val_accuracy: 78.6%, val_auc: 0.9, val_precision: 0.8, val_recall: 0.8, test_loss: 0.2, test_accuracy: 100.0%, test_auc: 1.0, test_precision: 1.0, test_recall: 1.0
+Fold 3 - val_loss: 0.5, val_accuracy: 78.6%, val_auc: 0.9, val_precision: 0.8, val_recall: 0.8, test_loss: 0.2, test_accuracy: 100.0%, test_auc: 1.0, test_precision: 1.0, test_recall: 1.0
+-----------------------------------------------------------------
+val_loss: 0.4±0.0, val_accuracy: 78.6±0.0%, val_auc: 0.9±0.0, val_precision: 0.8±0.0, val_recall: 0.8±0.0
+test_loss: 0.2±0.0, test_accuracy: 93.3±6.7%, test_auc: 1.0±0.0, test_precision: 0.9±0.1, test_recall: 0.9±0.1
+-----------------------------------------------------------------

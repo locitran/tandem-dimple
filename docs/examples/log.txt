@@ -1,0 +1,47 @@
+Logging started at 2025-05-01 14:13:56.373292
+Job name: input_as_list_SAVs started at 2025-05-01 14:13:56.373398
+Job directory: /mnt/nas_1/YangLab/loci/tandem/jobs/input_as_list_SAVs
+SAVs saved to /mnt/nas_1/YangLab/loci/tandem/jobs/input_as_list_SAVs/SAVs.txt
+Selected feature set: ('GNM_co_rank_full', 'ANM_stiffness_chain', 'GNM_V2_full', 'GNM_V1_full', 'GNM_Eigval1_full', 'GNM_rankV2_full', 'GNM_Eigval2_full', 'GNM_rankV1_full', 'ANM_effectiveness_chain', 'SASA', 'loop_percent', 'AG1', 'Dcom', 'AG5', 'AG3', 'SSbond', 'Hbond', 'DELTA_Hbond', 'sheet_percent', 'helix_percent', 'Rg', 'IDRs', 'Lside', 'deltaLside', 'entropy', 'wtPSIC', 'deltaPSIC', 'consurf', 'ACNR', 'BLOSUM', 'ranked_MI', 'deltaPolarity', 'deltaCharge')
+Mapping SAVs to PDB structures...
+Pickle '/mnt/nas_1/YangLab/loci/tandem/data/pickles/uniprot/UniprotMap-O14508.pkl' recovered.
+Find 6I5J OPM and Assembly...
+WARNING Trying to parse as mmCIF file instead
+3087 atoms and 1 coordinate set(s) were parsed in 0.35s.
+WARNING Trying to parse as mmCIF file instead
+3037 atoms and 1 coordinate set(s) were parsed in 0.34s.
+Pickle '/mnt/nas_1/YangLab/loci/tandem/data/pickles/uniprot/UniprotMap-O14508.pkl' saved.
+1 out of 1 SAVs have been mapped to PDB in 1.3s.
+Uniprot2PDB map saved to /mnt/nas_1/YangLab/loci/tandem/jobs/input_as_list_SAVs/input_as_list_SAVs-Uniprot2PDB.txt
+Computing strutural and dynamics features from PDB structures...
+Processing 6i5j...
+Fixed PDB file /mnt/nas_1/YangLab/loci/tandem/pdbfile/fix/6i5j-2.pdb
+Loading PDB /mnt/nas_1/YangLab/loci/tandem/pdbfile/fix/6i5j-2.pdb...
+Pickle 'PDBfeatures-6i5j-bas2.pkl' recovered.
+3002 atoms and 1 coordinate set(s) were parsed in 0.03s.
+6124 atoms and 1 coordinate set(s) were parsed in 0.08s.
+ConSurf features calculated in 0.02s.
+Creating mutation file for S52N in /mnt/nas_1/YangLab/loci/tandem/pdbfile/fix/6i5j_D.pdb
+1312 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.54s.
+PDB features for 6i5j computed in 1.57s.
+Pickle 'PDBfeatures-6i5j-bas2.pkl' saved.
+PDB features: 1/1 SAVs processed [100%]
+PDB features computed in 2.03s.
+Computing sequence features ...
+Pickle '/mnt/nas_1/YangLab/loci/tandem/data/pickles/uniprot/UniprotMap-O14508.pkl' recovered.
+SAVs saved to /mnt/nas_1/YangLab/loci/tandem/jobs/input_as_list_SAVs/_temp_PolyPhen2.txt
+Submitting query to PolyPhen-2...
+PolyPhen-2 is running...
+PolyPhen-2's output parsed.
+PolyPhen-2 features have been calculated in 45.08s.
+Pickle '/mnt/nas_1/YangLab/loci/tandem/data/pickles/uniprot/UniprotMap-O14508.pkl' saved.
+SEQ features: 1/1 SAVs processed, O14508 [100%]
+SEQ features computed in 45.19s.
+Feature matrix saved to /mnt/nas_1/YangLab/loci/tandem/jobs/input_as_list_SAVs/input_as_list_SAVs-features.csv
+Found 5 models in /mnt/nas_1/YangLab/loci/tandem/models/different_number_of_layers/20250423-1234-tandem/n_hidden-5.
+Loading models from /mnt/nas_1/YangLab/loci/tandem/models/different_number_of_layers/20250423-1234-tandem/n_hidden-5.
+Using CPU for inference. Set CUDA_VISIBLE_DEVICES to 0 to use GPU.
+Report saved to /mnt/nas_1/YangLab/loci/tandem/jobs/input_as_list_SAVs/input_as_list_SAVs_report.txt
+Predictions saved to /mnt/nas_1/YangLab/loci/tandem/jobs/input_as_list_SAVs/input_as_list_SAVs_full_predictions.txt
+Logging stopped at 2025-05-01 14:14:48.143328

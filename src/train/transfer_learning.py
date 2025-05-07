@@ -34,7 +34,7 @@ def import_data(TANDEM_testSet):
     folds, R20000, preprocess_feat = getR20000(TANDEM_R20000, CLUSTER, feat_names=t_sel_feats)
     test_knw, test_unk = getTestset(TANDEM_testSet, t_sel_feats, preprocess_feat) 
     input_shape = R20000[2].shape[1]
-    return folds, R20000, test_knw, test_unk, input_shape
+    return folds, R20000, preprocess_feat, test_knw, test_unk, input_shape
 
 def train_model(base_models,
                 TANDEM_testSet,
