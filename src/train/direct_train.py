@@ -57,7 +57,7 @@ def train_model(TANDEM_testSet,
     patience = 50
     n_hidden = 2
     cfg = get_config(input_shape, n_hidden=n_hidden, patience=patience, dropout_rate=0.0,
-                     n_neuron_per_hidden=33, n_neuron_last_hidden=33)
+                     n_neuron_per_hidden=16, n_neuron_last_hidden=16)
     
     cfg['training']['n_epochs'] = 10000
     logging.error("Start from epoch: %d", cfg.training.callbacks.EarlyStopping.start_from_epoch)

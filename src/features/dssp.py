@@ -140,15 +140,15 @@ def calcDSSP(pdb, parseall=False, removefile=False):
 def calcSecondary(pdbpath, chain="all", removefile=True):
     """
     Get DSSP data from PDB file
-    - Helices:
+    - Helices: 0.5
     H = a-helix
     I = π-helix
     G = 310-helix
     P = κ-helix (poly-proline II helix)
-    - Sheets:
+    - Sheets: 0
     B = residue in isolated β-bridge
     E = extended strand, participates in β ladder
-    - Loops:
+    - Loops: 1
     T = hydrogen-bonded turn
     S = bend
     """

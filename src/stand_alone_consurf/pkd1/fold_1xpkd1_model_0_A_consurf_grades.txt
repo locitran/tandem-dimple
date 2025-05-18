@@ -11,7 +11,16 @@ from  0.349 to  1.047 the grade is 4
 from  1.047 to  1.746 the grade is 3
 from  1.746 to  2.444 the grade is 2
 from  2.444 to  3.142 the grade is 1
-
+The layers for assigning grades are as follows.
+from -1.217 to -0.947 the grade is 9
+from -0.947 to -0.676 the grade is 8
+from -0.676 to -0.406 the grade is 7
+from -0.406 to -0.135 the grade is 6
+from -0.135 to  0.316 the grade is 5
+from  0.316 to  0.949 the grade is 4
+from  0.949 to  1.581 the grade is 3
+from  1.581 to  2.214 the grade is 2
+from  2.214 to  2.846 the grade is 1
 If the difference between the colors of the CONFIDENCE INTERVAL COLORS is more than 3 or the msa number (under the column titled MSA) is less than 6, there is insufficient data and an * appears in the COLOR column.
 
 - POS: The position of the acid in the sequence.

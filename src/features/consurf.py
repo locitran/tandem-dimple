@@ -71,7 +71,8 @@ def mapIndices(targetSeq, querySeq):
         target_seq, align_dash, query_seq, _ = aln.split('\n')
     except:
         split_aln = aln.split('\n')
-        target_seq = '' ; query_seq = ''
+        target_seq = ''
+        query_seq = ''
         for i, p in enumerate(split_aln):
             p_split = p.split()
             target_seq += p_split[2] if i % 4 == 0 else ''
@@ -95,7 +96,7 @@ def mapIndices(targetSeq, querySeq):
             query_indices.append(-1)
     return np.array(target_indices), np.array(query_indices)
 
-def _align(target, query) -> str:
+def _align(target, query):
     """Align two sequences using PairwiseAligner from Bio.Align
     Args:
         target (str): target sequence
@@ -250,7 +251,14 @@ def calcConSurf(pdb, chids, resids, wt_aas, folder='.'):
     target (tgt), contact (cnt)
     """
     assert len(chids) == len(resids) == len(wt_aas), 'chids, resids, and wt_aas must have the same length'
-    _dtype = np.dtype([('consurf', 'f'), ('ACNR', 'f')])
+    # _dtype = np.dtype([('consurf', 'f'), 
+    #                    ('ACNR', 'f')]
+    #                    )
+    _dtype = np.dtype([
+        ('consurf', 'f4'), 
+        ('ACNR', 'f4'),
+        ('consurf_color', 'i4'),
+    ])
     features = np.full(len(chids), np.nan, dtype=_dtype)
     
     # Read the PDB file
@@ -299,7 +307,10 @@ def calcConSurf(pdb, chids, resids, wt_aas, folder='.'):
         tgt_idx = np.where(tgt_indices == tgt_resindex)[0][0]
         tgt_idx = tgt_consurf_indices[tgt_idx]
         tgt_score = float(df_tgt.loc[tgt_idx]['SCORE'])
+        tgt_color = df_tgt.loc[tgt_idx]['COLOR'] # some cases color contains "*" -> remove it
+        tgt_color = int(tgt_color.split('*')[0])+10 if '*' in tgt_color else int(tgt_color)
         features['consurf'][i] = tgt_score
+        features['consurf_color'][i] = tgt_color
         # LOGGER.info(f'Target {target}, {tgt_chid}, {tgt_resid}, {tgt_resindex},  {tgt_score}')
         # Retrieve consurf scores for contacts
         cnt_scores = []

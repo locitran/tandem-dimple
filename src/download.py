@@ -142,17 +142,6 @@ def fetchPDB(pdbID, **kwargs):
         if os.path.exists(outpath):
             return outpath
         
-    # Check if the file already exists
-    # if (format == 'opm' or compressed) and not refresh:
-    #     if os.path.exists(outpath):
-    #         return outpath
-    # else:
-    #     # Remove the '.gz' extension
-    #     outpath = outpath[:-3] 
-    #     url = url[:-3]
-    #     if os.path.exists(outpath) and not refresh:
-    #         return outpath
-    
     # Fetch the file
     try:
         urllib.request.urlretrieve(url, outpath)
@@ -183,8 +172,8 @@ def fetchPDB(pdbID, **kwargs):
                 file.writelines(lines)
         return outpath
     except Exception as e:
-        msg = traceback.format_exc()
-        LOGGER.error(msg)
+        # msg = traceback.format_exc()
+        # LOGGER.info(msg)
         LOGGER.info(f"Failed to fetch {pdbID} from RCSB PDB database {e}.")
         if format != 'cif':
             LOGGER.info(f"Fetch cif file instead.")

@@ -38,7 +38,7 @@ STR_FEATS = ['IDRs', 'SSbond', 'SF1', 'SF2', 'SF3', 'chain_length', 'protein_len
              'wtBJCE', 'mutBJCE', 'deltaBJCE', 'Lside', 'deltaLside',
              'DELTA_Rg', 'DELTA_Dcom', 'DELTA_SASA', 'DELTA_ACR', 
              'DELTA_Hbond', 'DELTA_DSS', 'DELTA_charge_pH7',
-             'consurf', 'ACNR']
+             'consurf', 'ACNR', 'consurf_color']
 # 'consurf', 'ACNR' are are supposed to be SEQ features, but
 # they are calculated here for convenience
 
@@ -812,7 +812,7 @@ class PDBfeatures:
         Reason is that ConSurf provides calculations for the asymmetric unit, not the biological unit.
         Especially when you do searching the chainID in https://consurfdb.tau.ac.il/
         """
-        _dtype = np.dtype([('consurf', 'f'), ('ACNR', 'f')])
+        _dtype = np.dtype([('consurf', 'f'), ('ACNR', 'f'), ('consurf_color', 'i4')])
         features = np.full(len(chids), np.nan, dtype=_dtype)
         try:
             if self.format == 'custom' or self.format == 'af':
@@ -1066,9 +1066,9 @@ class PDBfeatures:
             f['Lside'] = Lside
             f['deltaLside'] = deltaLside
         # Calculate ConSurf features
-        if {'consurf', 'ACNR'}.intersection(set(sel_feats)):
+        if {'consurf', 'ACNR', 'consurf_color'}.intersection(set(sel_feats)):
             consurf = self.calcConSurffeatures(chids, resids, wt_aas)
-            for name in ['consurf', 'ACNR']:
+            for name in ['consurf', 'ACNR', 'consurf_color']:
                 if name in sel_feats:
                     f[name] = consurf[name]
         # Calculate DELTA features
@@ -1089,7 +1089,7 @@ class PDBfeatures:
             d = self.feats[chid]
             indices = self._findIndex(chid, resid)
             for name in sel_feats:
-                if name in ['wtBJCE', 'mutBJCE', 'deltaBJCE', 'Lside', 'deltaLside', 'consurf', 'ACNR',
+                if name in ['wtBJCE', 'mutBJCE', 'deltaBJCE', 'Lside', 'deltaLside', 'consurf', 'ACNR', 'consurf_color',
                     'DELTA_Rg', 'DELTA_Dcom', 'DELTA_SASA', 'DELTA_ACR', 'DELTA_Hbond', 'DELTA_DSS', 'DELTA_charge_pH7']:
                     continue
                 if not isinstance(d[name], str):
@@ -1255,9 +1255,8 @@ def calcPDBfeatures(mapped_SAVs, custom_PDB=None, refresh=False,
         _dtype = np.dtype([("SAV_coords", "U50")] + _dtype.descr)
         _features = np.zeros(nSAVs, dtype=_dtype)
         _features['SAV_coords'] = mapped_SAVs['SAV_coords']
-        _features[sel_feats] = features
+        for f in sel_feats:
+            _features[f] = features[f]
         features = _features
     LOGGER.report('PDB features computed in %.2fs.', '_calcPDBfeatures')
     return features
-
-

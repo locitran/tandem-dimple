@@ -47,9 +47,13 @@ class ModelInference:
         """
         assert os.path.exists(folder), f"Folder {folder} does not exist."
         models = []
-        for model in os.listdir(folder):
-            if model.endswith('.h5'):
-                models.append(os.path.join(folder, model))
+        # for model in os.listdir(folder):
+        #     if model.endswith('.h5'):
+        #         models.append(os.path.join(folder, model))
+        for root, dirs, files in os.walk(folder):
+            for file in files:
+                if file.endswith('.h5'):
+                    models.append(os.path.join(root, file))
 
         assert len(models) > 0, f"No models found in {folder}."
         LOGGER.info(f"Found {len(models)} models in {folder}.")

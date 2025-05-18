@@ -190,14 +190,15 @@ class UniprotMapping:
                     pdb = parsePDB(PDB, model=1)
                 else:
                     # PDB is a PDBID
+                    LOGGER.info(f'Fetching PDB {PDB}...')
                     pdbpath = fetchPDB(PDB, format='pdb', folder=folder, refresh=self._refresh)
                     if pdbpath is not None:
                         pdb = parsePDB(pdbpath, model=1)
-            except Exception as e1:
+            except Exception as e:
                 msg = (
                     'Unable to import structure: PDB ID might be invalid'
                     ' or PDB file might be corrupted.\n'
-                    f'PDB error: {e1}')
+                    f'PDB error: {e}')
                 LOGGER.error(msg)
             if title is None:
                 title = os.path.basename(PDB.strip())

@@ -7,8 +7,15 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
+# Check if aria2c is installed
 if ! command -v aria2c &> /dev/null ; then
     echo "Error: aria2c could not be found. Please install aria2c (sudo apt install aria2)."
+    exit 1
+fi
+
+# Check if hmmer is installed
+if ! command -v hmmpress &> /dev/null ; then
+    echo "Error: hmmer could not be found. Please install hmmer (sudo apt install hmmer)."
     exit 1
 fi
 

@@ -5,11 +5,18 @@ __all__ = ['one2three', 'three2one', 'standard_aa', 'ROOT_DIR', 'RAW_PDB_DIR',
         'FIX_PDB_DIR', 'TMP_DIR', 'MATLAB_DIR', 'dynamics_feat', 
         'structure_feat', 'seq_feat', 'cols']
 
+aa_list = 'ACDEFGHIKLMNPQRSTVWY'
 one2three = {
-    'A': 'ALA', 'R': 'ARG', 'N': 'ASN', 'D': 'ASP', 'C': 'CYS', 'E': 'GLU', 'Q': 'GLN',
-    'G': 'GLY', 'H': 'HIS', 'I': 'ILE', 'L': 'LEU', 'K': 'LYS', 'M': 'MET', 'F': 'PHE',
-    'P': 'PRO', 'S': 'SER', 'T': 'THR', 'W': 'TRP', 'Y': 'TYR', 'V': 'VAL'
+    'A': 'ALA', 'C': 'CYS', 'D': 'ASP', 'E': 'GLU', 'F': 'PHE', 'G': 'GLY',
+    'H': 'HIS', 'I': 'ILE', 'K': 'LYS', 'L': 'LEU', 'M': 'MET', 'N': 'ASN',
+    'P': 'PRO', 'Q': 'GLN', 'R': 'ARG', 'S': 'SER', 'T': 'THR', 'V': 'VAL',
+    'W': 'TRP', 'Y': 'TYR'
 }
+# one2three = {
+#     'A': 'ALA', 'R': 'ARG', 'N': 'ASN', 'D': 'ASP', 'C': 'CYS', 'E': 'GLU', 'Q': 'GLN',
+#     'G': 'GLY', 'H': 'HIS', 'I': 'ILE', 'L': 'LEU', 'K': 'LYS', 'M': 'MET', 'F': 'PHE',
+#     'P': 'PRO', 'S': 'SER', 'T': 'THR', 'W': 'TRP', 'Y': 'TYR', 'V': 'VAL'
+# }
 three2one = {v: k for k, v in one2three.items()}
 standard_aa = list(one2three.values())
 ROOT_DIR = Path(__file__).resolve().parents[2]

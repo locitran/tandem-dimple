@@ -1,6 +1,6 @@
 # Input
 
-## `query`
+## `query` (required)
 
 We could query a SAV, a batch of SAVs, a UniPort ID, or UniProt ID with mutation site. A
 SAV should be formatted as `UniPort ID`, `position`, `wt aa`, `mut aa` ("wt" and "mut" refer to wild-type and mutant), where `position` is the place that mutated amino acid (aa) is introduced.
@@ -23,11 +23,11 @@ SAV should be formatted as `UniPort ID`, `position`, `wt aa`, `mut aa` ("wt" and
     query = 'P29033 10' # 19 SAVs
     ```
 
-## `job_name`
+## `job_name` (required)
 
 This will be used to create a directory for storing intermediate and output files. Job folders are stored at [../jobs/](../jobs/) directory. If provided job name is not unique, the job will overwrite the previous one.
 
-## `models`
+## `models` (optional)
 
 Default is None, it means that we will use the general disease model, TANDEM-DIMPLE, stored at [models/different_number_of_layers/20250423-1234-tandem/n_hidden-5](../models/different_number_of_layers/20250423-1234-tandem/n_hidden-5).
 
@@ -41,7 +41,7 @@ Besides TANDEM-DIMPLE, we can also use transfer-learned models for specific dise
     models = '../models/TransferLearning_RYR1'
     ```
 
-## `custom_PDB`
+## `custom_PDB` (optional)
 
 If `custom_PDB` is provided, we will use the custom PDB structure to map the SAV and calculate structural dynamics features. `custom_PDB` could be a structure file in `.cif` or `.pdb` format, or a PDB ID that can be downloaded from the PDB database.
 *   Custom PDB file:
@@ -59,12 +59,12 @@ If `custom_PDB` is a Alphafold3 predicted structure (in `.cif` format), it shoul
 If `custom_PDB` is a structure file, ConSurf will compute the conservation score (slower); if it’s a PDB ID, the score is fetched from the ConSurf database (faster).
 
 
-## `featSet`
+## `featSet` (optional)
 
 The default is None, which means that we will use the latest feature set.
 If you want to use a specific feature set, you can specify it as a list.
 
-## `refresh`
+## `refresh` (optional)
 
 The default is False, which means that we will use the cached data and precomputed features in the pickle files.
 We have two files to cache, corresponding SEQ and STR/DYN features. 

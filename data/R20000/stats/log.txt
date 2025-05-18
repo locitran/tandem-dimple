@@ -1,4 +1,4 @@
-Logging started at 2025-04-17 13:29:08.430235
+Logging started at 2025-05-12 17:26:48.856859
 philic_percent is removed from the dataframe
 delta_philic_percent is removed from the dataframe
 GNM_Ventropy_full is removed from the dataframe

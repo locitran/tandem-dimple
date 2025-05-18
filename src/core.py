@@ -177,12 +177,20 @@ class Tandem:
         arr['labels'] = labels
         arr[list(self.featSet)] = self.featMatrix
 
-        if not withLabels:
+        if withLabels and withSAVs:
+            # Keep all columns
+            arr = arr[['SAV_coords', 'labels'] + list(self.featSet)]
+        elif withLabels:
+            # Remove the SAV_coords column from arr
+            arr = arr[['labels'] + list(self.featSet)]
+        elif withSAVs:
             # Remove the labels column from arr
             arr = arr[['SAV_coords'] + list(self.featSet)]
-        if not withSAVs:
-            # Remove the SAV_coords column from arr
+            LOGGER.info('SAV_coords column removed from feature matrix.')
+        else:
+            # Remove the labels and SAV_coords columns from arr
             arr = arr[list(self.featSet)]
+
         # Save the structured array to a CSV file
         if filename is not None:
             filepath = os.path.join(folder, filename + '-features.csv')
@@ -306,6 +314,10 @@ def calcFeatures(query, labels=None, job_name='tandem-dimple', custom_PDB=None,
     logfile = os.path.join(job_directory, 'log.txt')
     LOGGER.start(logfile)
     # Set up the Tandem object
+    kwargs['job_directory'] = job_directory
+    if 'folder' not in kwargs:
+        kwargs['folder'] = os.path.join(ROOT_DIR, 'data') 
+    os.makedirs(kwargs['folder'], exist_ok=True)
     t = Tandem(query, refresh=refresh, **kwargs)
 
     # Save SAVs to a file

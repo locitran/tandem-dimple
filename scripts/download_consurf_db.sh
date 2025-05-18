@@ -6,8 +6,9 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
-if ! command -v aria2c &> /dev/null ; then
-    echo "Error: aria2c could not be found. Please install aria2c (sudo apt install aria2)."
+# Check if gdown is installed
+if ! command -v gdown &> /dev/null ; then
+    echo "Error: gdown could not be found. Please install gdown (pip install gdown)."
     exit 1
 fi
 

@@ -192,3 +192,4 @@ data/consurf/uniref90.fasta
 models/tf.ipynb
 models/feature_importance.ipynb
 models/comparison.ipynb
+models/tandem.ipynb
