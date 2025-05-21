@@ -254,6 +254,8 @@ class PDBfeatures:
                     environment = pdb.select(selstr)
                     if environment is None:
                         gnm = GNM()
+                        LOGGER.info('Building GNM model on the whole structure')
+                        LOGGER.info('No environment, using GNM')
                         gnm.buildKirchhoff(system, cutoff=7.3, gamma=1.0)
                         gnm.calcModes(n_modes=n)
                     else:
@@ -269,6 +271,8 @@ class PDBfeatures:
                     environment = pdb.ca.select('beta < 50')
                     if environment is None:
                         gnm = GNM()
+                        LOGGER.info('Building GNM model on the whole structure')
+                        LOGGER.info('No environment, using GNM')
                         gnm.buildKirchhoff(system, cutoff=7.3, gamma=1.0)
                         gnm.calcModes(n_modes=n)
                     else:
@@ -281,6 +285,8 @@ class PDBfeatures:
                 ca = pdb.ca[chID]
                 self._checkNumCalphas(ca)
                 gnm = GNM()
+                LOGGER.info('Building GNM model on the whole structure')
+                LOGGER.info('No environment, using GNM')
                 gnm.buildKirchhoff(ca, cutoff=7.3, gamma=1.0)
                 gnm.calcModes(n_modes=n)
                 gnm_e[chID] = gnm
@@ -1229,10 +1235,10 @@ def calcPDBfeatures(mapped_SAVs, custom_PDB=None, refresh=False,
                 # Load PDB structure and calculate features
                 LOGGER.info(f"Loading PDB {pdbPath}...")
                 obj = PDBfeatures(pdbPath, format=format, recover_pickle=not(refresh), **kwargs)
-                if "full" not in obj._gnm:
-                    obj._gnm['full'] = {chID: None for chID in obj.chids}
-                if "full" not in obj._anm:
-                    obj._anm['full'] = {chID: None for chID in obj.chids}
+                # if "full" not in obj._gnm:
+                    # obj._gnm['full'] = {chID: None for chID in obj.chids}
+                # if "full" not in obj._anm:
+                    # obj._anm['full'] = {chID: None for chID in obj.chids}
             except Exception as e:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)

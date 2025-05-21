@@ -15,7 +15,7 @@ fi
 DOWNLOAD_DIR="$1"
 GGDRIVE_ID="17IFFwGVHrJuUET3J8kEM9sqq2D0Z6Fco"
 
-mkdir --parents "${DOWNLOAD_DIR}"
+mkdir -p "${DOWNLOAD_DIR}"
 
 # Start timer
 SECONDS=0

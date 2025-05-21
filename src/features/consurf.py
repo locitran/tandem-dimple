@@ -308,7 +308,12 @@ def calcConSurf(pdb, chids, resids, wt_aas, folder='.'):
         tgt_idx = tgt_consurf_indices[tgt_idx]
         tgt_score = float(df_tgt.loc[tgt_idx]['SCORE'])
         tgt_color = df_tgt.loc[tgt_idx]['COLOR'] # some cases color contains "*" -> remove it
-        tgt_color = int(tgt_color.split('*')[0])+10 if '*' in tgt_color else int(tgt_color)
+
+        if isinstance(tgt_color, str) and '*' in tgt_color:
+            tgt_color = int(tgt_color.split('*')[0]) + 10
+        else:
+            tgt_color = int(tgt_color)
+
         features['consurf'][i] = tgt_score
         features['consurf_color'][i] = tgt_color
         # LOGGER.info(f'Target {target}, {tgt_chid}, {tgt_resid}, {tgt_resindex},  {tgt_score}')
