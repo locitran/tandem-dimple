@@ -1,6 +1,44 @@
 from scipy import stats
 import numpy as np
 
+def np2ds(x, y, shuffle=True, batch_size=32, seed=150):
+    """Convert a numpy array to a tf.data dataset
+    Args:
+    data: numpy array
+    shuffle: shuffle the dataset
+    batch_size: batch size
+        No. samples in each batch
+
+    Returns:
+    ds: tf.data.Dataset
+    ds = (features, labels)
+    """
+    
+    import sys
+    if "tensorflow" not in sys.modules:
+        import tensorflow as tf
+    else:
+        tf = sys.modules["tensorflow"]
+        
+    ds = tf.data.Dataset.from_tensor_slices((x, y))
+    if shuffle:
+        ds = ds.shuffle(buffer_size=len(x), seed=seed)
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(batch_size)
+    return ds
+
+def onehot_encoding(labels, n_classes):
+    """One hot encodes the labels
+    class 0 --> [1, 0]
+    class 1 --> [0, 1]
+    """
+    labels = np.asarray(labels, dtype=int)
+    onehot = np.zeros((len(labels), n_classes))
+    for i, label in enumerate(labels):
+        onehot[i, label] = 1
+    return onehot
+
+    
 probs2mode_dtype = np.dtype([
     ('mode', 'i4'),
     ('decision', 'U20'),

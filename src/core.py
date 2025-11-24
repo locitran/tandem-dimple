@@ -4,6 +4,7 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import shap
+import json
 
 from scipy import stats
 from dataclasses import asdict
@@ -16,7 +17,7 @@ from .utils.settings import TANDEM_v1dot1, TANDEM_R20000
 from .utils.logger import LOGGER
 from .model.data_processing import Preprocessing, onehot_encoding, np2ds
 from .model.train import TLConfig, train_model
-from .plot import plotSHAP_bar
+from .model.plot import plotSHAP_bar, plotLoss
 
 class Tandem(Features):
     
@@ -69,7 +70,7 @@ class Tandem(Features):
             sav_w = 15
             vote_w = 8
             path_w = 15
-            decision_w = 15
+            classification_w = 15
             filepath = os.path.join(folder, filename)
             with open(filepath, "w", encoding="utf-8") as f:
                 # header parts for base columns
@@ -77,14 +78,14 @@ class Tandem(Features):
                     f'{"SAV":<{sav_w}}', # " | ",
                     f'{"vote":<{vote_w}}',
                     f'{"probability":<{path_w}}',
-                    f'{"decision":<{decision_w}}'
+                    f'{"classification":<{classification_w}}'
                 ]
                 # add tf columns if they exist
                 if any(c.endswith("_tf") for c in df_tandem.columns):
                     header_parts += [#" | ",
                         f'{"vote_tf":<{vote_w}}',
                         f'{"probability_tf":<{path_w}}',
-                        f'{"decision_tf":<{decision_w}}'
+                        f'{"classification_tf":<{classification_w}}'
                     ]
                 header = "".join(header_parts) + "\n"
                 f.write(header)
@@ -103,13 +104,13 @@ class Tandem(Features):
                         path_s = f"{float(path):.3f}"
                     else:
                         path_s = ""
-                    decision = str(data.get("decision", "") or "")
+                    classification = str(data.get("classification", "") or "")
 
                     line_parts = [ # build line parts
                         f"{sav:<{sav_w}}", # " | ",
                         f"{vote_s:<{vote_w}}",
                         f"{path_s:<{path_w}}",
-                        f"{decision:<{decision_w}}",
+                        f"{classification:<{classification_w}}",
                     ]
                     
                     if "ratio_tf" in data: # add tf values if present
@@ -124,12 +125,12 @@ class Tandem(Features):
                             path_tf_s = f"{float(path_tf):.3f}"
                         else:
                             path_tf_s = ""
-                        decision_tf = str(data.get("decision_tf", "") or "")
+                        classification_tf = str(data.get("classification_tf", "") or "")
                     
                         line_parts += [ #" | ",
                             f"{vote_tf_s:<{vote_w}}",
                             f"{path_tf_s:<{path_w}}",
-                            f"{decision_tf:<{decision_w}}",
+                            f"{classification_tf:<{classification_w}}",
                         ]
                     # join and finish line
                     line = "".join(line_parts) + "\n"
@@ -186,7 +187,7 @@ class Tandem(Features):
         mode = stats.mode(preds, axis=1) 
         mode_val = mode[0] # (nSAVs, )
         mode_count = mode[1] # (nSAVs, )
-        decision = np.array([
+        classification = np.array([
             "pathogenic" if val == 1 else "benign" for val in mode_val
         ])
         ratio = mode_count / M
@@ -208,7 +209,7 @@ class Tandem(Features):
             out['pred'][i] = preds[i]
             out['shap'][i] = featImp_masked[i]
         out['mode'] = mode_val
-        out['decision'] = decision
+        out['classification'] = classification
         out['ratio'] = ratio
         out['path_prob'] = path_probs
         out['path_prob_sem'] = path_probs_sem
@@ -251,7 +252,7 @@ class Tandem(Features):
 
         SAVs = self.data['SAVs']
         globalSHAP_title = 'Global feature contribution to model prediction'
-        individualSHAP_title = 'Feature contribution to model prediction on {}'
+        individualSHAP_title = 'Feature contribution to model prediction on {} ({})'
 
         # Create folder(s) to store SHAP figure(s)
         tandem_shap = os.path.join(folder, 'tandem_shap')
@@ -259,15 +260,17 @@ class Tandem(Features):
         # Plot global SHAP values in case more than 1 SAV being calculated
         if self.nSAVs > 1:
             _featImp = self.data['tandem']['shap']
-            plotSHAP_bar(_featImp, globalSHAP_title, tandem_shap, 'globalSHAP')
+            plotSHAP_bar(_featImp, globalSHAP_title, tandem_shap, 'globalSHAP', globalshap=True)
             
         # Plot SHAP values for individual SAVs
         for i in range(self.nSAVs):
             sav = str(SAVs[i])
             _featImp = self.data['tandem']['shap'][i]
-            plotSHAP_bar(_featImp, individualSHAP_title.format(sav), 
-                         tandem_shap, sav)
+            _classif = self.data['tandem']['classification'][i]
+            plotSHAP_bar(_featImp, individualSHAP_title.format(sav, _classif), 
+                         tandem_shap, sav, globalshap=False)
 
+        # This is for TANDEM-DIMPLE in case models is not default
         if not np.ma.is_masked(self.data['tandem_dimple']['shap']):
             tandem_dimple_shap = os.path.join(folder, 'tandem_dimple_shap')
             os.makedirs(tandem_dimple_shap, exist_ok=True)
@@ -278,8 +281,9 @@ class Tandem(Features):
             for i in range(self.nSAVs):
                 sav = str(SAVs[i])
                 _featImp = self.data['tandem_dimple']['shap'][i]
-                plotSHAP_bar(_featImp, individualSHAP_title.format(sav), 
-                            tandem_dimple_shap, sav)
+                _classif = self.data['tandem_dimple']['classification'][i]
+                plotSHAP_bar(_featImp, individualSHAP_title.format(sav, _classif), 
+                            tandem_dimple_shap, sav, globalshap=False)
             
     #### -------- Transfer learning ------- #####
 
@@ -371,7 +375,7 @@ class Tandem(Features):
                 writer.writerow([fold+1, "transfer", "test", *history['tf']['test'][fold]])
         LOGGER.info(f"[INFO] History saved to {filepath}")
 
-    def train(self, name, filename):
+    def train(self, name, filename, smin=47):
         assert self.featMatrix is not None, "Feature matrix not set."
         assert self._isColSet("labels"), "Labels not set."
         assert self.config is not None, "Config not set."
@@ -381,13 +385,22 @@ class Tandem(Features):
 
         cfg = self.config
         feat_names = self.featMatrix.dtype.names
+        # Data from All indices
         X = np.column_stack([self.featMatrix[name] for name in feat_names])
-        X = self.preprocess(X)  # ensure scaler
-        y = np.asarray(self.data["labels"], dtype=int)
-        SAVs = self.data["SAVs"]
+        X = self.preprocess(X)  # ensure scaler # (nSAVs, nfeat)
+        y = np.asarray(self.data["labels"], dtype=int) # (nSAVs, )
+        SAVs = self.data["SAVs"] # (nSAVs, )
+
+        # Check indices no mapping -> ignore these SAVs
+        # If resolved length is 0  -> no structure model
+        accept_idx = self.data['Asymmetric_PDB_resolved_length'] != 0
+        all_idx    = np.arange(self.nSAVs)[accept_idx]
+        X = X[all_idx]
+        y = y[all_idx]
+        SAVs = SAVs[all_idx]
+        assert SAVs.shape[0] >= smin, f"Does not meet minimum SAVs {smin} for transfer learning"
 
         # ----- hold-out test split first -----
-        all_idx = np.arange(self.nSAVs)
         train_idx, test_idx = train_test_split(
             all_idx,
             test_size=cfg.test_size,
@@ -408,12 +421,12 @@ class Tandem(Features):
             'fd': {'val': [], 'test': []}, 
             'tf': {'val': [], 'test': []}
         }
-
+        SAV_cv = {}
         for fold_idx, (inner_tr, inner_va) in enumerate(skf.split(train_idx, y[train_idx]), start=1):
             x_tr, y_tr, sav_tr = X[inner_tr], y[inner_tr], SAVs[inner_tr]
             x_va, y_va, sav_va = X[inner_va], y[inner_va], SAVs[inner_va]
             
-            model_dir = os.path.join(job_dir, f'fold_{fold_idx}')
+            model_dir = os.path.join(job_dir, f'TD_{fold_idx}') # TD: TANDEM-DIMPLE
             os.makedirs(model_dir, exist_ok=True)
 
             # log the folds
@@ -424,6 +437,7 @@ class Tandem(Features):
             pos_te  = int(np.sum(y_te))
             neg_te  = int(len(y_te) - np.sum(y_te))
 
+            SAV_cv[fold_idx] = {'train': sav_tr.tolist(), 'val': sav_va.tolist(), 'test': sav_te.tolist()}
             LOGGER.info(
                 f"Fold {fold_idx} - Train: {pos_tr}pos + {neg_tr}neg, "
                 f"Val: {pos_va}pos + {neg_va}neg, "
@@ -437,9 +451,9 @@ class Tandem(Features):
             y_va_1h = onehot_encoding(y_va, 2)
             y_te_1h = onehot_encoding(y_te, 2)
 
-            train_ds = np2ds(x_tr,   y_tr_1h,   shuffle=True,  batch_size=cfg.batch_size, seed=cfg.seed)
-            val_ds   = np2ds(x_va,   y_va_1h,   shuffle=False, batch_size=cfg.batch_size, seed=cfg.seed)
-            test_ds  = np2ds(x_te,   y_te_1h,   shuffle=False, batch_size=cfg.batch_size, seed=cfg.seed)
+            train_ds = np2ds(x_tr, y_tr_1h, shuffle=True,  batch_size=cfg.batch_size, seed=cfg.seed)
+            val_ds   = np2ds(x_va, y_va_1h, shuffle=False, batch_size=cfg.batch_size, seed=cfg.seed)
+            test_ds  = np2ds(x_te, y_te_1h, shuffle=False, batch_size=cfg.batch_size, seed=cfg.seed)
 
             # ----- build/train model -----
             # Load foundation model
@@ -457,6 +471,7 @@ class Tandem(Features):
                 )
                 tf_model.name = name
                 models.append(tf_model)
+                tf_model.save(f"{model_dir}/model_{model_idx}.h5")
 
                 # ----- Evaluation -----
                 fd_val_eval = fd_model.evaluate(val_ds, verbose=0)
@@ -481,6 +496,11 @@ class Tandem(Features):
                 
         self.history_avg(history)
         self.history_to_csv(history, filename=filename)
+        plotLoss(folder=job_dir, filename='loss.png')
+
+        # Save SAVs splitting schemes for cross-validation
+        with open(f'{job_dir}/cross_validation_SAVs.json', 'w') as f:
+            json.dump(SAV_cv, f, indent=4)
 
         LOGGER.report('train in %.1fs.', '_train')
         return history

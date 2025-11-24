@@ -11,14 +11,13 @@ class Features:
 
     def __init__(self, query, refresh=False, **kwargs):
         
-
         # global shape: (nSAVs, )
         # individual shape
         self.model2pred_dtype = np.dtype([
             ('prob', object), # (n_models, ) 
             ('pred', object), # (n_models, )
             ('mode', 'i4'),
-            ('decision', 'U20'),
+            ('classification', 'U20'),
             ('ratio', 'f4'),
             ('path_prob', 'f4'),
             ('path_prob_sem', 'f4'), 

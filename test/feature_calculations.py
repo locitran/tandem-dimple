@@ -3,7 +3,7 @@ import sys
 addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, addpath) # /home/newloci
 
-from tandem.src.main import tandem_dimple
+from tandem.src.main import run
 from tandem.src.core import calcFeatures
 
 query = ['O14508 52 S N', 'P29033 217 Y D']

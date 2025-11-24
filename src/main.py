@@ -77,13 +77,8 @@ def run(
         history = t.train(name, filename="history.csv")
     else:
         t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='predictions.txt')
+        t.plotSHAP(folder=job_directory)
 
-    # SHAP analysis
-    # Plot global feature contribution
-    # 1. TANDEM models
-    # 2. TANDEM-DIMPLE models
-    t.plotSHAP(folder=job_directory)
-    
     for label in LOGGER._reports:
         LOGGER.info(f"  {label}: {LOGGER._reports[label]:.2f}s ({LOGGER._report_times[label]} time(s))")
     LOGGER.report('Run time elapsed in %.2fs.', "_runtime")

@@ -2,9 +2,12 @@ import numpy as np
 import random
 import os 
 
+from ..utils.logger import LOGGER
+
 from dataclasses import dataclass
 import tensorflow as tf
 from keras.saving import register_keras_serializable
+
 
 def get_seed(seed=0):
     random.seed(seed)
@@ -47,6 +50,8 @@ class DelayedEarlyStopping(tf.keras.callbacks.EarlyStopping):
                     self.stopped_epoch = epoch
                     self.model.stop_training = True
                     self.model.set_weights(self.best_weights)
+                    LOGGER.info(f"Restoring model weights from the end of the best epoch: {self.best_epoch}.")
+                    LOGGER.info(f"Epoch {self.best_epoch + 1}: best epoch")
 
 @register_keras_serializable(package="custom", name="BinaryF1Score")
 class BinaryF1Score(tf.keras.metrics.Metric):
@@ -155,6 +160,7 @@ def train_model(
         epochs=cfg.n_epochs,
         validation_data=val_ds,
         callbacks=callbacks,
+        verbose=0,
     )
     model.save(os.path.join(folder, f'model_{filename}.h5'), include_optimizer=True)
     return model
@@ -164,7 +170,7 @@ class TLConfig:
     # optimization
     learning_rate: float = 5e-5
     batch_size: int = 300
-    n_epochs: int = 300
+    n_epochs: int = 1000
     patience: int = 50
     restore_best_weights: bool = True
     start_from_epoch: int = 10
