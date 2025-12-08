@@ -15,7 +15,6 @@ def run(
     pretrained_model_folder=TANDEM_v1dot1,
     job_name='tandem-dimple',
     features= None, 
-    tf_name=None,
     config=None, 
     featSet=None,
     refresh=False,
@@ -73,8 +72,7 @@ def run(
     if labels:
         t.setLabels(labels)
         t.setConfig(config)
-        name = tf_name if tf_name else job_name
-        history = t.train(name, filename="history.csv")
+        history = t.train(job_name, filename="history.csv")
     else:
         t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='predictions.txt')
         t.plotSHAP(folder=job_directory)
