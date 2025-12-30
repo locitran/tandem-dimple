@@ -4,10 +4,13 @@ import logging
 import pandas as pd
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score, roc_auc_score
+from scipy import stats
 
 from .modules import Preprocessing, DelayedEarlyStopping, Callback_CSVLogger
 from .modules import BinaryF1Score, GradientLoggingModel, GradientLogger
@@ -17,10 +20,82 @@ from ..utils.logger import LOGGER
 from ..features import TANDEM_FEATS
 from .config import get_config
 from .process_data import getR20000, getTestset, onehot_encoding
-from ..model.data_processing import probs2mode
 
 filedir = os.path.dirname(os.path.abspath(__file__))
 
+probs2mode_dtype = np.dtype([
+    ('mode', 'i4'),
+    ('decision', 'U20'),
+    ('count', 'i4'),
+    ('ratio', 'f4'),
+    ('path_probs', 'f4'),
+    ('path_probs_sem', 'f4')
+])
+def probs2mode(probs):
+    """
+    Given an NxM numpy array, where N is the number of samples
+    and M is the number of models' probabilities for class 1,
+    return a structured array with:
+      - mode: majority class (0 or 1)
+      - decision: 'benign' or 'pathogenic'
+      - count: number of models voting for the mode
+      - path_prob: mean probability supporting the voted class
+      - path_prob_mean: same as path_prob (kept for compatibility)
+      - path_prob_sem: SEM of supporting probabilities
+    """
+    if probs.ndim == 1:
+        probs = probs.reshape(1, -1)
+    N, M = probs.shape
+    out = np.full(N, np.nan, dtype=probs2mode_dtype)
+
+    # Convert probabilities to binary predictions
+    preds = (probs > 0.5).astype(int)
+
+    # Get mode and count across the whole dataset
+    mode = stats.mode(preds, axis=1)
+    mode_val = mode[0]
+    mode_count = mode[1]
+    decision = np.array([
+        "pathogenic" if val == 1 else "benign" for val in mode_val
+    ])
+    ratio = mode_count / M
+
+    # Broadcast mode_val to match preds shape
+    mask = preds != mode_val[:, None]
+    masked_probs = np.ma.array(probs, mask=mask)
+    path_probs = masked_probs.mean(1)
+    path_probs_sem = stats.sem(masked_probs, axis=1)
+
+    out['mode'] = mode_val
+    out['count'] = mode_count
+    out['decision'] = decision
+    out['ratio'] = ratio
+    out['path_probs'] = path_probs
+    out['path_probs_sem'] = path_probs_sem
+    return out
+
+
+def evaluate(model, x, y):
+    """
+    model: DNN
+    x: (nsamples x 33)
+    y: (nsamples x 2)
+    """
+    pred = model.predict(x, verbose=False) # (N, 2)
+    y_prob = pred[:, 1] # (N, )
+    y_pred = (y_prob > 0.5).astype(int) # (N, )
+    y_true = np.argmax(y, axis=1) # (N, 1)
+
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, pos_label=1, zero_division=0)
+    recall  = recall_score(y_true, y_pred, pos_label=1, zero_division=0)
+    f1   = f1_score(y_true, y_pred, pos_label=1, zero_division=0)
+
+    # require probability (not class)
+    auc = roc_auc_score(y_true, y_prob)   # y_true: 0/1, y_prob: float probs
+
+    return accuracy, auc, precision, recall, f1
+    
 def get_seed(seed=150):
     random.seed(seed)
     tf.random.set_seed(seed)
@@ -111,12 +186,7 @@ def train_model(train_ds, val_ds, cfg, folder, filename,
     model.compile(
         optimizer=optimizer,
         loss='categorical_crossentropy',
-        metrics=['accuracy', 
-            tf.keras.metrics.AUC(name='auc'), 
-            tf.keras.metrics.Precision(name='precision'), 
-            tf.keras.metrics.Recall(name='recall'),
-            BinaryF1Score(name='f1_score')
-        ]
+        metrics=[tf.keras.metrics.CategoricalAccuracy(name="accuracy"),]
     )
     if logging_model:
         callbacks = [early_stopping, csv_logger, gradient_logger]
@@ -209,53 +279,83 @@ def reproduce_foundation_model(
         models.append(model)
         
         ### Evaluation
-        val_rs = model.evaluate(val_ds, verbose=0)
-        test_rs = model.evaluate(test_ds, verbose=0)
-        GJB2_notnan_rs = model.evaluate(GJB2_notnan_ds, verbose=0)
-        RYR1_notnan_rs = model.evaluate(RYR1_notnan_ds, verbose=0)
+        # val_rs = model.evaluate(val_ds, verbose=0)
+        # test_rs = model.evaluate(test_ds, verbose=0)
+        # GJB2_notnan_rs = model.evaluate(GJB2_notnan_ds, verbose=0)
+        # RYR1_notnan_rs = model.evaluate(RYR1_notnan_ds, verbose=0)
+        
+        # accuracy, auc, precision, recall, f1
+        val_rs = evaluate(model, val['x'], val['y'])
+        test_rs = evaluate(model, test['x'], test['y'])
+        GJB2_notnan_rs = evaluate(model, GJB2_notnan_features, GJB2_notnan_labels)
+        RYR1_notnan_rs = evaluate(model, RYR1_notnan_features, RYR1_notnan_labels)
 
         msg = (
             f"Fold {i+1} - "
-            f"val_loss: {val_rs[0]:.2f}, val_accuracy: {val_rs[1]*100:.1f}%, val_auc: {val_rs[2]:.2f}, "
-            f"val_precision: {val_rs[3]:.2f}, val_recall: {val_rs[4]:.2f}, val_f1: {val_rs[5]:.2f}, "
-            f"test_loss: {test_rs[0]:.2f}, test_accuracy: {test_rs[1]*100:.1f}%, test_auc: {test_rs[2]:.2f}, "
-            f"test_precision: {test_rs[3]:.2f}, test_recall: {test_rs[4]:.2f}, test_f1: {test_rs[5]:.2f}, "
-            f"RYR1_loss: {RYR1_notnan_rs[0]:.2f}, RYR1_accuracy: {RYR1_notnan_rs[1]*100:.1f}%, RYR1_auc: {RYR1_notnan_rs[2]:.2f}, "
-            f"RYR1_precision: {RYR1_notnan_rs[3]:.2f}, RYR1_recall: {RYR1_notnan_rs[4]:.2f}, RYR1_notnan_f1: {RYR1_notnan_rs[5]:.2f}, "
-            f"GJB2_loss: {GJB2_notnan_rs[0]:.2f}, GJB2_accuracy: {GJB2_notnan_rs[1]*100:.1f}%, GJB2_auc: {GJB2_notnan_rs[2]:.2f}, "
-            f"GJB2_precision: {GJB2_notnan_rs[3]:.2f}, GJB2_recall: {GJB2_notnan_rs[4]:.2f}, GJB2_notnan_f1: {GJB2_notnan_rs[5]:.2f}"
+            f"val_acc: {val_rs[0]*100:.1f}%, val_auc: {val_rs[1]:.2f}, val_precision: {val_rs[2]:.2f}, val_recall: {val_rs[3]:.2f}, val_f1: {val_rs[4]:.2f}, "
+            f"test_acc: {test_rs[0]*100:.1f}%, test_auc: {test_rs[1]:.2f}, test_precision: {test_rs[2]:.2f}, test_recall: {test_rs[3]:.2f}, test_f1: {test_rs[4]:.2f}, "
+            f"RYR1_acc: {RYR1_notnan_rs[0]*100:.1f}%, RYR1_auc: {RYR1_notnan_rs[1]:.2f}, RYR1_precision: {RYR1_notnan_rs[2]:.2f}, RYR1_recall: {RYR1_notnan_rs[3]:.2f}, RYR1_f1: {RYR1_notnan_rs[4]:.2f}, "
+            f"GJB2_acc: {GJB2_notnan_rs[0]*100:.1f}%, GJB2_auc: {GJB2_notnan_rs[1]:.2f}, GJB2_precision: {GJB2_notnan_rs[2]:.2f}, GJB2_recall: {GJB2_notnan_rs[3]:.2f}, GJB2_f1: {GJB2_notnan_rs[4]:.2f}"
         )
         LOGGER.info(msg)
+
         evaluations[i] = {
-            'val_loss': val_rs[0], 'val_accuracy': val_rs[1], 'val_auc': val_rs[2], 'val_precision': val_rs[3], 'val_recall': val_rs[4], 'val_f1': val_rs[5],
-            'test_loss': test_rs[0], 'test_accuracy': test_rs[1], 'test_auc': test_rs[2], 'test_precision': test_rs[3], 'test_recall': test_rs[4], 'test_f1': test_rs[5],
-            'GJB2_notnan_loss': GJB2_notnan_rs[0], 'GJB2_notnan_accuracy': GJB2_notnan_rs[1], 'GJB2_notnan_auc': GJB2_notnan_rs[2], 'GJB2_notnan_precision': GJB2_notnan_rs[3], 'GJB2_notnan_recall': GJB2_notnan_rs[4], 'GJB2_notnan_f1': GJB2_notnan_rs[5],
-            'RYR1_notnan_loss': RYR1_notnan_rs[0], 'RYR1_notnan_accuracy': RYR1_notnan_rs[1], 'RYR1_notnan_auc': RYR1_notnan_rs[2], 'RYR1_notnan_precision': RYR1_notnan_rs[3], 'RYR1_notnan_recall': RYR1_notnan_rs[4], 'RYR1_notnan_f1': RYR1_notnan_rs[5],
+            'val_accuracy': val_rs[0], 'val_auc': val_rs[1], 'val_precision': val_rs[2], 'val_recall': val_rs[3], 'val_f1': val_rs[4],
+            'test_accuracy': test_rs[0], 'test_auc': test_rs[1], 'test_precision': test_rs[2], 'test_recall': test_rs[3], 'test_f1': test_rs[4],
+            'GJB2_notnan_accuracy': GJB2_notnan_rs[0], 'GJB2_notnan_auc': GJB2_notnan_rs[1], 'GJB2_notnan_precision': GJB2_notnan_rs[2], 'GJB2_notnan_recall': GJB2_notnan_rs[3], 'GJB2_notnan_f1': GJB2_notnan_rs[4],
+            'RYR1_notnan_accuracy': RYR1_notnan_rs[0], 'RYR1_notnan_auc': RYR1_notnan_rs[1], 'RYR1_notnan_precision': RYR1_notnan_rs[2], 'RYR1_notnan_recall': RYR1_notnan_rs[3], 'RYR1_notnan_f1': RYR1_notnan_rs[4],
         }
     
     df_evaluations = pd.DataFrame(evaluations).T
-    df_evaluations.to_csv(f'{log_dir}/evaluations.csv', index=False)
+    df_evaluations.to_csv(f"{log_dir}/evaluations.csv", index=False)
 
     # df_overall: mean row, std row, sem row
-    df_overall = pd.DataFrame(columns=df_evaluations.columns)
-    df_overall.loc['mean'] = df_evaluations.mean()
-    df_overall.loc['std'] = df_evaluations.std()
-    df_overall.loc['sem'] = df_evaluations.sem()
-    df_overall.to_csv(f'{log_dir}/overall.csv', index=False)
+    df_overall = pd.DataFrame(index=["mean", "std", "sem"], columns=df_evaluations.columns)
+    df_overall.loc["mean"] = df_evaluations.mean(numeric_only=True)
+    df_overall.loc["std"]  = df_evaluations.std(numeric_only=True)
+    df_overall.loc["sem"]  = df_evaluations.sem(numeric_only=True)
+
+    # keep index so mean/std/sem labels are preserved
+    df_overall.to_csv(f"{log_dir}/overall.csv", index=True)
 
     LOGGER.info("-----------------------------------------------------------------")
-    LOGGER.info(f"Vali - loss: {df_overall.loc['mean', 'val_loss']:.2f}±{df_overall.loc['sem', 'val_loss']:.2f}, "
-                f"accuracy: {df_overall.loc['mean', 'val_accuracy']*100:.1f}±{df_overall.loc['sem', 'val_accuracy']*100:.1f}%, "
-                f"auc: {df_overall.loc['mean', 'val_auc']:.2f}±{df_overall.loc['sem', 'val_auc']:.2f}")
-    LOGGER.info(f"Test - loss: {df_overall.loc['mean', 'test_loss']:.2f}±{df_overall.loc['sem', 'test_loss']:.2f}, "
-                f"accuracy: {df_overall.loc['mean', 'test_accuracy']*100:.1f}±{df_overall.loc['sem', 'test_accuracy']*100:.1f}%, "
-                f"auc: {df_overall.loc['mean', 'test_auc']:.2f}±{df_overall.loc['sem', 'test_auc']:.2f}")
-    LOGGER.info(f"GJB2 - loss: {df_overall.loc['mean', 'GJB2_notnan_loss']:.2f}±{df_overall.loc['sem', 'GJB2_notnan_loss']:.2f}, "
-                f"accuracy: {df_overall.loc['mean', 'GJB2_notnan_accuracy']*100:.1f}±{df_overall.loc['sem', 'GJB2_notnan_accuracy']*100:.1f}%, "
-                f"auc: {df_overall.loc['mean', 'GJB2_notnan_auc']:.2f}±{df_overall.loc['sem', 'GJB2_notnan_auc']:.2f}")
-    LOGGER.info(f"RYR1 - loss: {df_overall.loc['mean', 'RYR1_notnan_loss']:.2f}±{df_overall.loc['sem', 'RYR1_notnan_loss']:.2f}, "
-                f"accuracy: {df_overall.loc['mean', 'RYR1_notnan_accuracy']*100:.1f}±{df_overall.loc['sem', 'RYR1_notnan_accuracy']*100:.1f}%, "
-                f"auc: {df_overall.loc['mean', 'RYR1_notnan_auc']:.2f}±{df_overall.loc['sem', 'RYR1_notnan_auc']:.2f}")
+
+    LOGGER.info(
+        f"Vali - "
+        f"accuracy: {df_overall.loc['mean','val_accuracy']*100:.1f}±{df_overall.loc['sem','val_accuracy']*100:.1f}%, "
+        f"auc: {df_overall.loc['mean','val_auc']:.2f}±{df_overall.loc['sem','val_auc']:.2f}, "
+        f"precision: {df_overall.loc['mean','val_precision']:.2f}±{df_overall.loc['sem','val_precision']:.2f}, "
+        f"recall: {df_overall.loc['mean','val_recall']:.2f}±{df_overall.loc['sem','val_recall']:.2f}, "
+        f"f1: {df_overall.loc['mean','val_f1']:.2f}±{df_overall.loc['sem','val_f1']:.2f}"
+    )
+
+    LOGGER.info(
+        f"Test - "
+        f"accuracy: {df_overall.loc['mean','test_accuracy']*100:.1f}±{df_overall.loc['sem','test_accuracy']*100:.1f}%, "
+        f"auc: {df_overall.loc['mean','test_auc']:.2f}±{df_overall.loc['sem','test_auc']:.2f}, "
+        f"precision: {df_overall.loc['mean','test_precision']:.2f}±{df_overall.loc['sem','test_precision']:.2f}, "
+        f"recall: {df_overall.loc['mean','test_recall']:.2f}±{df_overall.loc['sem','test_recall']:.2f}, "
+        f"f1: {df_overall.loc['mean','test_f1']:.2f}±{df_overall.loc['sem','test_f1']:.2f}"
+    )
+
+    LOGGER.info(
+        f"GJB2 - "
+        f"accuracy: {df_overall.loc['mean','GJB2_notnan_accuracy']*100:.1f}±{df_overall.loc['sem','GJB2_notnan_accuracy']*100:.1f}%, "
+        f"auc: {df_overall.loc['mean','GJB2_notnan_auc']:.2f}±{df_overall.loc['sem','GJB2_notnan_auc']:.2f}, "
+        f"precision: {df_overall.loc['mean','GJB2_notnan_precision']:.2f}±{df_overall.loc['sem','GJB2_notnan_precision']:.2f}, "
+        f"recall: {df_overall.loc['mean','GJB2_notnan_recall']:.2f}±{df_overall.loc['sem','GJB2_notnan_recall']:.2f}, "
+        f"f1: {df_overall.loc['mean','GJB2_notnan_f1']:.2f}±{df_overall.loc['sem','GJB2_notnan_f1']:.2f}"
+    )
+
+    LOGGER.info(
+        f"RYR1 - "
+        f"accuracy: {df_overall.loc['mean','RYR1_notnan_accuracy']*100:.1f}±{df_overall.loc['sem','RYR1_notnan_accuracy']*100:.1f}%, "
+        f"auc: {df_overall.loc['mean','RYR1_notnan_auc']:.2f}±{df_overall.loc['sem','RYR1_notnan_auc']:.2f}, "
+        f"precision: {df_overall.loc['mean','RYR1_notnan_precision']:.2f}±{df_overall.loc['sem','RYR1_notnan_precision']:.2f}, "
+        f"recall: {df_overall.loc['mean','RYR1_notnan_recall']:.2f}±{df_overall.loc['sem','RYR1_notnan_recall']:.2f}, "
+        f"f1: {df_overall.loc['mean','RYR1_notnan_f1']:.2f}±{df_overall.loc['sem','RYR1_notnan_f1']:.2f}"
+    )
+
     LOGGER.info("-----------------------------------------------------------------")
     # plot
     folds_history = [pd.read_csv(f'{log_dir}/history_fold_{i}.csv') for i in range(1, 6)]
@@ -295,6 +395,103 @@ def reproduce_foundation_model(
     df_RYR1_nan = pd.DataFrame(np_RYR1_nan)
     df_RYR1_nan.to_csv(f'{log_dir}/RYR1_nan_pathogenicity_pred.csv', index=False)
 
+def train_foundation_model(
+        name='reproduce_foundation_model',
+        featds=TANDEM_R20000,
+        featset=TANDEM_FEATS['v1.1'],
+        gjb2ds=TANDEM_GJB2,
+        ryr1ds=TANDEM_RYR1,
+        clstr=CLUSTER,
+    ):
+    """
+    folds: dictionary contains information of 5 folds
+    R20000: all SAVs (SAV_coords, features, labels) that are distributed into folds
+    preprocess_feat: class object which helps to standardize new input (e.g., RYR1, GJB2)
+
+    train+val --> train
+    test --> evaluate
+    """
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    log_dir = os.path.join(ROOT_DIR, f'logs/{name}/{current_time}')
+    logfile = os.path.join(log_dir, 'log.txt')
+    os.makedirs(log_dir, exist_ok=True)
+    LOGGER.start(logfile)
+    LOGGER.info(f"Start Time = {current_time}")
+    LOGGER.info(f"Tensorflow Version: {tf.__version__}") # Write to log    
+    LOGGER.info("Tensorflow Version should be 2.17")
+    LOGGER.info(f"Feature set: {featset}")
+    seed=17
+    patience = 50
+    n_hidden = 5
+    
+    use_all_gpus()
+    folds, R20000, preprocess_feat, df_clstr = getR20000(featds, clstr, feat_names=featset)
+    # Save train data (train+val) for shap analysis
+    R20000_x_train = np.vstack(
+        tup=(folds[1]['train']['x'],folds[1]['val']['x'])
+    )
+    R20000_y_train = np.vstack(
+        tup=(folds[1]['train']['y'],folds[1]['val']['y'])
+    )
+    np.save(f'{log_dir}/shap_background.npy', R20000_x_train)
+
+    GJB2_knw, GJB2_unk = getTestset(gjb2ds, featset, preprocess_feat)
+    RYR1_knw, RYR1_unk = getTestset(ryr1ds, featset, preprocess_feat)
+    GJB2_notnan_SAV_coords, GJB2_notnan_labels, GJB2_notnan_features = GJB2_knw
+    RYR1_notnan_SAV_coords, RYR1_notnan_labels, RYR1_notnan_features = RYR1_knw
+    GJB2_nan_SAV_coords, GJB2_nan_labels, GJB2_nan_features = GJB2_unk
+    RYR1_nan_SAV_coords, RYR1_nan_labels, RYR1_nan_features = RYR1_unk
+    
+    input_shape = R20000[2].shape[1]
+    cfg = get_config(input_shape, n_hidden=n_hidden, patience=patience, dropout_rate=0.0)
+    
+    ##################### 3. Train ####################################
+    train_ds = np_to_dataset(R20000_x_train, R20000_y_train, shuffle=True, batch_size=cfg.training.batch_size, seed=seed)
+    test_ds = np_to_dataset(folds[1]['test']['x'], folds[1]['test']['y'], shuffle=False, batch_size=cfg.training.batch_size, seed=seed)
+
+    initial_biase = np.log([np.sum(R20000_y_train[:, 0]) / np.sum(R20000_y_train[:, 1])]) # Ref: https://www.tensorflow.org/tutorials/structured_data/imbalanced_data
+
+    model = train_model(
+        train_ds, test_ds, cfg=cfg,
+        folder=log_dir, filename=f'train_plus_val', model_input=None, 
+        seed=seed, initial_biase=initial_biase, logging_model=False,
+    )
+
+    ### Evaluation
+    # accuracy, auc, precision, recall, f1
+    test_rs        = evaluate(model, R20000_x_train, R20000_y_train)
+    GJB2_notnan_rs = evaluate(model, GJB2_notnan_features, GJB2_notnan_labels)
+    RYR1_notnan_rs = evaluate(model, RYR1_notnan_features, RYR1_notnan_labels)
+
+    msg = (
+        f"test_acc: {test_rs[0]*100:.1f}%, test_auc: {test_rs[1]:.2f}, test_precision: {test_rs[2]:.2f}, test_recall: {test_rs[3]:.2f}, test_f1: {test_rs[4]:.2f}, "
+        f"RYR1_acc: {RYR1_notnan_rs[0]*100:.1f}%, RYR1_auc: {RYR1_notnan_rs[1]:.2f}, RYR1_precision: {RYR1_notnan_rs[2]:.2f}, RYR1_recall: {RYR1_notnan_rs[3]:.2f}, RYR1_f1: {RYR1_notnan_rs[4]:.2f}, "
+        f"GJB2_acc: {GJB2_notnan_rs[0]*100:.1f}%, GJB2_auc: {GJB2_notnan_rs[1]:.2f}, GJB2_precision: {GJB2_notnan_rs[2]:.2f}, GJB2_recall: {GJB2_notnan_rs[3]:.2f}, GJB2_f1: {GJB2_notnan_rs[4]:.2f}"
+    )
+    LOGGER.info(msg)
+
+    hist_path = os.path.join(log_dir, "history_train_plus_val.csv")
+    hist_df = pd.read_csv(hist_path)
+    # epoch,train_loss,train_accuracy,val_loss,val_accuracy
+        
+    # Plot loss
+    plt.figure(figsize=(7, 5))
+    plt.plot(hist_df["train_loss"], label="Train Loss")
+    plt.plot(hist_df["val_loss"], label="Test Loss")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Training Loss Curve")
+    plt.legend()
+    plt.grid(alpha=0.3)
+
+    loss_fig = os.path.join(log_dir, "training_loss.png")
+    plt.tight_layout()
+    plt.savefig(loss_fig, dpi=200)
+    plt.close()
+
+    LOGGER.info(f"Training loss curve saved to {loss_fig}")
+
 def reproduce_transfer_learning_model(
         base_models,
         TANDEM_testSet,
@@ -313,7 +510,7 @@ def reproduce_transfer_learning_model(
     ##################### 1. Set up feature set #####################
     t_sel_feats = TANDEM_FEATS['v1.1']
     LOGGER.info(f"Feature set: {t_sel_feats}")
-    R20000_folds, R20000, preprocess_feat = getR20000(TANDEM_R20000, CLUSTER, feat_names=t_sel_feats)
+    R20000_folds, R20000, preprocess_feat, df_clstr = getR20000(TANDEM_R20000, CLUSTER, feat_names=t_sel_feats)
     test_knw, test_unk = getTestset(TANDEM_testSet, t_sel_feats, preprocess_feat) 
 
     SAV_coords, labels, features = test_knw
@@ -361,11 +558,11 @@ def reproduce_transfer_learning_model(
     df_VUS_prob_list = []
     df_VUS_pred_list = []
 
-    df_cols = ['R20000_val_loss', 'R20000_val_accuracy',  'R20000_val_auc', 'R20000_val_precision', 'R20000_val_recall', 'R20000_val_f1',
-               'R20000_test_loss', 'R20000_test_accuracy', 'R20000_test_auc', 'R20000_test_precision', 'R20000_test_recall', 'R20000_test_f1',
-               'val_loss', 'val_accuracy', 'val_auc', 'val_precision', 'val_recall', 'val_f1',
-               'test_loss', 'test_accuracy', 'test_auc', 'test_precision', 'test_recall', 'test_f1',
-               'knw_loss', 'knw_accuracy', 'knw_auc', 'knw_precision', 'knw_recall', 'knw_f1',
+    df_cols = ['R20000_val_accuracy',  'R20000_val_auc', 'R20000_val_precision', 'R20000_val_recall', 'R20000_val_f1',
+               'R20000_test_accuracy', 'R20000_test_auc', 'R20000_test_precision', 'R20000_test_recall', 'R20000_test_f1',
+               'val_accuracy', 'val_auc', 'val_precision', 'val_recall', 'val_f1',
+               'test_accuracy', 'test_auc', 'test_precision', 'test_recall', 'test_f1',
+               'knw_accuracy', 'knw_auc', 'knw_precision', 'knw_recall', 'knw_f1',
                ]
     
     baseline = pd.DataFrame(columns=df_cols)
@@ -419,100 +616,80 @@ def reproduce_transfer_learning_model(
                 filename=f'fold_{fold_idx+1}',
                 model_input=fd_model_cp,
             )
+
             ### Evaluation before training
-            before_R20000_val_performance = fd_model.evaluate(R20000_val_ds, verbose=0)
-            before_R20000_test_performance = fd_model.evaluate(R20000_test_ds, verbose=0)
-            before_val_performance = fd_model.evaluate(val_ds, verbose=0)
-            before_test_performance = fd_model.evaluate(test_ds, verbose=0)
-            before_knw_performance = fd_model.evaluate(knw_ds, verbose=0)
+            before_R20000_val_rs  = evaluate(fd_model, R20000_val['x'],  R20000_val['y'])
+            before_R20000_test_rs = evaluate(fd_model, R20000_test['x'], R20000_test['y'])
+            before_val_rs         = evaluate(fd_model, x_val,            y_val)
+            before_test_rs        = evaluate(fd_model, x_test,           y_test)
+            before_knw_rs         = evaluate(fd_model, features,         y_knw)
+
             ### Evaluation after training
-            after_R20000_val_performance = model.evaluate(R20000_val_ds,verbose=0)
-            after_R20000_test_performance = model.evaluate(R20000_test_ds,verbose=0)
-            after_val_performance = model.evaluate(val_ds,verbose=0)
-            after_test_performance = model.evaluate(test_ds,verbose=0)
-            after_knw_performance = model.evaluate(knw_ds,verbose=0)
+            after_R20000_val_rs   = evaluate(model, R20000_val['x'],     R20000_val['y'])
+            after_R20000_test_rs  = evaluate(model, R20000_test['x'],    R20000_test['y'])
+            after_val_rs          = evaluate(model, x_val,               y_val)
+            after_test_rs         = evaluate(model, x_test,              y_test)
+            after_knw_rs          = evaluate(model, features,            y_knw)
+
+            # index mapping:
+            # 0=accuracy, 1=auc, 2=precision, 3=recall, 4=f1
 
             before_train[fold_idx] = {
-                'R20000_val_loss': before_R20000_val_performance[0], 'R20000_val_accuracy': before_R20000_val_performance[1], 'R20000_val_auc': before_R20000_val_performance[2], 'R20000_val_precision': before_R20000_val_performance[3], 'R20000_val_recall': before_R20000_val_performance[4],  'R20000_val_f1': before_R20000_val_performance[5], 
-                'R20000_test_loss': before_R20000_test_performance[0], 'R20000_test_accuracy': before_R20000_test_performance[1], 'R20000_test_auc': before_R20000_test_performance[2], 'R20000_test_precision': before_R20000_test_performance[3], 'R20000_test_recall': before_R20000_test_performance[4], 'R20000_test_f1': before_R20000_test_performance[5],
-                'val_loss': before_val_performance[0], 'val_accuracy': before_val_performance[1], 'val_auc': before_val_performance[2], 'val_precision': before_val_performance[3], 'val_recall': before_val_performance[4], 'val_f1': before_val_performance[5],
-                'test_loss': before_test_performance[0], 'test_accuracy': before_test_performance[1], 'test_auc': before_test_performance[2], 'test_precision': before_test_performance[3], 'test_recall': before_test_performance[4], 'test_f1': before_test_performance[5],
-                'knw_loss': before_knw_performance[0], 'knw_accuracy': before_knw_performance[1], 'knw_auc': before_knw_performance[2], 'knw_precision': before_knw_performance[3], 'knw_recall': before_knw_performance[4], 'knw_f1': before_knw_performance[5],
+                'R20000_val_accuracy': before_R20000_val_rs[0],  'R20000_val_auc': before_R20000_val_rs[1],
+                'R20000_val_precision': before_R20000_val_rs[2], 'R20000_val_recall': before_R20000_val_rs[3],
+                'R20000_val_f1': before_R20000_val_rs[4],
+
+                'R20000_test_accuracy': before_R20000_test_rs[0],  'R20000_test_auc': before_R20000_test_rs[1],
+                'R20000_test_precision': before_R20000_test_rs[2], 'R20000_test_recall': before_R20000_test_rs[3],
+                'R20000_test_f1': before_R20000_test_rs[4],
+
+                'val_accuracy': before_val_rs[0],  'val_auc': before_val_rs[1],
+                'val_precision': before_val_rs[2], 'val_recall': before_val_rs[3],
+                'val_f1': before_val_rs[4],
+
+                'test_accuracy': before_test_rs[0],  'test_auc': before_test_rs[1],
+                'test_precision': before_test_rs[2], 'test_recall': before_test_rs[3],
+                'test_f1': before_test_rs[4],
+
+                'knw_accuracy': before_knw_rs[0],  'knw_auc': before_knw_rs[1],
+                'knw_precision': before_knw_rs[2], 'knw_recall': before_knw_rs[3],
+                'knw_f1': before_knw_rs[4],
             }
+
             after_train[fold_idx] = {
-                'R20000_val_loss': after_R20000_val_performance[0], 'R20000_val_accuracy': after_R20000_val_performance[1], 'R20000_val_auc': after_R20000_val_performance[2], 'R20000_val_precision': after_R20000_val_performance[3], 'R20000_val_recall': after_R20000_val_performance[4], 'R20000_val_f1': after_R20000_val_performance[5],
-                'R20000_test_loss': after_R20000_test_performance[0], 'R20000_test_accuracy': after_R20000_test_performance[1], 'R20000_test_auc': after_R20000_test_performance[2], 'R20000_test_precision': after_R20000_test_performance[3], 'R20000_test_recall': after_R20000_test_performance[4], 'R20000_test_f1': after_R20000_test_performance[5],
-                'val_loss': after_val_performance[0], 'val_accuracy': after_val_performance[1], 'val_auc': after_val_performance[2], 'val_precision': after_val_performance[3], 'val_recall': after_val_performance[4], 'val_f1': after_val_performance[5],
-                'test_loss': after_test_performance[0], 'test_accuracy': after_test_performance[1], 'test_auc': after_test_performance[2], 'test_precision': after_test_performance[3], 'test_recall': after_test_performance[4], 'test_f1': after_test_performance[5],
-                'knw_loss': after_knw_performance[0], 'knw_accuracy': after_knw_performance[1], 'knw_auc': after_knw_performance[2], 'knw_precision': after_knw_performance[3], 'knw_recall': after_knw_performance[4], 'knw_f1': after_knw_performance[5],
+                'R20000_val_accuracy': after_R20000_val_rs[0],  'R20000_val_auc': after_R20000_val_rs[1],
+                'R20000_val_precision': after_R20000_val_rs[2], 'R20000_val_recall': after_R20000_val_rs[3],
+                'R20000_val_f1': after_R20000_val_rs[4],
+
+                'R20000_test_accuracy': after_R20000_test_rs[0],  'R20000_test_auc': after_R20000_test_rs[1],
+                'R20000_test_precision': after_R20000_test_rs[2], 'R20000_test_recall': after_R20000_test_rs[3],
+                'R20000_test_f1': after_R20000_test_rs[4],
+
+                'val_accuracy': after_val_rs[0],  'val_auc': after_val_rs[1], 'val_precision': after_val_rs[2], 'val_recall': after_val_rs[3], 'val_f1': after_val_rs[4],
+                'test_accuracy': after_test_rs[0],  'test_auc': after_test_rs[1], 'test_precision': after_test_rs[2], 'test_recall': after_test_rs[3], 'test_f1': after_test_rs[4],
+                'knw_accuracy': after_knw_rs[0],  'knw_auc': after_knw_rs[1], 'knw_precision': after_knw_rs[2], 'knw_recall': after_knw_rs[3], 'knw_f1': after_knw_rs[4],
             }
 
             LOGGER.info(
                 f"Fold {fold_idx+1} before - "
-                f"R20000_val_loss: {before_R20000_val_performance[0]:.2f}, "
-                f"R20000_val_accuracy: {before_R20000_val_performance[1]*100:.2f}%, "
-                f"R20000_val_auc: {before_R20000_val_performance[2]:.2f}, "
-                f"R20000_val_precision: {before_R20000_val_performance[3]:.2f}, "
-                f"R20000_val_recall: {before_R20000_val_performance[4]:.2f}, "
-                f"R20000_val_f1: {before_R20000_val_performance[5]:.2f}, "
-                f"R20000_test_loss: {before_R20000_test_performance[0]:.2f}, "
-                f"R20000_test_accuracy: {before_R20000_test_performance[1]*100:.2f}%, "
-                f"R20000_test_auc: {before_R20000_test_performance[2]:.2f}, "
-                f"R20000_test_precision: {before_R20000_test_performance[3]:.2f}, "
-                f"R20000_test_recall: {before_R20000_test_performance[4]:.2f}, "
-                f"R20000_test_f1: {before_R20000_test_performance[5]:.2f}, "
-                f"val_loss: {before_val_performance[0]:.2f}, "
-                f"val_accuracy: {before_val_performance[1]*100:.2f}%, "
-                f"val_auc: {before_val_performance[2]:.2f}, "
-                f"val_precision: {before_val_performance[3]:.2f}, "
-                f"val_recall: {before_val_performance[4]:.2f}, "
-                f"val_f1: {before_val_performance[5]:.2f}, "
-                f"test_loss: {before_test_performance[0]:.2f}, "
-                f"test_accuracy: {before_test_performance[1]*100:.2f}%, "
-                f"test_auc: {before_test_performance[2]:.2f}, "
-                f"test_precision: {before_test_performance[3]:.2f}, "
-                f"test_recall: {before_test_performance[4]:.2f}, "
-                f"test_f1: {before_test_performance[5]:.2f}, "
-                f"knw_loss: {before_knw_performance[0]:.2f}, "
-                f"knw_accuracy: {before_knw_performance[1]*100:.2f}%, "
-                f"knw_auc: {before_knw_performance[2]:.2f}, "
-                f"knw_precision: {before_knw_performance[3]:.2f}, "
-                f"knw_recall: {before_knw_performance[4]:.2f}, "
-                f"knw_f1: {before_knw_performance[5]:.2f}"
+                f"R20000_val_acc: {before_R20000_val_rs[0]*100:.2f}%, R20000_val_auc: {before_R20000_val_rs[1]:.2f}, "
+                f"R20000_val_precision: {before_R20000_val_rs[2]:.2f}, R20000_val_recall: {before_R20000_val_rs[3]:.2f}, R20000_val_f1: {before_R20000_val_rs[4]:.2f}, "
+                f"R20000_test_acc: {before_R20000_test_rs[0]*100:.2f}%, R20000_test_auc: {before_R20000_test_rs[1]:.2f}, "
+                f"R20000_test_precision: {before_R20000_test_rs[2]:.2f}, R20000_test_recall: {before_R20000_test_rs[3]:.2f}, R20000_test_f1: {before_R20000_test_rs[4]:.2f}, "
+                f"val_acc: {before_val_rs[0]*100:.2f}%, val_auc: {before_val_rs[1]:.2f}, val_precision: {before_val_rs[2]:.2f}, val_recall: {before_val_rs[3]:.2f}, val_f1: {before_val_rs[4]:.2f}, "
+                f"test_acc: {before_test_rs[0]*100:.2f}%, test_auc: {before_test_rs[1]:.2f}, test_precision: {before_test_rs[2]:.2f}, test_recall: {before_test_rs[3]:.2f}, test_f1: {before_test_rs[4]:.2f}, "
+                f"knw_acc: {before_knw_rs[0]*100:.2f}%, knw_auc: {before_knw_rs[1]:.2f}, knw_precision: {before_knw_rs[2]:.2f}, knw_recall: {before_knw_rs[3]:.2f}, knw_f1: {before_knw_rs[4]:.2f}"
             )
 
             LOGGER.info(
                 f"Fold {fold_idx+1} after - "
-                f"R20000_val_loss: {after_R20000_val_performance[0]:.2f}, "
-                f"R20000_val_accuracy: {after_R20000_val_performance[1]*100:.2f}%, "
-                f"R20000_val_auc: {after_R20000_val_performance[2]:.2f}, "
-                f"R20000_val_precision: {after_R20000_val_performance[3]:.2f}, "
-                f"R20000_val_recall: {after_R20000_val_performance[4]:.2f}, "
-                f"R20000_val_f1: {after_R20000_val_performance[5]:.2f}, "
-                f"R20000_test_loss: {after_R20000_test_performance[0]:.2f}, "
-                f"R20000_test_accuracy: {after_R20000_test_performance[1]*100:.2f}%, "
-                f"R20000_test_auc: {after_R20000_test_performance[2]:.2f}, "
-                f"R20000_test_precision: {after_R20000_test_performance[3]:.2f}, "
-                f"R20000_test_recall: {after_R20000_test_performance[4]:.2f}, "
-                f"R20000_test_f1: {after_R20000_test_performance[5]:.2f}, "
-                f"val_loss: {after_val_performance[0]:.2f}, "
-                f"val_accuracy: {after_val_performance[1]*100:.2f}%, "
-                f"val_auc: {after_val_performance[2]:.2f}, "
-                f"val_precision: {after_val_performance[3]:.2f}, "
-                f"val_recall: {after_val_performance[4]:.2f}, "
-                f"val_f1: {after_val_performance[5]:.2f}, "
-                f"test_loss: {after_test_performance[0]:.2f}, "
-                f"test_accuracy: {after_test_performance[1]*100:.2f}%, "
-                f"test_auc: {after_test_performance[2]:.2f}, "
-                f"test_precision: {after_test_performance[3]:.2f}, "
-                f"test_recall: {after_test_performance[4]:.2f}, "
-                f"test_f1: {after_test_performance[5]:.2f}, "
-                f"knw_loss: {after_knw_performance[0]:.2f}, "
-                f"knw_accuracy: {after_knw_performance[1]*100:.2f}%, "
-                f"knw_auc: {after_knw_performance[2]:.2f}, "
-                f"knw_precision: {after_knw_performance[3]:.2f}, "
-                f"knw_recall: {after_knw_performance[4]:.2f}, "
-                f"knw_f1: {after_knw_performance[5]:.2f}"
+                f"R20000_val_acc: {after_R20000_val_rs[0]*100:.2f}%, R20000_val_auc: {after_R20000_val_rs[1]:.2f}, "
+                f"R20000_val_precision: {after_R20000_val_rs[2]:.2f}, R20000_val_recall: {after_R20000_val_rs[3]:.2f}, R20000_val_f1: {after_R20000_val_rs[4]:.2f}, "
+                f"R20000_test_acc: {after_R20000_test_rs[0]*100:.2f}%, R20000_test_auc: {after_R20000_test_rs[1]:.2f}, "
+                f"R20000_test_precision: {after_R20000_test_rs[2]:.2f}, R20000_test_recall: {after_R20000_test_rs[3]:.2f}, R20000_test_f1: {after_R20000_test_rs[4]:.2f}, "
+                f"val_acc: {after_val_rs[0]*100:.2f}%, val_auc: {after_val_rs[1]:.2f}, val_precision: {after_val_rs[2]:.2f}, val_recall: {after_val_rs[3]:.2f}, val_f1: {after_val_rs[4]:.2f}, "
+                f"test_acc: {after_test_rs[0]*100:.2f}%, test_auc: {after_test_rs[1]:.2f}, test_precision: {after_test_rs[2]:.2f}, test_recall: {after_test_rs[3]:.2f}, test_f1: {after_test_rs[4]:.2f}, "
+                f"knw_acc: {after_knw_rs[0]*100:.2f}%, knw_auc: {after_knw_rs[1]:.2f}, knw_precision: {after_knw_rs[2]:.2f}, knw_recall: {after_knw_rs[3]:.2f}, knw_f1: {after_knw_rs[4]:.2f}"
             )
 
             # Prediction test_ds
@@ -590,23 +767,93 @@ def reproduce_transfer_learning_model(
         after_train_overall.to_csv(f'{model_dir}/after_training.csv', index=False)
         LOGGER.info(f"Save after_train_overall to {f'{model_dir}/after_training.csv'}")
 
-        # Print out the results
+        # Print out the results (no loss)
         print_out = 'Before Training\n'
         print_out += '-----------------------------------------------------------------\n'
-        print_out += 'R20000_val_loss\t%.2f±%.2f, R20000_val_accuracy\t%.2f±%.2f%%, \n' % (before_train_overall.loc['mean', 'R20000_val_loss'], before_train_overall.loc['sem', 'R20000_val_loss'], before_train_overall.loc['mean', 'R20000_val_accuracy']*100, before_train_overall.loc['sem', 'R20000_val_accuracy']*100)
-        print_out += 'R20000_test_loss\t%.2f±%.2f, R20000_test_accuracy\t%.2f±%.2f%%, \n' % (before_train_overall.loc['mean', 'R20000_test_loss'], before_train_overall.loc['sem', 'R20000_test_loss'], before_train_overall.loc['mean', 'R20000_test_accuracy']*100, before_train_overall.loc['sem', 'R20000_test_accuracy']*100)
-        print_out += 'val_loss\t%.2f±%.2f, val_accuracy\t%.2f±%.2f%%, \n' % (before_train_overall.loc['mean', 'val_loss'], before_train_overall.loc['sem', 'val_loss'], before_train_overall.loc['mean', 'val_accuracy']*100, before_train_overall.loc['sem', 'val_accuracy']*100)
-        print_out += 'test_loss\t%.2f±%.2f, test_accuracy\t%.2f±%.2f%%, \n' % (before_train_overall.loc['mean', 'test_loss'], before_train_overall.loc['sem', 'test_loss'], before_train_overall.loc['mean', 'test_accuracy']*100, before_train_overall.loc['sem', 'test_accuracy']*100)
-        print_out += 'knw_loss\t%.2f±%.2f, knw_accuracy\t%.2f±%.2f%%, \n' % (before_train_overall.loc['mean', 'knw_loss'], before_train_overall.loc['sem', 'knw_loss'], before_train_overall.loc['mean', 'knw_accuracy']*100, before_train_overall.loc['sem', 'knw_accuracy']*100)
+        print_out += (
+            'R20000_val  acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (before_train_overall.loc['mean','R20000_val_accuracy']*100, before_train_overall.loc['sem','R20000_val_accuracy']*100,
+            before_train_overall.loc['mean','R20000_val_auc'],         before_train_overall.loc['sem','R20000_val_auc'],
+            before_train_overall.loc['mean','R20000_val_precision'],   before_train_overall.loc['sem','R20000_val_precision'],
+            before_train_overall.loc['mean','R20000_val_recall'],      before_train_overall.loc['sem','R20000_val_recall'],
+            before_train_overall.loc['mean','R20000_val_f1'],          before_train_overall.loc['sem','R20000_val_f1'])
+        )
+        print_out += (
+            'R20000_test acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (before_train_overall.loc['mean','R20000_test_accuracy']*100, before_train_overall.loc['sem','R20000_test_accuracy']*100,
+            before_train_overall.loc['mean','R20000_test_auc'],         before_train_overall.loc['sem','R20000_test_auc'],
+            before_train_overall.loc['mean','R20000_test_precision'],   before_train_overall.loc['sem','R20000_test_precision'],
+            before_train_overall.loc['mean','R20000_test_recall'],      before_train_overall.loc['sem','R20000_test_recall'],
+            before_train_overall.loc['mean','R20000_test_f1'],          before_train_overall.loc['sem','R20000_test_f1'])
+        )
+        print_out += (
+            'val         acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (before_train_overall.loc['mean','val_accuracy']*100, before_train_overall.loc['sem','val_accuracy']*100,
+            before_train_overall.loc['mean','val_auc'],         before_train_overall.loc['sem','val_auc'],
+            before_train_overall.loc['mean','val_precision'],   before_train_overall.loc['sem','val_precision'],
+            before_train_overall.loc['mean','val_recall'],      before_train_overall.loc['sem','val_recall'],
+            before_train_overall.loc['mean','val_f1'],          before_train_overall.loc['sem','val_f1'])
+        )
+        print_out += (
+            'test        acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (before_train_overall.loc['mean','test_accuracy']*100, before_train_overall.loc['sem','test_accuracy']*100,
+            before_train_overall.loc['mean','test_auc'],         before_train_overall.loc['sem','test_auc'],
+            before_train_overall.loc['mean','test_precision'],   before_train_overall.loc['sem','test_precision'],
+            before_train_overall.loc['mean','test_recall'],      before_train_overall.loc['sem','test_recall'],
+            before_train_overall.loc['mean','test_f1'],          before_train_overall.loc['sem','test_f1'])
+        )
+        print_out += (
+            'knw         acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (before_train_overall.loc['mean','knw_accuracy']*100, before_train_overall.loc['sem','knw_accuracy']*100,
+            before_train_overall.loc['mean','knw_auc'],         before_train_overall.loc['sem','knw_auc'],
+            before_train_overall.loc['mean','knw_precision'],   before_train_overall.loc['sem','knw_precision'],
+            before_train_overall.loc['mean','knw_recall'],      before_train_overall.loc['sem','knw_recall'],
+            before_train_overall.loc['mean','knw_f1'],          before_train_overall.loc['sem','knw_f1'])
+        )
         print_out += '-----------------------------------------------------------------\n'
         print_out += 'After Training\n'
-        print_out += 'R20000_val_loss\t%.2f±%.2f, R20000_val_accuracy\t%.2f±%.2f%%, \n' % (after_train_overall.loc['mean', 'R20000_val_loss'], after_train_overall.loc['sem', 'R20000_val_loss'], after_train_overall.loc['mean', 'R20000_val_accuracy']*100, after_train_overall.loc['sem', 'R20000_val_accuracy']*100)
-        print_out += 'R20000_test_loss\t%.2f±%.2f, R20000_test_accuracy\t%.2f±%.2f%%, \n' % (after_train_overall.loc['mean', 'R20000_test_loss'], after_train_overall.loc['sem', 'R20000_test_loss'], after_train_overall.loc['mean', 'R20000_test_accuracy']*100, after_train_overall.loc['sem', 'R20000_test_accuracy']*100)
-        print_out += 'val_loss\t%.2f±%.2f, val_accuracy\t%.2f±%.2f%%, \n' % (after_train_overall.loc['mean', 'val_loss'], after_train_overall.loc['sem', 'val_loss'], after_train_overall.loc['mean', 'val_accuracy']*100, after_train_overall.loc['sem', 'val_accuracy']*100)
-        print_out += 'test_loss\t%.2f±%.2f, test_accuracy\t%.2f±%.2f%%, \n' % (after_train_overall.loc['mean', 'test_loss'], after_train_overall.loc['sem', 'test_loss'], after_train_overall.loc['mean', 'test_accuracy']*100, after_train_overall.loc['sem', 'test_accuracy']*100)
-        print_out += 'knw_loss\t%.2f±%.2f, knw_accuracy\t%.2f±%.2f%%, \n' % (after_train_overall.loc['mean', 'knw_loss'], after_train_overall.loc['sem', 'knw_loss'], after_train_overall.loc['mean', 'knw_accuracy']*100, after_train_overall.loc['sem', 'knw_accuracy']*100)
+        print_out += (
+            'R20000_val  acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (after_train_overall.loc['mean','R20000_val_accuracy']*100, after_train_overall.loc['sem','R20000_val_accuracy']*100,
+            after_train_overall.loc['mean','R20000_val_auc'],         after_train_overall.loc['sem','R20000_val_auc'],
+            after_train_overall.loc['mean','R20000_val_precision'],   after_train_overall.loc['sem','R20000_val_precision'],
+            after_train_overall.loc['mean','R20000_val_recall'],      after_train_overall.loc['sem','R20000_val_recall'],
+            after_train_overall.loc['mean','R20000_val_f1'],          after_train_overall.loc['sem','R20000_val_f1'])
+        )
+        print_out += (
+            'R20000_test acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (after_train_overall.loc['mean','R20000_test_accuracy']*100, after_train_overall.loc['sem','R20000_test_accuracy']*100,
+            after_train_overall.loc['mean','R20000_test_auc'],         after_train_overall.loc['sem','R20000_test_auc'],
+            after_train_overall.loc['mean','R20000_test_precision'],   after_train_overall.loc['sem','R20000_test_precision'],
+            after_train_overall.loc['mean','R20000_test_recall'],      after_train_overall.loc['sem','R20000_test_recall'],
+            after_train_overall.loc['mean','R20000_test_f1'],          after_train_overall.loc['sem','R20000_test_f1'])
+        )
+        print_out += (
+            'val         acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (after_train_overall.loc['mean','val_accuracy']*100, after_train_overall.loc['sem','val_accuracy']*100,
+            after_train_overall.loc['mean','val_auc'],         after_train_overall.loc['sem','val_auc'],
+            after_train_overall.loc['mean','val_precision'],   after_train_overall.loc['sem','val_precision'],
+            after_train_overall.loc['mean','val_recall'],      after_train_overall.loc['sem','val_recall'],
+            after_train_overall.loc['mean','val_f1'],          after_train_overall.loc['sem','val_f1'])
+        )
+        print_out += (
+            'test        acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (after_train_overall.loc['mean','test_accuracy']*100, after_train_overall.loc['sem','test_accuracy']*100,
+            after_train_overall.loc['mean','test_auc'],         after_train_overall.loc['sem','test_auc'],
+            after_train_overall.loc['mean','test_precision'],   after_train_overall.loc['sem','test_precision'],
+            after_train_overall.loc['mean','test_recall'],      after_train_overall.loc['sem','test_recall'],
+            after_train_overall.loc['mean','test_f1'],          after_train_overall.loc['sem','test_f1'])
+        )
+        print_out += (
+            'knw         acc\t%.2f±%.2f%%, auc\t%.2f±%.2f, prec\t%.2f±%.2f, rec\t%.2f±%.2f, f1\t%.2f±%.2f\n'
+            % (after_train_overall.loc['mean','knw_accuracy']*100, after_train_overall.loc['sem','knw_accuracy']*100,
+            after_train_overall.loc['mean','knw_auc'],         after_train_overall.loc['sem','knw_auc'],
+            after_train_overall.loc['mean','knw_precision'],   after_train_overall.loc['sem','knw_precision'],
+            after_train_overall.loc['mean','knw_recall'],      after_train_overall.loc['sem','knw_recall'],
+            after_train_overall.loc['mean','knw_f1'],          after_train_overall.loc['sem','knw_f1'])
+        )
         print_out += '-----------------------------------------------------------------\n'
-        LOGGER.info(print_out) # Write to log
+        LOGGER.info(print_out)
 
         baseline.loc[f'mean_{model_idx}'] = before_train_overall.loc['mean']
         baseline.loc[f'std_{model_idx}'] = before_train_overall.loc['std']

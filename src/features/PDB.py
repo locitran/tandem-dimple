@@ -82,6 +82,7 @@ class PDBfeatures:
         self._gnm = None
         self._anm = None
         self.timestamp = None
+        self.uniref90 = kwargs['uniref90']
 
         if "job_directory" in kwargs:
             self.job_directory = kwargs["job_directory"]
@@ -837,9 +838,9 @@ class PDBfeatures:
                 if self.format == 'custom' or self.format == 'af':
                     # If the format is custom or af, we need to use the pdbPath
                     # And calculate ConSurf based on stand_alone_consurf
-                    f = calcConSurf(self.pdbPath, chID, folder=self.job_directory)  
+                    f = calcConSurf(self.pdbPath, chID, folder=self.job_directory, uniref90=self.uniref90)  
                 else:
-                    f = calcConSurf(self.pdbID, chID, folder=self.job_directory)
+                    f = calcConSurf(self.pdbID, chID, folder=self.job_directory, uniref90=self.uniref90)
                 d['consurf'] = f['consurf']
                 d['ACNR'] = f['ACNR']
                 d['consurf_color'] = f['consurf_color']

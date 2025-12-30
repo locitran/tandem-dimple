@@ -76,6 +76,7 @@ sudo apt install ncbi-blast+
 sudo apt install mafft
 sudo apt install clustalw
 sudo apt install muscle
+sudo apt install hmmer
 ```
 **Step 4**: Test the installation
 ```bash

@@ -8,6 +8,21 @@ from .utils.settings import TANDEM_v1dot1
 
 __all__ = ['run']
 
+def toSAV_coords(SAVs):
+    """
+    >>> a = ['P29033 Y217E', 'P29033 Y217F', 'P29033 Y217T']
+    >>> toSAV_coords(a)
+    ['P29033 217 Y E', 'P29033 217 Y F', 'P29033 217 Y T']
+    """
+    out = []
+    for s in SAVs:
+        acc, wt_resid_mt = s.split()
+        wt = wt_resid_mt[0]
+        mt = wt_resid_mt[-1]
+        resid = wt_resid_mt[0+1:-1]
+        out.append(f"{acc} {resid} {wt} {mt}")
+    return out
+
 def run(
     query,
     labels=None,
@@ -19,6 +34,7 @@ def run(
     featSet=None,
     refresh=False,
     pkl_folder='data',
+    uniref90=None,
 ):
     """
     query: 
@@ -57,6 +73,8 @@ def run(
         refresh=refresh,
         job_directory=job_directory, 
         folder=pkl_folder,
+        uniref90=uniref90,
+
     )
     t.getSAVs(filename='SAVs.txt', folder=job_directory)
     t.setFeatSet(featSet)
@@ -74,7 +92,7 @@ def run(
         t.setConfig(config)
         history = t.train(job_name, filename="history.csv")
     else:
-        t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='predictions.txt')
+        t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='predictions')
         t.plotSHAP(folder=job_directory)
 
     for label in LOGGER._reports:

@@ -28,7 +28,7 @@ consurfLookup = consurfDir + '/2024-10-08.json'
 customDir = consurfDir + '/db/custom'
 # uniref90_2022_05 = consurfDir + '/uniref90_2022_05.fa'
 uniref90_2022_05 = consurfDir + '/uniref90.fasta'
-uniref90_2022_05 = '/mnt/nas_1/YangLab/project/tandem_website/inference/tandem/data/consurf/uniref90.fasta'
+uniref90_2022_05 = os.path.join(consurfDir, 'uniref90.fasta')
 # uniref90_2022_05 = consurfDir + '/uniref50.fasta'
 os.makedirs(customDir, exist_ok=True)
 
@@ -184,7 +184,7 @@ def get_consurf(unique_chain, folder='.') -> pd.DataFrame:
         df.to_csv(outpath, sep='\t', index=False)
         return df
 
-def getConSurffile(pdb, chid, folder='.'):
+def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     """Get the consurf file for a given PDB ID and chain ID.
     pdb: PDB ID or PDB file
         - pdb: PDB ID 
@@ -232,7 +232,7 @@ def getConSurffile(pdb, chid, folder='.'):
         query=pdbID,
         structure=pdb,
         chain=chid,
-        DB=uniref90_2022_05,
+        DB=uniref90,
         work_dir=folder,
         algorithm="HMMER"
     )
@@ -256,7 +256,7 @@ def getConSurffile(pdb, chid, folder='.'):
     return df
 
 
-def calcConSurf(pdb, chid, folder='.'):
+def calcConSurf(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     _dtype = np.dtype([
         ('consurf', 'f4'), 
         ('ACNR', 'f4'), # Average contact neighbouring residues
@@ -284,7 +284,7 @@ def calcConSurf(pdb, chid, folder='.'):
     tgt_seq = tgt_chain.getSequence()
     features = np.full(len(tgt_chain), np.nan, dtype=_dtype)
     
-    df_consurf = getConSurffile(pdbID, chid, folder=folder)
+    df_consurf = getConSurffile(pdbID, chid, folder=folder, uniref90=uniref90)
     # Replace color* --> color+10
     if df_consurf['COLOR'].dtype != int:
         df_consurf['COLOR'] = df_consurf['COLOR'].apply(

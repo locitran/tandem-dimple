@@ -59,7 +59,7 @@ def _plotSHAP_bar(
     ax.spines['left'].set_visible(True)
     ax.spines['right'].set_visible(False)
     ax.tick_params(axis='x', which='both', bottom=True, top=False, labelbottom=True)
-    ax.set_ylabel('Absolute SHAP value', fontsize=axis_fontsize)
+    ax.set_ylabel('SHAP value', fontsize=axis_fontsize)
     ax.set_xticks(np.arange(n_features)+0.5)
     ax.set_xticklabels(featnames[feature_order][::-1], rotation=90, fontsize=legend_fontsize)
     ax.set_xlabel('Protein features', fontsize=axis_fontsize)

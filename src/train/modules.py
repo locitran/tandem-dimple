@@ -6,7 +6,6 @@ import numpy as np
 # from oldfile.func import plot_acc_loss
 # from tensorflow.data import Dataset
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score, accuracy_score

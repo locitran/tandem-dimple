@@ -5,7 +5,7 @@ from . import TANDEM_FEATS
 from .Uniprot import seqScanning, mapSAVs2PDB
 from .PDB import calcPDBfeatures
 from .SEQ import calcSEQfeatures
-from ..utils.logger import LOGGER 
+from ..utils.logger import LOGGER
 
 class Features:
 

@@ -22,7 +22,6 @@ t = run(
     job_name=job_name,
     # features=None, 
     features=fm, 
-    tf_name=job_name,
     labels=labels,
     config={'seed':seed}, 
     custom_PDB='2ZW3', 

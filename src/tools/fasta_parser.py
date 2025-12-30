@@ -7,7 +7,7 @@ import io
 import os
 import requests
 
-from ..utils.logger import LOGGER
+from ....gradio_app.src.logger import LOGGER
 
 @dataclass
 class FastaRecord:

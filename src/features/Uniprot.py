@@ -544,8 +544,10 @@ class UniprotMapping:
 
         # Sort chains by length: longest first
         customPDBmapping = self.customPDBmapping
-        sorted_chains = sorted(customPDBmapping['chain_len'], 
-                               key=lambda x: (-customPDBmapping['chain_len'][x], x))
+        sorted_chains = sorted(
+            customPDBmapping['identities'], 
+            key=lambda x: (-customPDBmapping['identities'][x], x)
+        )
         title = customPDBmapping['PDB']
         maps = customPDBmapping['maps'] 
         alphafold = customPDBmapping['alphafold']
@@ -557,23 +559,30 @@ class UniprotMapping:
                 chain_len = customPDBmapping['chain_len'][c]
                 if resid not in maps[c]:
                     continue
-                hit = maps[c][resid]
-                if hit[1] != wt_aa:
-                    msg = 'Residue {} ({}) was found in chain {} '.format(resid, c, wt_aa)
-                    msg += 'of PDB {} but has wrong aa, residue {} ({})'.format(title, hit[0], hit[1])
+                # hit = maps[c][resid]
+                pdb_resid, pdb_aa = maps[c][resid]
+
+                # if hit[1] != wt_aa:
+                if pdb_aa != wt_aa:
+                    msg = (
+                        f"Residue {resid} ({wt_aa}) was found in chain {c} "
+                        f"of PDB {title} but has the wrong amino acid: {pdb_aa}"
+                    )
                     LOGGER.info(msg)
                     continue
                 if not alphafold:
-                    res_map = f'{title} {c} {hit[0]} {hit[1]}'
+                    res_map = f'{title} {c} {pdb_resid} {pdb_aa}'
                     hits[idx] = (res_map, chain_len, chain_len, '', '', -999)
                     break
                 else:
-                    confidence = customPDBmapping['confidence'][c][hit[0]]
+                    confidence = customPDBmapping['confidence'][c][pdb_resid]
                     if confidence < 50:
                         hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence}'
                         continue
-                    res_map = f'{title} {c} {hit[0]} {hit[1]}'
+                    res_map = f'{title} {c} {pdb_resid} {pdb_aa}'
                     hits[idx] = (res_map, chain_len, chain_len, '', '', -999)
+                    break
+
             if len(hits[idx]['>asu:PDB_coords']) == 0:
                 hits[idx]['>asu:PDB_coords'] = 'Cannot map, no hits found'
 
@@ -784,7 +793,7 @@ class UniprotMapping:
 
     ### Alignments
 
-    def _align(self, seqU, seqC, PDBresids, print_info=False):
+    def _align(self, seqU, seqC, PDBresids):
         algo = self._align_algo_args[0]
         args = self._align_algo_args[1:]
         kwargs = self._align_algo_kwargs
@@ -796,14 +805,15 @@ class UniprotMapping:
             al = bioalign.localxs(seqU, seqC, *args, **kwargs)
         else:
             al = bioalign.localds(seqU, seqC, *args, **kwargs)
-        if print_info is True:
-            info = format_alignment(*al[0])
-            LOGGER.info(info[:-1])
-            idnt = sum([1 for a1, a2 in zip(al[0][0], al[0][1]) if a1 == a2])
-            frac = idnt/len(seqC)
-            m = "{} out of {} ({:.1%}) residues".format(idnt, len(seqC), frac)
-            m += " in the chain are identical to Uniprot amino acids."
-            LOGGER.info(m)
+
+        info = format_alignment(*al[0])
+        LOGGER.info(info[:-1])
+        idnt = sum([1 for a1, a2 in zip(al[0][0], al[0][1]) if a1 == a2])
+        frac = idnt/len(seqC)
+        m = "{} out of {} ({:.1%}) residues".format(idnt, len(seqC), frac)
+        m += " in the chain are identical to Uniprot amino acids."
+        LOGGER.info(m)
+
         # compute mapping between Uniprot and PDB chain resids
         aligned_seqU = al[0][0]
         aligned_seqC = al[0][1]
@@ -819,7 +829,7 @@ class UniprotMapping:
                     mp[resid_U] = (PDBresids[resindx_PDB], aaC)
             if aaC != '-':
                 resindx_PDB += 1
-        return al[0][:2], mp
+        return al[0][:2], mp, frac
 
     def _quickAlign(self, seqU, seqC, PDBresids):
         '''Works only if PDB sequence and resids perfectly match
@@ -840,13 +850,16 @@ class UniprotMapping:
                 mp[resid] = (resid, aaC)
                 s[indx] = aaC
         aligned_seqC = "".join(s)
-        return (seqU, aligned_seqC), mp
+        LOGGER.info("100% of residues in the chain are identical to Uniprot amino acids.")
+        return (seqU, aligned_seqC), mp, 1
 
     def _calcAlignments(self, PDBID, chains_to_align):
         seqUniprot = self.sequence
         PDBrecord = self.getPDBmappings(PDBID)
         alignments = PDBrecord.setdefault('alignments', {})
         maps = PDBrecord.setdefault('maps', {})
+        identities = customPDBmapping.setdefault('identities', {})
+
         for c in chains_to_align:
             # check for precomputed alignments and maps
             if c in alignments:
@@ -856,15 +869,16 @@ class UniprotMapping:
             seqChain = PDBrecord['chain_seq'][c]
             LOGGER.timeit('_align')
             try:
-                a, m = self._quickAlign(seqUniprot, seqChain, PDBresids)
+                a, m, frac = self._quickAlign(seqUniprot, seqChain, PDBresids)
                 msg = "Chain {} in {} was quick-aligned".format(c, PDBID)
             except:
-                a, m = self._align(seqUniprot, seqChain, PDBresids)
+                a, m, frac = self._align(seqUniprot, seqChain, PDBresids)
                 msg = "Chain {} in {} was aligned".format(c, PDBID)
-            LOGGER.report(msg + ' in %.1fs.', '_align')
+            LOGGER.report(f'{msg} in %.1fs.', '_align')
             # store alignments and maps into PDBmappings
             alignments[c] = a
             maps[c] = m
+            identities[c] = frac
         return
 
     def _calcCustomAlignments(self, chains_to_align):
@@ -872,6 +886,8 @@ class UniprotMapping:
         customPDBmapping = self.customPDBmapping
         alignments = customPDBmapping.setdefault('alignments', {})
         maps = customPDBmapping.setdefault('maps', {})
+        identities = customPDBmapping.setdefault('identities', {})
+
         for c in chains_to_align:
             # check for precomputed alignments and maps
             if c in alignments:
@@ -880,18 +896,16 @@ class UniprotMapping:
             PDBresids = customPDBmapping['chain_res'][c]
             seqChain = customPDBmapping['chain_seq'][c]
             LOGGER.timeit('_align')
+            LOGGER.info(f"Aligning chain {c} of custom PDB ...")
             try:
-                a, m = self._quickAlign(seqUniprot, seqChain, PDBresids)
-                msg = f"Chain {c} was quick-aligned"
+                a, m, frac = self._quickAlign(seqUniprot, seqChain, PDBresids)
             except:
-                LOGGER.info(f"Aligning chain {c} of custom PDB ...")
-                a, m = self._align(seqUniprot, seqChain, PDBresids,
-                                   print_info=True)
-                msg = f"Chain {c} was aligned"
-            LOGGER.report(msg + ' in %.1fs.', '_align')
+                a, m, frac = self._align(seqUniprot, seqChain, PDBresids)
+            LOGGER.report(f'Chain {c} was aligned in %.1fs.', '_align')
             # store alignments and maps into PDBmappings
             alignments[c] = a
             maps[c] = m
+            identities[c] = frac
         return
 
 def simpleConversion(SAV_coords):

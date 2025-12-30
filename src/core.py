@@ -19,6 +19,9 @@ from .model.data_processing import Preprocessing, onehot_encoding, np2ds
 from .model.train import TLConfig, train_model
 from .model.plot import plotSHAP_bar, plotLoss
 
+import logging
+logging.getLogger("shap").setLevel(logging.ERROR)
+
 class Tandem(Features):
     
     def __init__(self, query, refresh=False, **kwargs):
@@ -51,93 +54,62 @@ class Tandem(Features):
         self.preprocess = Preprocessing(fm)
     
     def getPredictions(self, models, folder='.', filename=None):
-        # calc predictions
+        """
+        Generate prediction results with hierarchical (MultiIndex) columns.
+
+        Output columns:
+        - SAV
+        - TANDEM -> [probability, classification]
+        - TANDEM-DIMPLE -> [probability, classification] (if models provided)
+
+        Saves CSV only if filename is provided.
+        """
+
+        # 1. Calculate predictions
         self.calcPredictions(models)
 
-        # Convert to df
-        df_tandem = pd.DataFrame(self.data['tandem'].tolist(), columns=self.data['tandem'].dtype.names)
-        df_tandem_dimple = pd.DataFrame(self.data['tandem_dimple'].tolist(), columns=self.data['tandem_dimple'].dtype.names) if models else None
-        # if tandem_dimple exists, add its columns with suffix "_tf"
-        if df_tandem_dimple is not None:
-            # rename TF columns to have _tf suffix
-            df_tandem_dimple = df_tandem_dimple.add_suffix('_tf')
-            # merge by index (row-aligned)
-            df_tandem = pd.concat([df_tandem, df_tandem_dimple], axis=1)
-        # finally add SAVs column
-        df_tandem.insert(loc=0, column='SAVs', value=self.data["SAVs"])
+        # 2. Base data
+        savs = self.data["SAVs"]
 
+        tandem_prob = self.data["tandem"]["path_prob"]
+        tandem_cls  = self.data["tandem"]["classification"]
+
+        # 3. Build column MultiIndex
+        data = {
+            ("SAV", "SAV"): savs,
+            ("TANDEM", "probability"): tandem_prob,
+            ("TANDEM", "classification"): tandem_cls,
+        }
+
+        # 4. Optional TANDEM-DIMPLE
+        if models != TANDEM_v1dot1:
+            td_prob = self.data["tandem_dimple"]["path_prob"]
+            td_cls  = self.data["tandem_dimple"]["classification"]
+
+            data[("TANDEM-DIMPLE", "probability")] = td_prob
+            data[("TANDEM-DIMPLE", "classification")] = td_cls
+        
+        columns = data.keys()
+
+        # 5. Create DataFrame with MultiIndex columns
+        multi_cols = pd.MultiIndex.from_tuples(columns)
+        df = pd.DataFrame(data, columns=multi_cols)
+
+        # 7. Save CSV (flatten header for compatibility)
         if filename:
-            sav_w = 15
-            vote_w = 8
-            path_w = 15
-            classification_w = 15
-            filepath = os.path.join(folder, filename)
-            with open(filepath, "w", encoding="utf-8") as f:
-                # header parts for base columns
-                header_parts = [
-                    f'{"SAV":<{sav_w}}', # " | ",
-                    f'{"vote":<{vote_w}}',
-                    f'{"probability":<{path_w}}',
-                    f'{"classification":<{classification_w}}'
-                ]
-                # add tf columns if they exist
-                if any(c.endswith("_tf") for c in df_tandem.columns):
-                    header_parts += [#" | ",
-                        f'{"vote_tf":<{vote_w}}',
-                        f'{"probability_tf":<{path_w}}',
-                        f'{"classification_tf":<{classification_w}}'
-                    ]
-                header = "".join(header_parts) + "\n"
-                f.write(header)
+            filepath = os.path.join(folder, f"{filename}.csv")
 
-                # rows
-                for _, data in df_tandem.iterrows():
-                    sav = data["SAVs"]
-                    # base values
-                    vote = data.get("ratio")
-                    vote_s = f"{float(vote):.3f}" if pd.notnull(vote) else ""
-                    path = data.get("path_prob")
-                    sem = data.get("path_prob_sem")
-                    if pd.notnull(path) and pd.notnull(sem):
-                        path_s = f"{float(path):.3f}±{float(sem):.3f}"
-                    elif pd.notnull(path):
-                        path_s = f"{float(path):.3f}"
-                    else:
-                        path_s = ""
-                    classification = str(data.get("classification", "") or "")
+            df_to_save = df.copy()
+            df_to_save.columns = [
+                col if isinstance(col, str) else f"{col[0]}::{col[1]}"
+                for col in df_to_save.columns
+            ]
 
-                    line_parts = [ # build line parts
-                        f"{sav:<{sav_w}}", # " | ",
-                        f"{vote_s:<{vote_w}}",
-                        f"{path_s:<{path_w}}",
-                        f"{classification:<{classification_w}}",
-                    ]
-                    
-                    if "ratio_tf" in data: # add tf values if present
-                        vote_tf = data.get("ratio_tf")
-                        vote_tf_s = f"{float(vote_tf):.3f}" if pd.notnull(vote_tf) else ""
-                    
-                        path_tf = data.get("path_probs_tf")
-                        sem_tf = data.get("path_probs_sem_tf")
-                        if pd.notnull(path_tf) and pd.notnull(sem_tf):
-                            path_tf_s = f"{float(path_tf):.3f}±{float(sem_tf):.3f}"
-                        elif pd.notnull(path_tf):
-                            path_tf_s = f"{float(path_tf):.3f}"
-                        else:
-                            path_tf_s = ""
-                        classification_tf = str(data.get("classification_tf", "") or "")
-                    
-                        line_parts += [ #" | ",
-                            f"{vote_tf_s:<{vote_w}}",
-                            f"{path_tf_s:<{path_w}}",
-                            f"{classification_tf:<{classification_w}}",
-                        ]
-                    # join and finish line
-                    line = "".join(line_parts) + "\n"
-                    f.write(line)
-                LOGGER.info(f'Predictions are saved to {filepath}')
-        return df_tandem
+            df_to_save.to_csv(filepath, index=False)
+            LOGGER.info(f"Predictions saved to {filepath}")
 
+        return df
+    
     def calcPredictions(self, models):
         assert os.path.isdir(models), f"Folder {models} does not exist."
         assert self.featMatrix is not None, 'Feature matrix not set.'
@@ -239,8 +211,7 @@ class Tandem(Features):
 
         featImp = []
         for model in models:
-            f = lambda X: model.predict(X, verbose=0)  
-            explainer = shap.KernelExplainer(f, background, link="logit")
+            explainer = shap.KernelExplainer(model.predict, background, link="logit")
             shap_values = explainer.shap_values(testSet, nsamples=100, silent=True)
             featImp.append(shap_values[1])
         featImp = np.array(featImp) # n_models X nSAVs X n_feats
@@ -258,9 +229,9 @@ class Tandem(Features):
         tandem_shap = os.path.join(folder, 'tandem_shap')
         os.makedirs(tandem_shap, exist_ok=True)
         # Plot global SHAP values in case more than 1 SAV being calculated
-        if self.nSAVs > 1:
-            _featImp = self.data['tandem']['shap']
-            plotSHAP_bar(_featImp, globalSHAP_title, tandem_shap, 'globalSHAP', globalshap=True)
+        # if self.nSAVs > 1:
+        #     _featImp = self.data['tandem']['shap']
+        #     plotSHAP_bar(_featImp, globalSHAP_title, tandem_shap, 'globalSHAP', globalshap=True)
             
         # Plot SHAP values for individual SAVs
         for i in range(self.nSAVs):
@@ -274,9 +245,9 @@ class Tandem(Features):
         if not np.ma.is_masked(self.data['tandem_dimple']['shap']):
             tandem_dimple_shap = os.path.join(folder, 'tandem_dimple_shap')
             os.makedirs(tandem_dimple_shap, exist_ok=True)
-            if self.nSAVs > 1:
-                _featImp = self.data['tandem_dimple']['shap']
-                plotSHAP_bar(_featImp, globalSHAP_title, tandem_dimple_shap, 'globalSHAP')
+            # if self.nSAVs > 1:
+            #     _featImp = self.data['tandem_dimple']['shap']
+            #     plotSHAP_bar(_featImp, globalSHAP_title, tandem_dimple_shap, 'globalSHAP')
 
             for i in range(self.nSAVs):
                 sav = str(SAVs[i])

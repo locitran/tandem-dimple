@@ -15,7 +15,6 @@ from Bio import Align
 from Bio.Align import substitution_matrices
 from ..utils.logger import LOGGER
 
-
 basedir = os.path.dirname(os.path.abspath(__file__))
 
 bayesInterval = 3

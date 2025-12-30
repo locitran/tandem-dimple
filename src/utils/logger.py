@@ -32,6 +32,7 @@ now = datetime.datetime.now
 
 warnings.filterwarnings("ignore", message=".*failed to parse occupancy.*")
 warnings.filterwarnings("ignore", message=".*failed to parse beta-factor.*")
+
 class PackageLogger(object):
 
     """A class for package wide logging functionality."""
