@@ -464,9 +464,21 @@ def train_foundation_model(
     RYR1_notnan_rs = evaluate(model, RYR1_notnan_features, RYR1_notnan_labels)
 
     msg = (
-        f"test_acc: {test_rs[0]*100:.1f}%, test_auc: {test_rs[1]:.2f}, test_precision: {test_rs[2]:.2f}, test_recall: {test_rs[3]:.2f}, test_f1: {test_rs[4]:.2f}, "
-        f"RYR1_acc: {RYR1_notnan_rs[0]*100:.1f}%, RYR1_auc: {RYR1_notnan_rs[1]:.2f}, RYR1_precision: {RYR1_notnan_rs[2]:.2f}, RYR1_recall: {RYR1_notnan_rs[3]:.2f}, RYR1_f1: {RYR1_notnan_rs[4]:.2f}, "
-        f"GJB2_acc: {GJB2_notnan_rs[0]*100:.1f}%, GJB2_auc: {GJB2_notnan_rs[1]:.2f}, GJB2_precision: {GJB2_notnan_rs[2]:.2f}, GJB2_recall: {GJB2_notnan_rs[3]:.2f}, GJB2_f1: {GJB2_notnan_rs[4]:.2f}"
+        f"test_acc: {test_rs[0]*100:.1f}%, "
+        f"test_auc: {test_rs[1]*100:.1f}%, "
+        f"test_precision: {test_rs[2]*100:.1f}%, "
+        f"test_recall: {test_rs[3]*100:.1f}%, "
+        f"test_f1: {test_rs[4]*100:.1f}%, "
+        f"RYR1_acc: {RYR1_notnan_rs[0]*100:.1f}%, "
+        f"RYR1_auc: {RYR1_notnan_rs[1]*100:.1f}%, "
+        f"RYR1_precision: {RYR1_notnan_rs[2]*100:.1f}%, "
+        f"RYR1_recall: {RYR1_notnan_rs[3]*100:.1f}%, "
+        f"RYR1_f1: {RYR1_notnan_rs[4]*100:.1f}%, "
+        f"GJB2_acc: {GJB2_notnan_rs[0]*100:.1f}%, "
+        f"GJB2_auc: {GJB2_notnan_rs[1]*100:.1f}%, "
+        f"GJB2_precision: {GJB2_notnan_rs[2]*100:.1f}%, "
+        f"GJB2_recall: {GJB2_notnan_rs[3]*100:.1f}%, "
+        f"GJB2_f1: {GJB2_notnan_rs[4]*100:.1f}%"
     )
     LOGGER.info(msg)
 
@@ -491,6 +503,120 @@ def train_foundation_model(
     plt.close()
 
     LOGGER.info(f"Training loss curve saved to {loss_fig}")
+
+def train_transfer_learning_model(
+        base_model,
+        TANDEM_testSet,
+        name,
+        seed=73):
+
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    log_dir = os.path.join(ROOT_DIR, 'logs', name, f'{current_time}-seed-{seed}')
+    os.makedirs(log_dir, exist_ok=True)
+    logfile = os.path.join(log_dir, 'log.txt')
+    LOGGER.start(logfile)
+    LOGGER.info(f"Start Time = {current_time}")
+    use_all_gpus()
+
+    # R20000_folds, R20000, preprocess_feat, test_knw, test_unk, input_shape = import_data(TANDEM_testSet)
+    ##################### 1. Set up feature set #####################
+    t_sel_feats = TANDEM_FEATS['v1.1']
+    LOGGER.info(f"Feature set: {t_sel_feats}")
+    R20000_folds, R20000, preprocess_feat, df_clstr = getR20000(TANDEM_R20000, CLUSTER, feat_names=t_sel_feats)
+    test_knw, test_unk = getTestset(TANDEM_testSet, t_sel_feats, preprocess_feat) 
+
+    SAV_coords, labels, features = test_knw
+    VUS_coords, VUS_labels, VUS_features = test_unk
+    labels = np.argmax(labels, axis=1)
+
+    ##################### 3. Set up model configuration #####################
+    patience = 50
+    n_hidden = 5
+    cfg = get_config(33, n_hidden=n_hidden, patience=patience, dropout_rate=0.0)
+    cfg.training.callbacks.EarlyStopping.start_from_epoch = 10
+    cfg.training.n_epochs = 2000
+    LOGGER.info(f"Start from epoch: {cfg.training.callbacks.EarlyStopping.start_from_epoch}")
+
+    ##################### 5. Split test data #####################
+    # 1. Split 3 folds (60% – 30% – 10%)
+    train_indices, test_indices = train_test_split(np.arange(len(labels)), test_size=0.1, random_state=seed, stratify=labels)
+    # Save train data (train+val) for shap analysis
+    testset_train = test_knw[2][train_indices]
+    np.save(f'{log_dir}/shap_background.npy', testset_train)
+
+    train_ds = np_to_dataset(features[train_indices], onehot_encoding(labels[train_indices], 2), shuffle=True, batch_size=cfg.training.batch_size, seed=seed)
+    test_ds = np_to_dataset(features[test_indices], onehot_encoding(labels[test_indices], 2), shuffle=False, batch_size=cfg.training.batch_size, seed=seed)
+
+    knw_ds  = np_to_dataset(features, onehot_encoding(labels, 2), shuffle=False, batch_size=cfg.training.batch_size, seed=seed)
+    
+    fd_model = tf.keras.models.load_model(base_model)
+
+    ##################### 5. Train model on test data #####################
+    fd_model_cp = tf.keras.models.clone_model(fd_model)
+    fd_model_cp.set_weights(fd_model.get_weights())
+
+    model = train_model(
+        train_ds, 
+        test_ds, 
+        cfg=cfg,
+        folder=log_dir, 
+        filename=f'train_plus_val_tandem_dimple',
+        model_input=fd_model_cp,
+    )
+
+    ### Evaluation before training
+    before_test_rs        = evaluate(fd_model, features[train_indices], onehot_encoding(labels[train_indices], 2))
+    before_knw_rs         = evaluate(fd_model, features,                onehot_encoding(labels, 2))
+
+    ### Evaluation after training
+    after_test_rs         = evaluate(model, features[train_indices], onehot_encoding(labels[train_indices], 2))
+    after_knw_rs          = evaluate(model, features,                onehot_encoding(labels, 2))
+
+    def _fmt_metrics(rs, prefix=""):
+        """
+        rs = [accuracy, auc, precision, recall, f1] (0-1 floats)
+        prints all as percent with 1 decimal.
+        """
+        acc, auc, prec, rec, f1 = rs
+        return (
+            f"{prefix}acc={acc*100:.1f}%, "
+            f"auc={auc*100:.1f}%, "
+            f"prec={prec*100:.1f}%, "
+            f"rec={rec*100:.1f}%, "
+            f"f1={f1*100:.1f}%"
+        )
+    
+    # ----------------------------
+    # 4) Log BEFORE -> AFTER comparison
+    # ----------------------------
+    msg = (
+        "[Transfer learning] Metrics (Before → After)\n"
+        f"Train-split: {_fmt_metrics(before_test_rs, 'before_')}  →  {_fmt_metrics(after_test_rs, 'after_')}\n"
+        f"All-known  : {_fmt_metrics(before_knw_rs,   'before_')}  →  {_fmt_metrics(after_knw_rs,   'after_')}"
+    )
+    LOGGER.info(msg)
+
+    # ----------------------------
+    # 5) Plot training curves from CSV
+    #    (your Callback_CSVLogger writes history_{filename}.csv)
+    # ----------------------------
+    hist_file = os.path.join(log_dir, "history_train_plus_val_tandem_dimple.csv")
+    if os.path.exists(hist_file):
+        hist_df = pd.read_csv(hist_file)
+
+        # Loss curve
+        if "train_loss" in hist_df.columns and "val_loss" in hist_df.columns:
+            plt.figure(figsize=(7, 5))
+            plt.plot(hist_df["train_loss"], label="Train Loss")
+            plt.plot(hist_df["val_loss"], label="Val Loss")
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss")
+            plt.title("Training Loss Curve")
+            plt.legend()
+            plt.grid(alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(os.path.join(log_dir, "training_loss.png"), dpi=200)
+            plt.close()
 
 def reproduce_transfer_learning_model(
         base_models,

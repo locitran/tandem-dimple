@@ -6,12 +6,12 @@ sys.path.insert(0, addpath) # /home/newloci
 from tandem.src.main import run
 
 query = ['O14508 52 S N', 'P29033 217 Y D']
-query = ['P29033 217 Y D', 'P29033 37 V I']
+query = ['P29033 100 H Q']
 # query = ['P29033 76 L S']
 
 td = run(
     query=query, # List of SAVs to be analyzed
-    job_name='input_as_list_SAVs', # Define where the job will be saved
+    job_name='test1', # Define where the job will be saved
     custom_PDB='2ZW3', # Path to the custom PDB file (if any)
     refresh=False, # Set to True to refresh the calculation
 )   

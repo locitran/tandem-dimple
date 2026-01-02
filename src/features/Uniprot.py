@@ -292,11 +292,13 @@ class UniprotMapping:
                         c_seq_len = sum([i[1]-i[0]+1 for i in intervals]) # defined as by UniProt website, column “Positions”
                         c_resolved_len = chain_len[chainID]
                         coverage_perc = c_resolved_len / self.sequence_length
+
                         if coverage_perc >= 0.5:
+                            LOGGER.info("YEAH")
                             matches.append((PDBID, chainID, c_seq_len, c_resolved_len, coverage_perc, resolution))
             # sort first by c_resolved_len, resolution, then PDBID and chainID
             matches.sort(key=lambda x: (-x[2], -x[3], -x[4], x[5], x[0][::-1], x[1])) # Smallest score first
-
+        
         # now align selected chains to find actual hits
         hits = np.zeros(len(resids), dtype=[
             ('>asu:PDB_coords', 'U100'),
@@ -325,12 +327,14 @@ class UniprotMapping:
                     # {'A': {uniprot_resid: (PDB_resid, aa), ...}, ...}
                 except:
                     continue
+                
                 if chainID == '@':
                     c_list = sorted(maps.keys())
                 else:
                     c_list = [chainID]
                 for c in c_list:
                     hit = maps[c].get(resid) # maps = {c: rec['maps'][c] for c in chains_to_align}
+                    
                     if hit is None:
                         continue
                     elif u_aa is not None and hit[1] != u_aa:
@@ -755,7 +759,7 @@ class UniprotMapping:
                     pdb = parsePDB(pdbpath, subset='calpha')
                 else:
                     raise ValueError('PDB file not found.')
-            except Exception:
+            except Exception as e:
                 mapping['chain_sel'] = None
                 mapping['chain_res'] = None
                 mapping['chain_seq'] = None
@@ -858,6 +862,7 @@ class UniprotMapping:
         PDBrecord = self.getPDBmappings(PDBID)
         alignments = PDBrecord.setdefault('alignments', {})
         maps = PDBrecord.setdefault('maps', {})
+        customPDBmapping = self.customPDBmapping
         identities = customPDBmapping.setdefault('identities', {})
 
         for c in chains_to_align:

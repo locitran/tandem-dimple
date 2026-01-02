@@ -39,9 +39,6 @@ def run_tandem_job():
         )
         LOGGER.info(f"Inference result: ok")
 
-        with open(f"{tandem_jobs}/{session_id}/{job_name}/params.json", "w") as f:
-            json.dump(params, f, indent=4)
-
         return jsonify({"output": 'ok'})
     
     except Exception as e:

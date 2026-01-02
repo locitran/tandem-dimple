@@ -25,14 +25,13 @@ RUN conda create -n tandem python=3.11.11 \
     && /bin/bash -c "source activate tandem && pip install flask && pip install -r requirements.txt" \
     && conda install -n tandem -c conda-forge -c bioconda mmseqs2
 
-# --- Step 4: Set environment on container boot ---
+# --- Step 4: Runtime environment variables ---
 SHELL ["/bin/bash", "-c"]
-ENV PATH /opt/conda/envs/tandem/bin:$PATH
-ENV CONDA_DEFAULT_ENV tandem
+ENV CONDA_DEFAULT_ENV=tandem
+ENV CONDA_PREFIX=/opt/conda/envs/tandem
+ENV PATH=/opt/conda/envs/tandem/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib:$LD_LIBRARY_PATH
 
-# --- Step 5: Now copy in app source code (changes often) ---
-# COPY api.py adapter.py ./
-
-# --- Step 6: Run Flask server ---
+# --- Step 5: Run server ---
 EXPOSE 5000
-CMD ["python", "main.py"]
+CMD ["conda", "run", "--no-capture-output", "-n", "tandem", "python", "main.py"]

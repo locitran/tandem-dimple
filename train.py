@@ -1,6 +1,6 @@
 # from src.train.optimization import test_numberOflayers_TANDEM, test_numberOflayers_RHAPSODY, test_ranking_method, simple_training
 # from src.train.optimization import test_batch_size, test_different_numberOfneurons, visualization_optimization
-from src.train.train import reproduce_foundation_model, reproduce_transfer_learning_model, train_foundation_model
+from src.train.train import reproduce_foundation_model, reproduce_transfer_learning_model, train_foundation_model, train_transfer_learning_model
 # from src.train.direct_train import train_model
 from src.utils.settings import TANDEM_GJB2, TANDEM_RYR1, TANDEM_v1dot1, TANDEM_R20000, CLUSTER
 from src.utils.settings import RHAPSODY_R20000, RHAPSODY_GJB2, RHAPSODY_RYR1, RHAPSODY_FEATS
@@ -21,14 +21,14 @@ if __name__ == "__main__":
     #     ryr1ds=TANDEM_RYR1,
     #     clstr=CLUSTER,
     # )
-    train_foundation_model(
-        name='train_plus_val_foundation_model',
-        featds=TANDEM_R20000,
-        featset=TANDEM_FEATS['v1.1'],
-        gjb2ds=TANDEM_GJB2,
-        ryr1ds=TANDEM_RYR1,
-        clstr=CLUSTER,
-    )
+    # train_foundation_model(
+    #     name='train_plus_val_foundation_model',
+    #     featds=TANDEM_R20000,
+    #     featset=TANDEM_FEATS['v1.1'],
+    #     gjb2ds=TANDEM_GJB2,
+    #     ryr1ds=TANDEM_RYR1,
+    #     clstr=CLUSTER,
+    # )
 
 
     # reproduce_foundation_model(
@@ -41,13 +41,20 @@ if __name__ == "__main__":
     # )
     
 
-    # reproduce_transfer_learning_model(
-    #     base_models=TANDEM_v1dot1,
-    #     TANDEM_testSet=TANDEM_RYR1,
-    #     name="TANDEM_RYR1",
-    #     seed=0,
-    # )
+    train_transfer_learning_model(
+        base_model='/home/loci/tandem_website/tandem/logs/train_plus_val_foundation_model/20251230-1711/model_train_plus_val.h5',
+        TANDEM_testSet=RHAPSODY_RYR1,
+        name="TANDEM_RYR1_train_plus_val",
+        seed=0,
+    )
     
+    # train_transfer_learning_model(
+    #     base_model='/home/loci/tandem_website/tandem/logs/train_plus_val_foundation_model/20251230-1711/model_train_plus_val.h5',
+    #     TANDEM_testSet=TANDEM_GJB2,
+    #     name="TANDEM_GJB2_train_plus_val",
+    #     seed=73,
+    # )
+
     # reproduce_transfer_learning_model(
     #     base_models=TANDEM_v1dot1,
     #     # base_models='/mnt/nas_1/YangLab/loci/tandem/logs/reproduce_foundation_model_noswap/20250930-2130',
