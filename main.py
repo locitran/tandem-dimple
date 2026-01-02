@@ -33,7 +33,7 @@ def run_tandem_job():
         run_tandem(
             query=toSAV_coords(params["SAV"]),
             labels=params["label"],
-            custom_PDB=params["label"],
+            custom_PDB=params["STR"],
             job_name=f"{session_id}/{job_name}",
             pretrained_model_folder=pretrained_model_folder,
         )

@@ -188,13 +188,12 @@ class UniprotMapping:
         if isinstance(PDB, str):
             try:
                 if os.path.isfile(PDB):
-                    pdb = parsePDB(PDB, model=1)
+                    pdb = parsePDB(PDB, model=1, subset='calpha')
                 else:
                     # PDB is a PDBID
                     LOGGER.info(f'Fetching PDB {PDB}...')
                     pdbpath = fetchPDB(PDB, format='pdb', folder=folder, refresh=self._refresh)
-                    if pdbpath is not None:
-                        pdb = parsePDB(pdbpath, model=1)
+                    pdb = parsePDB(pdbpath, model=1, subset='calpha')
             except Exception as e:
                 msg = (
                     'Unable to import structure: PDB ID might be invalid'
@@ -205,6 +204,7 @@ class UniprotMapping:
                 title = os.path.basename(PDB.strip())
                 title = title.replace(' ', '_')
         else:
+            pdb = PDB.ca
             if title is None:
                 title = PDB.getTitle()
 
@@ -212,7 +212,6 @@ class UniprotMapping:
         if alphafold:
             LOGGER.info(f'AlphaFold2 structure detected: {title}')
         LOGGER.info(f'Aligning {title}...')
-        pdb = pdb.ca
         # Initilize
         customPDBmapping = {
             'PDB': title,
@@ -900,13 +899,12 @@ class UniprotMapping:
             # otherwise, align and map to PDB resids
             PDBresids = customPDBmapping['chain_res'][c]
             seqChain = customPDBmapping['chain_seq'][c]
-            LOGGER.timeit('_align')
+
             LOGGER.info(f"Aligning chain {c} of custom PDB ...")
             try:
                 a, m, frac = self._quickAlign(seqUniprot, seqChain, PDBresids)
             except:
                 a, m, frac = self._align(seqUniprot, seqChain, PDBresids)
-            LOGGER.report(f'Chain {c} was aligned in %.1fs.', '_align')
             # store alignments and maps into PDBmappings
             alignments[c] = a
             maps[c] = m
@@ -977,7 +975,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
         ('PDB_resolution', 'f'),
         ('BioUnit_PDB_coords', 'U100'),
         ('OPM_PDB_coords', 'U100'),
-        ])
+    ])
     nSAVs = len(SAV_coords)
     mapped_SAVs = np.zeros(nSAVs, dtype=PDBmap_dtype)
     
@@ -997,7 +995,6 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
         except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(f'Error while mapping {acc}: {msg}')
-            # LOGGER.warn(f'Error while mapping {acc}')
             U2P_map = "Cannot map, unable to run " + acc
 
         if isinstance(U2P_map, str):
