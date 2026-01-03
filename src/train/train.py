@@ -74,7 +74,6 @@ def probs2mode(probs):
     out['path_probs_sem'] = path_probs_sem
     return out
 
-
 def evaluate(model, x, y):
     """
     model: DNN

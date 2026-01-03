@@ -577,7 +577,6 @@ class PDBfeatures:
                     continue
             seq = pdb[chID].getSequence()
             try:
-                LOGGER.info(f"Calc RONN {seq}")
                 IDRs = ronn.calc_ronn(seq)
                 d['IDRs'] = IDRs
             except Exception as e:

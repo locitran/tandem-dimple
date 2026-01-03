@@ -86,11 +86,10 @@ def run(
         t.getUniprot2PDBmap(filename='Uniprot2PDB.txt', folder=job_directory)
         t.getFeatMatrix(withSAVs=True, filename='features.csv', folder=job_directory)    
 
-    history = None
     if labels:
         t.setLabels(labels)
         t.setConfig(config)
-        history = t.train(job_name, filename="history.csv")
+        t.train(job_name, filename="history.csv")
     else:
         t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='predictions')
         t.plotSHAP(folder=job_directory)
@@ -99,4 +98,4 @@ def run(
         LOGGER.info(f"  {label}: {LOGGER._reports[label]:.2f}s ({LOGGER._report_times[label]} time(s))")
     LOGGER.report('Run time elapsed in %.2fs.', "_runtime")
     LOGGER.close(logfile)
-    return t, history
+    return t

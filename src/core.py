@@ -16,7 +16,7 @@ from .features.features import Features
 from .utils.settings import TANDEM_v1dot1, TANDEM_R20000
 from .utils.logger import LOGGER
 from .model.data_processing import Preprocessing, onehot_encoding, np2ds
-from .model.train import TLConfig, train_model
+from .model.train import TLConfig, train_model, evaluate_model
 from .model.plot import plotSHAP_bar, plotLoss
 
 import logging
@@ -388,10 +388,8 @@ class Tandem(Features):
         # ----- CV on training set -----
         skf = StratifiedKFold(n_splits=cfg.val_splits, shuffle=True, random_state=cfg.seed)
         models = []
-        history = {
-            'fd': {'val': [], 'test': []}, 
-            'tf': {'val': [], 'test': []}
-        }
+
+        test_evaluation = {'TANDEM': [], 'TANDEM-DIMPLE': []}
         SAV_cv = {}
         for fold_idx, (inner_tr, inner_va) in enumerate(skf.split(train_idx, y[train_idx]), start=1):
             x_tr, y_tr, sav_tr = X[inner_tr], y[inner_tr], SAVs[inner_tr]
@@ -440,38 +438,28 @@ class Tandem(Features):
                     filename=f'{model_idx}',
                     model_input=fd_model_cp,
                 )
-                tf_model.name = name
+                tf_model.name = 'TANDEM-DIMPLE'
                 models.append(tf_model)
                 tf_model.save(f"{model_dir}/model_{model_idx}.h5")
 
                 # ----- Evaluation -----
-                fd_val_eval = fd_model.evaluate(val_ds, verbose=0)
-                fd_test_eval = fd_model.evaluate(test_ds, verbose=0)
-                tf_val_eval = tf_model.evaluate(val_ds, verbose=0)
-                tf_test_eval = tf_model.evaluate(test_ds, verbose=0)
+                fd_test_eval = evaluate_model(fd_model_cp, x_te, y_te_1h)
+                tf_test_eval = evaluate_model(tf_model, x_te, y_te_1h)
 
-                metrics = ["loss", "accuracy", "auc", "precision", "recall", "f1"]
-                left_title  = f"Foundation model (model {model_idx} fold {fold_idx})"
-                right_title = "Transfer learning model"
-                LOGGER.info(f"{left_title:<33} | {right_title}")
-                LOGGER.info(f"{'val':>16}{'test':>11} {' ':>6}| {'val':>5}{'test':>11}")
-                for idx, metric in enumerate(metrics):
-                    left  = f"{fd_val_eval[idx]:>6.2f}{fd_test_eval[idx]:>10.2f}"
-                    right = f"{tf_val_eval[idx]:>6.2f}{tf_test_eval[idx]:>10.2f}"
-                    LOGGER.info(f"{metric:>9}: {left:<20}   | {right:<11}")
+                test_evaluation['TANDEM'].append(fd_test_eval)
+                test_evaluation['TANDEM-DIMPLE'].append(tf_test_eval)
 
-                history['fd']['val'].append(fd_val_eval)
-                history['fd']['test'].append(fd_test_eval)
-                history['tf']['val'].append(tf_val_eval)
-                history['tf']['test'].append(tf_test_eval)
-                
-        self.history_avg(history)
-        self.history_to_csv(history, filename=filename)
         plotLoss(folder=job_dir, filename='loss.png')
-
+        # Convert each model's list of dicts into a DataFrame
+        dfs = {}
+        for model, runs in test_evaluation.items():
+            df = pd.DataFrame(runs)          # shape: (n_runs, n_metrics)
+            dfs[model] = df.mean()           # or df.mean(), df.std()
+        # Combine into final table
+        pd.DataFrame(dfs).to_csv(f'{job_dir}/test_evaluation.csv', index=False)
+        
         # Save SAVs splitting schemes for cross-validation
         with open(f'{job_dir}/cross_validation_SAVs.json', 'w') as f:
             json.dump(SAV_cv, f, indent=4)
 
         LOGGER.report('train in %.1fs.', '_train')
-        return history

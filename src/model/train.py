@@ -4,10 +4,9 @@ import os
 
 from ..utils.logger import LOGGER
 
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, roc_auc_score
 from dataclasses import dataclass
 import tensorflow as tf
-from keras.saving import register_keras_serializable
-
 
 def get_seed(seed=0):
     random.seed(seed)
@@ -53,27 +52,6 @@ class DelayedEarlyStopping(tf.keras.callbacks.EarlyStopping):
                     LOGGER.info(f"Restoring model weights from the end of the best epoch: {self.best_epoch}.")
                     LOGGER.info(f"Epoch {self.best_epoch + 1}: best epoch")
 
-@register_keras_serializable(package="custom", name="BinaryF1Score")
-class BinaryF1Score(tf.keras.metrics.Metric):
-    def __init__(self, name='f1_score', **kwargs):
-        super(BinaryF1Score, self).__init__(name=name, **kwargs)
-        self.precision = tf.keras.metrics.Precision()
-        self.recall = tf.keras.metrics.Recall()
-
-    def update_state(self, y_true, y_pred, sample_weight=None):
-        y_pred = tf.round(y_pred)  # assumes sigmoid output
-        self.precision.update_state(y_true, y_pred, sample_weight)
-        self.recall.update_state(y_true, y_pred, sample_weight)
-
-    def result(self):
-        p = self.precision.result()
-        r = self.recall.result()
-        return 2 * ((p * r) / (p + r + tf.keras.backend.epsilon()))
-
-    def reset_states(self):
-        self.precision.reset_states()
-        self.recall.reset_states()
-            
 # Create customized callbacks to record test accuracy and loss
 class Callback_CSVLogger(tf.keras.callbacks.Callback):
     def __init__(self, data, name, log_file):
@@ -114,19 +92,33 @@ class Callback_CSVLogger(tf.keras.callbacks.Callback):
         with open(self.log_file, 'a') as f:
             f.write(row)
 
-def _compile_model(model, lr):
-    optimizer = tf.keras.optimizers.Nadam(learning_rate=lr)
-    model.compile(
-        optimizer=optimizer,
-        loss='categorical_crossentropy',
-        metrics=['accuracy', 
-            tf.keras.metrics.AUC(name='auc'), 
-            tf.keras.metrics.Precision(name='precision'), 
-            tf.keras.metrics.Recall(name='recall'),
-            BinaryF1Score(name='f1_score')
-        ]
-    )
-    return model
+def evaluate_model(model, x, y):
+    """
+    model: DNN
+    x: (nsamples x 33)
+    y: (nsamples x 2)
+    """
+    pred = model.predict(x, verbose=False) # (N, 2)
+    y_prob = pred[:, 1] # (N, )
+    y_pred = (y_prob > 0.5).astype(int) # (N, )
+    y_true = np.argmax(y, axis=1) # (N, 1)
+
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, pos_label=1, zero_division=0)
+    recall  = recall_score(y_true, y_pred, pos_label=1, zero_division=0)
+    f1   = f1_score(y_true, y_pred, pos_label=1, zero_division=0)
+
+    # require probability (not class)
+    auc = roc_auc_score(y_true, y_prob)   # y_true: 0/1, y_prob: float probs
+
+    return {
+        "accuracy": accuracy, 
+        "auc": auc, 
+        "precision": precision, 
+        "recall": recall, 
+        "f1": f1
+    }
+
 
 def train_model(
     train_ds, 
@@ -153,14 +145,16 @@ def train_model(
         start_from_epoch=cfg.start_from_epoch,
         verbose=cfg.verbose,
     )
-    model = _compile_model(model, cfg.learning_rate)
-    callbacks = [early_stopping, csv_logger]
+    optimizer = tf.keras.optimizers.Nadam(learning_rate=cfg.learning_rate)
+    model.compile(optimizer=optimizer, loss='categorical_crossentropy',
+        metrics=[tf.keras.metrics.CategoricalAccuracy(name="accuracy"),]
+    )
     model.fit(
         train_ds,
         epochs=cfg.n_epochs,
         validation_data=val_ds,
-        callbacks=callbacks,
-        verbose=0,
+        callbacks=[early_stopping, csv_logger],
+        # verbose=0,
     )
     model.save(os.path.join(folder, f'model_{filename}.h5'), include_optimizer=True)
     return model
@@ -170,14 +164,14 @@ class TLConfig:
     # optimization
     learning_rate: float = 5e-5
     batch_size: int = 300
-    n_epochs: int = 1000
+    n_epochs: int = 10000
     patience: int = 50
     restore_best_weights: bool = True
     start_from_epoch: int = 10
     # data / CV
     val_splits: int = 3    # Stratified KFold
     test_size: float = 0.10
-    seed: int = 42
+    seed: int = 0
     # checkpoint metric
     monitor: str = "val_loss"     # requires AUC metric
     monitor_mode: str = "min"
