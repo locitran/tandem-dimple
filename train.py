@@ -41,12 +41,12 @@ if __name__ == "__main__":
     # )
     
 
-    train_transfer_learning_model(
-        base_model='/home/loci/tandem_website/tandem/logs/train_plus_val_foundation_model/20251230-1711/model_train_plus_val.h5',
-        TANDEM_testSet=RHAPSODY_RYR1,
-        name="TANDEM_RYR1_train_plus_val",
-        seed=0,
-    )
+    # train_transfer_learning_model(
+    #     base_model='/home/loci/tandem_website/tandem/logs/train_plus_val_foundation_model/20251230-1711/model_train_plus_val.h5',
+    #     TANDEM_testSet=RHAPSODY_RYR1,
+    #     name="TANDEM_RYR1_train_plus_val",
+    #     seed=0,
+    # )
     
     # train_transfer_learning_model(
     #     base_model='/home/loci/tandem_website/tandem/logs/train_plus_val_foundation_model/20251230-1711/model_train_plus_val.h5',
@@ -55,13 +55,12 @@ if __name__ == "__main__":
     #     seed=73,
     # )
 
-    # reproduce_transfer_learning_model(
-    #     base_models=TANDEM_v1dot1,
-    #     # base_models='/mnt/nas_1/YangLab/loci/tandem/logs/reproduce_foundation_model_noswap/20250930-2130',
-    #     TANDEM_testSet=TANDEM_GJB2,
-    #     name="TANDEM_GJB2",
-    #     seed=73,
-    # )
+    reproduce_transfer_learning_model(
+        base_models=TANDEM_v1dot1,
+        TANDEM_testSet=TANDEM_GJB2,
+        name="TANDEM_GJB2",
+        seed=73,
+    )
 
     # simple_training(
         # seed=17

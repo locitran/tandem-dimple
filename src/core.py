@@ -222,16 +222,11 @@ class Tandem(Features):
         assert not np.ma.is_masked(self.data['tandem']['shap']), 'SHAP has not been calculated' 
 
         SAVs = self.data['SAVs']
-        globalSHAP_title = 'Global feature contribution to model prediction'
         individualSHAP_title = 'Feature contribution to model prediction on {} ({})'
 
         # Create folder(s) to store SHAP figure(s)
         tandem_shap = os.path.join(folder, 'tandem_shap')
         os.makedirs(tandem_shap, exist_ok=True)
-        # Plot global SHAP values in case more than 1 SAV being calculated
-        # if self.nSAVs > 1:
-        #     _featImp = self.data['tandem']['shap']
-        #     plotSHAP_bar(_featImp, globalSHAP_title, tandem_shap, 'globalSHAP', globalshap=True)
             
         # Plot SHAP values for individual SAVs
         for i in range(self.nSAVs):
@@ -245,9 +240,6 @@ class Tandem(Features):
         if not np.ma.is_masked(self.data['tandem_dimple']['shap']):
             tandem_dimple_shap = os.path.join(folder, 'tandem_dimple_shap')
             os.makedirs(tandem_dimple_shap, exist_ok=True)
-            # if self.nSAVs > 1:
-            #     _featImp = self.data['tandem_dimple']['shap']
-            #     plotSHAP_bar(_featImp, globalSHAP_title, tandem_dimple_shap, 'globalSHAP')
 
             for i in range(self.nSAVs):
                 sav = str(SAVs[i])
@@ -265,88 +257,7 @@ class Tandem(Features):
             cfg.update({k: v for k, v in config.items() if k in cfg})
         self.config = TLConfig(**cfg)
 
-    def history_avg(self, history):
-        metrics = ["loss", "accuracy", "auc", "precision", "recall", "f1"]
-        summary = {}
-        for model_type in ["fd", "tf"]:
-            summary[model_type] = {}
-            for split in ["val", "test"]:
-                arr = np.array(history[model_type][split])  # shape (n_runs, n_metrics)
-                means = arr.mean(axis=0)
-                stds  = arr.std(axis=0, ddof=1)
-                sems  = stds / np.sqrt(arr.shape[0])  # SEM
-                mins  = arr.min(axis=0)
-                maxs  = arr.max(axis=0)
-
-                summary[model_type][split] = {
-                    m: {
-                        "mean": float(mu),
-                        "std": float(sd),
-                        "sem": float(se),
-                        "min": float(mn),
-                        "max": float(mx)
-                    }
-                    for m, mu, se, sd, mn, mx in zip(metrics, means, sems, stds, mins, maxs)
-                }
-        # --- Print: Foundation models ---
-        fd_title = "Foundation models"
-        LOGGER.info(fd_title)
-        LOGGER.info(f"{'val':>15}{'std':>6}{'sem':>6}{'min':>6}{'max':>6}"
-                    f"{'test':>9}{'std':>5}{'sem':>6}{'min':>6}{'max':>6}")
-
-        for metric in metrics:
-            v = summary["fd"]["val"][metric]
-            t = summary["fd"]["test"][metric]
-            line = (f"{metric:>10}: "
-                    f"{v['mean']:.3f} {v['std']:.3f} {v['sem']:.3f} {v['min']:.3f} {v['max']:.3f}   "
-                    f"{t['mean']:.3f} {t['std']:.3f} {t['sem']:.3f} {t['min']:.3f} {t['max']:.3f}")
-            LOGGER.info(line)
-
-        # --- Print: Transfer learning models ---
-        tf_title = "Transfer learning models"
-        LOGGER.info(tf_title)
-        LOGGER.info(f"{'val':>15}{'std':>6}{'sem':>6}{'min':>6}{'max':>6}"
-                    f"{'test':>9}{'std':>5}{'sem':>6}{'min':>6}{'max':>6}")
-
-        for metric in metrics:
-            v = summary["tf"]["val"][metric]
-            t = summary["tf"]["test"][metric]
-            line = (f"{metric:>10}: "
-                    f"{v['mean']:.3f} {v['std']:.3f} {v['sem']:.3f} {v['min']:.3f} {v['max']:.3f}   "
-                    f"{t['mean']:.3f} {t['std']:.3f} {t['sem']:.3f} {t['min']:.3f} {t['max']:.3f}")
-            LOGGER.info(line)
-
-    def history_to_csv(self, history, filename="history.csv"):
-        """
-        Save training history of foundation vs transfer models into CSV format.
-
-        history: dict
-            {
-                'fd': {'val': [...], 'test': [...]},
-                'tf': {'val': [...], 'test': [...]}
-            }
-        filename: str
-            Output CSV file name
-        """
-        metrics = ["loss", "accuracy", "auc", "precision", "recall", "f1"]
-        filepath = os.path.join(self.options['job_directory'], filename)
-        with open(filepath, mode="w", newline="") as f:
-            writer = csv.writer(f)
-            # header
-            writer.writerow([
-                "fold", "model_type", "split", *metrics
-            ])
-            n_folds = len(history["fd"]["val"])
-            for fold in range(n_folds):
-                # foundation model
-                writer.writerow([fold+1, "foundation", "val",  *history['fd']['val'][fold]])
-                writer.writerow([fold+1, "foundation", "test", *history['fd']['test'][fold]])
-                # transfer model
-                writer.writerow([fold+1, "transfer", "val",  *history['tf']['val'][fold]])
-                writer.writerow([fold+1, "transfer", "test", *history['tf']['test'][fold]])
-        LOGGER.info(f"[INFO] History saved to {filepath}")
-
-    def train(self, name, filename, smin=47):
+    def train(self, smin=47):
         assert self.featMatrix is not None, "Feature matrix not set."
         assert self._isColSet("labels"), "Labels not set."
         assert self.config is not None, "Config not set."
@@ -392,8 +303,8 @@ class Tandem(Features):
         test_evaluation = {'TANDEM': [], 'TANDEM-DIMPLE': []}
         SAV_cv = {}
         for fold_idx, (inner_tr, inner_va) in enumerate(skf.split(train_idx, y[train_idx]), start=1):
-            x_tr, y_tr, sav_tr = X[inner_tr], y[inner_tr], SAVs[inner_tr]
-            x_va, y_va, sav_va = X[inner_va], y[inner_va], SAVs[inner_va]
+            x_tr, y_tr, sav_tr = X[train_idx][inner_tr], y[train_idx][inner_tr], SAVs[train_idx][inner_tr]
+            x_va, y_va, sav_va = X[train_idx][inner_va], y[train_idx][inner_va], SAVs[train_idx][inner_va]
             
             model_dir = os.path.join(job_dir, f'TD_{fold_idx}') # TD: TANDEM-DIMPLE
             os.makedirs(model_dir, exist_ok=True)
@@ -422,7 +333,7 @@ class Tandem(Features):
 
             train_ds = np2ds(x_tr, y_tr_1h, shuffle=True,  batch_size=cfg.batch_size, seed=cfg.seed)
             val_ds   = np2ds(x_va, y_va_1h, shuffle=False, batch_size=cfg.batch_size, seed=cfg.seed)
-            test_ds  = np2ds(x_te, y_te_1h, shuffle=False, batch_size=cfg.batch_size, seed=cfg.seed)
+            # test_ds  = np2ds(x_te, y_te_1h, shuffle=False, batch_size=cfg.batch_size, seed=cfg.seed)
 
             # ----- build/train model -----
             # Load foundation model
@@ -455,8 +366,10 @@ class Tandem(Features):
         for model, runs in test_evaluation.items():
             df = pd.DataFrame(runs)          # shape: (n_runs, n_metrics)
             dfs[model] = df.mean()           # or df.mean(), df.std()
-        # Combine into final table
-        pd.DataFrame(dfs).to_csv(f'{job_dir}/test_evaluation.csv', index=False)
+        
+        final_df = pd.DataFrame(dfs) # Combine
+        final_df.insert(0, "metric", final_df.index) # add column metrics
+        final_df.to_csv(f'{job_dir}/test_evaluation.csv', index=False)
         
         # Save SAVs splitting schemes for cross-validation
         with open(f'{job_dir}/cross_validation_SAVs.json', 'w') as f:

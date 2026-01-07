@@ -89,7 +89,7 @@ def run(
     if labels:
         t.setLabels(labels)
         t.setConfig(config)
-        t.train(job_name, filename="history.csv")
+        t.train()
     else:
         t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='predictions')
         t.plotSHAP(folder=job_directory)

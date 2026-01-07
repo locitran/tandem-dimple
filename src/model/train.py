@@ -164,14 +164,14 @@ class TLConfig:
     # optimization
     learning_rate: float = 5e-5
     batch_size: int = 300
-    n_epochs: int = 10000
+    n_epochs: int = 1000
     patience: int = 50
     restore_best_weights: bool = True
     start_from_epoch: int = 10
     # data / CV
     val_splits: int = 3    # Stratified KFold
     test_size: float = 0.10
-    seed: int = 0
+    seed: int = 73
     # checkpoint metric
     monitor: str = "val_loss"     # requires AUC metric
     monitor_mode: str = "min"

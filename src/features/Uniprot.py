@@ -293,7 +293,6 @@ class UniprotMapping:
                         coverage_perc = c_resolved_len / self.sequence_length
 
                         if coverage_perc >= 0.5:
-                            LOGGER.info("YEAH")
                             matches.append((PDBID, chainID, c_seq_len, c_resolved_len, coverage_perc, resolution))
             # sort first by c_resolved_len, resolution, then PDBID and chainID
             matches.sort(key=lambda x: (-x[2], -x[3], -x[4], x[5], x[0][::-1], x[1])) # Smallest score first
@@ -554,11 +553,17 @@ class UniprotMapping:
         title = customPDBmapping['PDB']
         maps = customPDBmapping['maps'] 
         alphafold = customPDBmapping['alphafold']
+        identities = customPDBmapping['identities']
+
         # keys: pdb chids
         # values: (PDBresids[resindx_PDB], aaC)
         # hit[0]: resid; hit[1]: aa ; e.g. 'A': (PDBresids[resindx_PDB], aaC)= 5038: (5037, 'S')
         for idx, (resid, wt_aa) in enumerate(zip(resids, wt_aas)):
             for c in sorted_chains:
+                identity = identities[c]
+                if identity < 0.30:
+                    LOGGER.info(f'Chain {c} has a low identity, {identity:.2f}, to UniProt sequence')
+                    continue
                 chain_len = customPDBmapping['chain_len'][c]
                 if resid not in maps[c]:
                     continue
@@ -580,7 +585,7 @@ class UniprotMapping:
                 else:
                     confidence = customPDBmapping['confidence'][c][pdb_resid]
                     if confidence < 50:
-                        hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence}'
+                        hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence} (chain {c})'
                         continue
                     res_map = f'{title} {c} {pdb_resid} {pdb_aa}'
                     hits[idx] = (res_map, chain_len, chain_len, '', '', -999)
@@ -599,7 +604,7 @@ class UniprotMapping:
 
     def savePickle(self, **kwargs):
         filename = kwargs.get('filename', self.acc)
-        folder = kwargs.get('folder', '.')
+        folder = kwargs.get('folder', 'data')
         folder = os.path.join(folder, 'pickles/uniprot')
         os.makedirs(folder, exist_ok=True)
         filename = 'UniprotMap-' + filename + '.pkl'
