@@ -1,7 +1,7 @@
 # from src.train.optimization import test_numberOflayers_TANDEM, test_numberOflayers_RHAPSODY, test_ranking_method, simple_training
 # from src.train.optimization import test_batch_size, test_different_numberOfneurons, visualization_optimization
-from src.train.train import reproduce_foundation_model, reproduce_transfer_learning_model, train_foundation_model, train_transfer_learning_model
-# from src.train.direct_train import train_model
+from src.train.train import train_foundation_model, train_transfer_learning_model
+from src.train.train import reproduce_foundation_model, reproduce_transfer_learning_model, reproduce_direct_learning_model
 from src.utils.settings import TANDEM_GJB2, TANDEM_RYR1, TANDEM_v1dot1, TANDEM_R20000, CLUSTER
 from src.utils.settings import RHAPSODY_R20000, RHAPSODY_GJB2, RHAPSODY_RYR1, RHAPSODY_FEATS
 from src.features import TANDEM_FEATS
@@ -55,21 +55,23 @@ if __name__ == "__main__":
     #     seed=73,
     # )
 
-    reproduce_transfer_learning_model(
-        base_models=TANDEM_v1dot1,
-        TANDEM_testSet=TANDEM_GJB2,
-        name="TANDEM_GJB2",
-        seed=73,
-    )
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet=TANDEM_GJB2,
+    #     name="TANDEM_GJB2",
+    #     seed=27,
+    # )
+    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1", nHidden=2, nNeurons=16, seed=0)
+    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=0)
+    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1", nHidden=2, nNeurons=16, seed=100)
+    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=100)
+    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1", nHidden=2, nNeurons=16, seed=73)
+    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=73)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=16, seed=100)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=100)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=16, seed=27)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=27)
 
-    # simple_training(
-        # seed=17
-    # )
-    
-    # test_numberOflayers_TANDEM(
-    #     seed=17
-    # )
-    
 # from src.train.train import reproduce_transfer_learning_model, reproduce_foundation_model
 # import pandas as pd 
 # from src.features import TANDEM_FEATS

@@ -30,7 +30,8 @@ SHELL ["/bin/bash", "-c"]
 ENV CONDA_DEFAULT_ENV=tandem
 ENV CONDA_PREFIX=/opt/conda/envs/tandem
 ENV PATH=/opt/conda/envs/tandem/bin:$PATH
-ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib:$LD_LIBRARY_PATH
+# ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib
 
 # --- Step 5: Run server ---
 EXPOSE 5000

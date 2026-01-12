@@ -354,11 +354,14 @@ class Tandem(Features):
                 tf_model.save(f"{model_dir}/model_{model_idx}.h5")
 
                 # ----- Evaluation -----
-                fd_test_eval = evaluate_model(fd_model_cp, x_te, y_te_1h)
+                fd_test_eval = evaluate_model(fd_model, x_te, y_te_1h)
                 tf_test_eval = evaluate_model(tf_model, x_te, y_te_1h)
 
                 test_evaluation['TANDEM'].append(fd_test_eval)
                 test_evaluation['TANDEM-DIMPLE'].append(tf_test_eval)
+
+        with open(f"{job_dir}/test_evaluation.json", 'w') as f:
+            json.dump(test_evaluation, f, indent=2)
 
         plotLoss(folder=job_dir, filename='loss.png')
         # Convert each model's list of dicts into a DataFrame

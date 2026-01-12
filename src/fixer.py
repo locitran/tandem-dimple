@@ -1,12 +1,14 @@
-from uuid import uuid1
 import os
+import re
 import subprocess
 import numpy as np
 
+from pathlib import Path
 from openmm.app.element import hydrogen
 import openmm.app as app
-from prody import parsePDB, writePDB
+from prody import parsePDB, writePDB, AtomGroup
 from sklearn.cluster import KMeans
+from uuid import uuid1
 
 from .utils.logger import LOGGER
 from .pdbfixer.pdbfixer import PDBFixer
@@ -17,6 +19,21 @@ from .download import fetchPDB, fetchPDB_BiologicalAssembly, fetchAF2
 __all__ = ['LociFixer', 'fixPDB', 'createMutationfile', 'buildNE1']
 
 MAX_NUM_RESIDUES = 20000
+ATOM_PATTERN = re.compile(
+    r"""
+    ^ATOM\s+
+    (?P<serial>\d+)\s+
+    (?P<atom_name>\S+)\s+
+    (?P<resname>\S+)\s+
+    (?P<chain>[A-Za-z])\s*
+    (?P<resnum>\d+)\s+
+    (?P<x>-?\d+(?:\.\d+)?)\s*
+    (?P<y>-?\d+(?:\.\d+)?)\s+
+    (?P<z>-?\d+(?:\.\d+)?)
+    $
+    """,
+    re.VERBOSE
+)
 
 class LociFixer(PDBFixer):
     def __init__(self, *args, **kwargs):
@@ -174,70 +191,6 @@ class LociFixer(PDBFixer):
             out_f.write('HEADER\n')
             PDBFile.writeFile(self.topology, self.positions, out_f, keepIds=keepIds, modify_chain=modify_chain)
 
-def fixPDB(pdb, format='asu', 
-           fix_loop=True, replaceNonstandard=True, refresh=False, folder='.'):
-    """pdb could be a PDB file or a PDB ID"""
-    os.makedirs(folder, exist_ok=True)
-    if format == 'custom' and os.path.isfile(pdb):
-        # Take the filename from the custom_PDB
-        filename = pdb.split('/')[-1].split('.')[0]
-        out = os.path.join(folder, f'{filename}.pdb')
-        f = LociFixer(pdb)
-        # Check pdb has DUM atoms
-        has_dum_atom = any(atom.residue.name == 'DUM' for atom in f.topology.atoms())
-        if has_dum_atom:
-            f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
-            f.saveTopology(savePath=out)
-            out = buildCGmembrane(out, folder=folder, filename=filename, refresh=refresh)
-        else:
-            f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
-            f.saveTopology(savePath=out)
-
-    elif format == 'opm':
-        out = os.path.join(folder, f'{pdb}-ne1.pdb')
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
-            return out
-        pdbpath = fetchPDB(pdb, format=format, refresh=refresh, folder=RAW_PDB_DIR)
-        f = LociFixer(pdbpath)
-        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
-        opm_path = os.path.join(folder, f'{pdb}-opm.pdb')
-        f.saveTopology(savePath=opm_path)
-        out = buildCGmembrane(opm_path, folder=folder, filename=pdb, refresh=refresh)
-
-    elif format == 'asu':
-        out = os.path.join(folder, f'{pdb}.pdb')
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
-            return out
-        pdbpath = fetchPDB(pdb, format='pdb', refresh=refresh, folder=RAW_PDB_DIR)
-        f = LociFixer(pdbpath)
-        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
-        f.saveTopology(savePath=out)
-
-    elif format == 'af':
-        out = os.path.join(folder, f'{pdb}.pdb')
-        acc = pdb.split('-')[1]
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
-            return out
-        pdbpath = fetchAF2(acc, refresh=refresh, folder=RAW_PDB_DIR)
-        return pdbpath
-    
-    else: # format == bas*
-        assemblyID = int(format[3:])
-        out = os.path.join(folder, f'{pdb}-{assemblyID}.pdb')
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
-            return out
-        pdbpath = fetchPDB_BiologicalAssembly(pdb, assemblyID, format='cif', 
-                                        refresh=refresh, folder=RAW_PDB_DIR)
-        f = LociFixer(pdbpath)
-        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
-        f.saveTopology(savePath=out)
-    LOGGER.info(f"Fixed PDB file {out}")
-    return out
-
 def createMutationfile(pdbpath, chid, mutation, out=None):
     LOGGER.info(f"Creating mutation file for {mutation} in {pdbpath}")
     f = LociFixer(pdbpath)
@@ -323,22 +276,61 @@ def execCGmembrane(opm_file, folder='.', filename=None,
     cgmembrane_output = out.stdout
     cgmembrane_output = cgmembrane_output.split('\n')
 
-    NE1_atoms = [line for line in cgmembrane_output if line.startswith('ATOM')]
-    NE1_atoms = [
-        line for line in cgmembrane_output 
-            if line.startswith('ATOM') and
-            float(line[30:38])**2 + float(line[38:46])**2 > rr**2
-    ]
-    # Format the filtered atoms into PDB format
-    NE1_atoms = ["{}{:6.2f}{:6.2f}{:>12}\n".format(line, 1, 1, "M") for line in NE1_atoms]
+    ##### Start parsing the ATOM line #####
+    coords   = []
+    names    = []
+    resnames = []
+    resnums  = []
+    chains   = []
+    elements = []
+    rr2 = rr * rr
+    for line in cgmembrane_output:
+        if not line.startswith("ATOM"):
+            continue
+
+        match = ATOM_PATTERN.match(line)
+        if not match:
+            LOGGER.warn(f"Malformed ATOM: {l}")
+            continue
+
+        d = match.groupdict()
+        x, y, z = float(d["x"]), float(d["y"]), float(d["z"])
+
+        # sanity check
+        if not (-1000 < x < 1000 and -1000 < y < 1000):
+            LOGGER.warn(f"Unphysical XY: {x} {y} line: {l}")
+            continue
+
+        # radial filter
+        if x*x + y*y <= rr2:
+            continue
+
+        # collect
+        coords.append([x, y, z])
+        names.append(d["atom_name"])
+        resnames.append(d["resname"])
+        resnums.append(int(d["resnum"]))
+        chains.append(d["chain"])
+        elements.append("M")   # coarse-grained pseudo element
+
+    ag = AtomGroup("NE1_atoms")
+    ag.setCoords(np.array(coords))
+    ag.setNames(names)
+    ag.setResnames(resnames)
+    ag.setResnums(resnums)
+    ag.setChids(chains)
+    ag.setElements(elements)
+    # required defaults to avoid ProDy/BioPython crashes
+    ag.setOccupancies([1.0] * ag.numAtoms())
+    ag.setBetas([0.0] * ag.numAtoms())
+    ag.setFlags('hetatm', [False] * ag.numAtoms())
 
     # Write the NE1 atoms to a file
     if filename is not None:
         out = os.path.join(folder, f'{filename}.pdb')
     else:
         out = os.path.join(folder, 'ne1.pdb')
-    with open(out, 'w') as f:
-        f.writelines(NE1_atoms)
+    writePDB(out, ag)
     LOGGER.info(f"NE1 atoms written to {out}")
     return out
 
@@ -350,7 +342,7 @@ def buildCGmembrane(opm_file, folder, filename, refresh=True):
     
     try:
         pdb = parsePDB(opm_file)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         raise FileNotFoundError('Error: Cannot parsePDB opm_file')
 
     # check if DUM is present
@@ -500,3 +492,75 @@ def buildNE1(opm_file, folder='.', filename=None, radius_node=3.1, thick=16.6,
     if remove:
         os.remove(opm_file)
     return ne1_file
+
+def removeEND(pdbpath):
+    pdb = Path(pdbpath)
+    lines = pdb.read_text().splitlines()
+    lines = [l for l in lines if l.strip() != "END"]
+    pdb.write_text("\n".join(lines) + "\n")
+
+def fixPDB(pdb, format='asu', 
+           fix_loop=True, replaceNonstandard=True, refresh=False, folder='.'):
+    """pdb could be a PDB file or a PDB ID"""
+    os.makedirs(folder, exist_ok=True)
+    if format == 'custom' and os.path.isfile(pdb):
+        # Take the filename from the custom_PDB
+        filename = pdb.split('/')[-1].split('.')[0]
+        out = os.path.join(folder, f'{filename}.pdb')
+        removeEND(pdb)
+        f = LociFixer(pdb)
+        # Check pdb has DUM atoms
+        has_dum_atom = any(atom.residue.name == 'DUM' for atom in f.topology.atoms())
+        if has_dum_atom:
+            f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
+            f.saveTopology(savePath=out)
+            LOGGER.info(out)
+            out = buildCGmembrane(out, folder=folder, filename=filename, refresh=refresh)
+        else:
+            f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
+            f.saveTopology(savePath=out)
+
+    elif format == 'opm':
+        out = os.path.join(folder, f'{pdb}-ne1.pdb')
+        if os.path.isfile(out) and not refresh:
+            LOGGER.info(f"File {out} already exists")
+            return out
+        pdbpath = fetchPDB(pdb, format=format, refresh=refresh, folder=RAW_PDB_DIR)
+        f = LociFixer(pdbpath)
+        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
+        opm_path = os.path.join(folder, f'{pdb}-opm.pdb')
+        f.saveTopology(savePath=opm_path)
+        out = buildCGmembrane(opm_path, folder=folder, filename=pdb, refresh=refresh)
+
+    elif format == 'asu':
+        out = os.path.join(folder, f'{pdb}.pdb')
+        if os.path.isfile(out) and not refresh:
+            LOGGER.info(f"File {out} already exists")
+            return out
+        pdbpath = fetchPDB(pdb, format='pdb', refresh=refresh, folder=RAW_PDB_DIR)
+        f = LociFixer(pdbpath)
+        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
+        f.saveTopology(savePath=out)
+
+    elif format == 'af':
+        out = os.path.join(folder, f'{pdb}.pdb')
+        acc = pdb.split('-')[1]
+        if os.path.isfile(out) and not refresh:
+            LOGGER.info(f"File {out} already exists")
+            return out
+        pdbpath = fetchAF2(acc, refresh=refresh, folder=RAW_PDB_DIR)
+        return pdbpath
+    
+    else: # format == bas*
+        assemblyID = int(format[3:])
+        out = os.path.join(folder, f'{pdb}-{assemblyID}.pdb')
+        if os.path.isfile(out) and not refresh:
+            LOGGER.info(f"File {out} already exists")
+            return out
+        pdbpath = fetchPDB_BiologicalAssembly(pdb, assemblyID, format='cif', 
+                                        refresh=refresh, folder=RAW_PDB_DIR)
+        f = LociFixer(pdbpath)
+        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
+        f.saveTopology(savePath=out)
+    LOGGER.info(f"Fixed PDB file {out}")
+    return out

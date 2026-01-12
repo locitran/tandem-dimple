@@ -1163,8 +1163,9 @@ class PDBfeatures:
                         f[name][i] = d[name][indices[0]]
         return f
 
-def calcPDBfeatures(mapped_SAVs, custom_PDB=None, refresh=False, 
-                    sel_feats=PDB_FEATS, withSAV=False, **kwargs):
+def calcPDBfeatures(
+        mapped_SAVs, custom_PDB=None, refresh=False, 
+        sel_feats=PDB_FEATS, withSAV=False, **kwargs):
     """Computes structural and dynamics features from PDB structures.
     mapped_SAVs: numpy array or pandas DataFrame
         columns: 

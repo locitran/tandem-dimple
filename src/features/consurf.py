@@ -255,7 +255,6 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     df.to_csv(consurffile, sep='\t', index=False)
     return df
 
-
 def calcConSurf(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     _dtype = np.dtype([
         ('consurf', 'f4'), 
