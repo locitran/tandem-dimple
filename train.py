@@ -55,18 +55,26 @@ if __name__ == "__main__":
     #     seed=73,
     # )
 
-    # reproduce_transfer_learning_model(
-    #     base_models=TANDEM_v1dot1,
-    #     TANDEM_testSet=TANDEM_GJB2,
-    #     name="TANDEM_GJB2",
-    #     seed=27,
-    # )
-    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1", nHidden=2, nNeurons=16, seed=0)
-    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=0)
-    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1", nHidden=2, nNeurons=16, seed=100)
-    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=100)
-    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1", nHidden=2, nNeurons=16, seed=73)
-    reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=73)
+    reproduce_transfer_learning_model(
+        base_models=TANDEM_v1dot1,
+        TANDEM_testSet=TANDEM_GJB2,
+        name="TANDEM_GJB2",
+        seed=73,
+    )
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=16, seed=0)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=33, seed=0)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=16, seed=100)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=33, seed=100)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=16, seed=73)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=33, seed=73)
+
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2_2026Jan12", nHidden=2, nNeurons=16, seed=27)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2_2026Jan12", nHidden=2, nNeurons=33, seed=27)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2_2026Jan12", nHidden=2, nNeurons=16, seed=100)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2_2026Jan12", nHidden=2, nNeurons=33, seed=100)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2_2026Jan12", nHidden=2, nNeurons=16, seed=73)
+    # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2_2026Jan12", nHidden=2, nNeurons=33, seed=73)
+
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=16, seed=100)
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=100)
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=16, seed=27)

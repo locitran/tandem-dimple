@@ -1057,8 +1057,7 @@ def reproduce_direct_learning_model(TANDEM_testSet, name, nNeurons, nHidden, see
 
     ##################### 3. Set up model configuration #####################
     patience = 50
-    cfg = get_config(
-        33, patience=patience, dropout_rate=0.0, 
+    cfg = get_config(33, patience=patience, dropout_rate=0.0, 
         n_neuron_per_hidden=nNeurons, n_neuron_last_hidden=nNeurons, n_hidden=nHidden
     )
     cfg.training.callbacks.EarlyStopping.start_from_epoch = 10
@@ -1073,32 +1072,25 @@ def reproduce_direct_learning_model(TANDEM_testSet, name, nNeurons, nHidden, see
     np.save(f'{log_dir}/shap_background.npy', testset_train)
 
     kf = StratifiedKFold(n_splits=3, random_state=seed, shuffle=True)
-    folds = []
+    evaluations = {}
     for i, (train_idx, val_idx) in enumerate(kf.split(train_indices, labels[train_indices])):
         train, val = train_indices[train_idx], train_indices[val_idx]
         test = test_indices
-        # Save the folds
-        element = {
-            'train': {'x': features[train], 'y': labels[train], 'SAV_coords': SAV_coords[train]},
-            'val': {'x': features[val], 'y': labels[val], 'SAV_coords': SAV_coords[val]},
-            'test': {'x': features[test], 'y': labels[test], 'SAV_coords': SAV_coords[test]}
-        }
-        folds.append(element)
-        # log the folds
+
+        x_train,y_train,SAVs_train  = features[train],  labels[train],  SAV_coords[train]
+        x_val,  y_val,  SAVs_val    = features[val],    labels[val],    SAV_coords[val]
+        x_test, y_test, SAVs_test   = features[test],   labels[test],   SAV_coords[test]
+
         LOGGER.info(
             f"Fold {i+1} - "
-            f"Train: {np.sum(labels[train])}pos + {len(train)-np.sum(labels[train])}neg, "
-            f"Val: {np.sum(labels[val])}pos + {len(val)-np.sum(labels[val])}neg, "
-            f"Test: {np.sum(labels[test])}pos + {len(test)-np.sum(labels[test])}neg"
+            f"Train: {np.sum(y_train)}pos + {len(train)-np.sum(y_train)}neg, "
+            f"Val: {np.sum(y_val)}pos + {len(val)-np.sum(y_val)}neg, "
+            f"Test: {np.sum(y_test)}pos + {len(test)-np.sum(y_test)}neg"
         )
-        LOGGER.info(f"Train: {SAV_coords[train]}")
-        LOGGER.info(f"Val: {SAV_coords[val]}")
-        LOGGER.info(f"Test: {SAV_coords[test]}")
+        LOGGER.info(f"Train: {SAVs_train}")
+        LOGGER.info(f"Val: {SAVs_val}")
+        LOGGER.info(f"Test: {SAVs_test}")
 
-    evaluations = {}
-    for fold_idx in range(3):
-        fold = folds[fold_idx]
-        train, val, test = fold['train'], fold['val'], fold['test']
         x_train, y_train, SAVs_train = train['x'], train['y'], train['SAV_coords']
         x_val, y_val, SAVs_val = val['x'], val['y'], val['SAV_coords']
         x_test, y_test, SAVs_test  = test['x'], test['y'], test['SAV_coords']
@@ -1109,10 +1101,8 @@ def reproduce_direct_learning_model(TANDEM_testSet, name, nNeurons, nHidden, see
 
         train_ds = np_to_dataset(x_train, y_train, shuffle=True, batch_size=cfg.training.batch_size, seed=seed)
         val_ds = np_to_dataset(x_val, y_val, shuffle=False, batch_size=cfg.training.batch_size, seed=seed)
-        test_ds = np_to_dataset(x_test, y_test, shuffle=False, batch_size=cfg.training.batch_size, seed=seed)
 
         y_knw = onehot_encoding(labels, 2)
-        knw_ds  = np_to_dataset(features, y_knw, shuffle=False, batch_size=cfg.training.batch_size, seed=seed)
 
         ##################### 5. Train model on test data #####################
         model = train_model(train_ds, val_ds, cfg=cfg, folder=log_dir, filename=f'fold_{fold_idx+1}')
@@ -1120,7 +1110,7 @@ def reproduce_direct_learning_model(TANDEM_testSet, name, nNeurons, nHidden, see
         test_eval = evaluate(model, x_test,   y_test)
         knw_eval  = evaluate(model, features, y_knw)
         # return accuracy, auc, precision, recall, f1
-        evaluations[fold_idx] = {
+        evaluations[i] = {
             'val_accuracy': val_eval[0], 'val_auc': val_eval[1], 'val_precision': val_eval[2], 'val_recall': val_eval[3], 'val_f1': val_eval[4],
             'test_accuracy': test_eval[0], 'test_auc': test_eval[1], 'test_precision': test_eval[2], 'test_recall': test_eval[3], 'test_f1': test_eval[4],
             'knw_accuracy': knw_eval[0], 'knw_auc': knw_eval[1], 'knw_precision': knw_eval[2], 'knw_recall': knw_eval[3], 'knw_f1': knw_eval[4],

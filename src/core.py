@@ -54,60 +54,33 @@ class Tandem(Features):
         self.preprocess = Preprocessing(fm)
     
     def getPredictions(self, models, folder='.', filename=None):
-        """
-        Generate prediction results with hierarchical (MultiIndex) columns.
-
-        Output columns:
-        - SAV
-        - TANDEM -> [probability, classification]
-        - TANDEM-DIMPLE -> [probability, classification] (if models provided)
-
-        Saves CSV only if filename is provided.
-        """
-
-        # 1. Calculate predictions
         self.calcPredictions(models)
+        SAV = self.data["SAVs"]
+        tdm_data = self.data["tandem"]
+        tdp_data = self.data["tandem_dimple"]
 
-        # 2. Base data
-        savs = self.data["SAVs"]
-
-        tandem_prob = self.data["tandem"]["path_prob"]
-        tandem_cls  = self.data["tandem"]["classification"]
-
-        # 3. Build column MultiIndex
-        data = {
-            ("SAV", "SAV"): savs,
-            ("TANDEM", "probability"): tandem_prob,
-            ("TANDEM", "classification"): tandem_cls,
-        }
-
-        # 4. Optional TANDEM-DIMPLE
+        tdm_prob_cls = [
+            f"{p:.3f}±{sem:.3f} ({cls})"
+            for p, sem, cls in zip(
+                tdm_data["path_prob"], tdm_data["path_prob_sem"], tdm_data["classification"])
+        ]
         if models != TANDEM_v1dot1:
-            td_prob = self.data["tandem_dimple"]["path_prob"]
-            td_cls  = self.data["tandem_dimple"]["classification"]
+            tdp_prob_cls = [
+                f"{p:.3f}±{sem:.3f} ({cls})"
+                for p, sem, cls in zip(
+                    tdp_data["path_prob"], tdp_data["path_prob_sem"], tdp_data["classification"])
+                ]
+            df_data = {"SAV": SAV, "TANDEM": tdm_prob_cls, "TANDEM-DIMPLE": tdp_prob_cls}
+            columns = ["SAV", "TANDEM", "TANDEM-DIMPLE"]
+        else:
+            df_data = {"SAV": SAV, "TANDEM": tdm_prob_cls}
+            columns = ["SAV", "TANDEM"]
 
-            data[("TANDEM-DIMPLE", "probability")] = td_prob
-            data[("TANDEM-DIMPLE", "classification")] = td_cls
-        
-        columns = data.keys()
-
-        # 5. Create DataFrame with MultiIndex columns
-        multi_cols = pd.MultiIndex.from_tuples(columns)
-        df = pd.DataFrame(data, columns=multi_cols)
-
-        # 7. Save CSV (flatten header for compatibility)
+        df = pd.DataFrame(df_data, columns=columns)
         if filename:
             filepath = os.path.join(folder, f"{filename}.csv")
-
-            df_to_save = df.copy()
-            df_to_save.columns = [
-                col if isinstance(col, str) else f"{col[0]}::{col[1]}"
-                for col in df_to_save.columns
-            ]
-
-            df_to_save.to_csv(filepath, index=False)
+            df.to_csv(filepath, index=False)
             LOGGER.info(f"Predictions saved to {filepath}")
-
         return df
     
     def calcPredictions(self, models):
@@ -366,13 +339,22 @@ class Tandem(Features):
         plotLoss(folder=job_dir, filename='loss.png')
         # Convert each model's list of dicts into a DataFrame
         dfs = {}
+        dfs_sem = {}
         for model, runs in test_evaluation.items():
             df = pd.DataFrame(runs)          # shape: (n_runs, n_metrics)
-            dfs[model] = df.mean()           # or df.mean(), df.std()
-        
-        final_df = pd.DataFrame(dfs) # Combine
-        final_df.insert(0, "metric", final_df.index) # add column metrics
-        final_df.to_csv(f'{job_dir}/test_evaluation.csv', index=False)
+            dfs[model] = 100*df.mean()
+            dfs_sem[model] = 100*df.std(ddof=1) / np.sqrt(len(df))
+            
+        final_df = pd.DataFrame(index=dfs[next(iter(dfs))].index)
+        for model in dfs:
+            final_df[model] = [
+                f"{dfs[model][metric]:.1f}±{dfs_sem[model][metric]:.1f}%"
+                for metric in final_df.index
+            ]
+
+        final_df.insert(0, "metric", final_df.index)
+        final_df.reset_index(drop=True, inplace=True)
+        final_df.to_csv(f"{job_dir}/test_evaluation.csv", index=False)
         
         # Save SAVs splitting schemes for cross-validation
         with open(f'{job_dir}/cross_validation_SAVs.json', 'w') as f:
