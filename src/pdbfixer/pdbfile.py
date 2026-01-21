@@ -242,7 +242,7 @@ class PDBFile(object):
 
     @staticmethod
     def writeFile(topology, positions, file=sys.stdout, keepIds=False, extraParticleIdentifier='EP',
-                    modify_chain=None):
+                    modify_chain=None, bfactors=None, occupancies=None):
     # def writeFile(topology, positions, file=sys.stdout, extraParticleIdentifier='EP'):
         """Write a PDB file containing a single model.
 
@@ -264,7 +264,7 @@ class PDBFile(object):
         """
         PDBFile.writeHeader(topology, file)
         PDBFile.writeModel(topology, positions, file, keepIds=keepIds, extraParticleIdentifier=extraParticleIdentifier,
-                            modify_chain=modify_chain)
+                            modify_chain=modify_chain, bfactors=bfactors, occupancies=occupancies)
         # PDBFile.writeModel(topology, positions, file, extraParticleIdentifier=extraParticleIdentifier)
         PDBFile.writeFooter(topology, file)
 
@@ -289,7 +289,7 @@ class PDBFile(object):
 
     @staticmethod
     def writeModel(topology, positions, file=sys.stdout, modelIndex=None, keepIds=False, extraParticleIdentifier='EP',
-                   modify_chain=None):
+                   modify_chain=None, bfactors=None, occupancies=None):
     # def writeModel(topology, positions, file=sys.stdout, modelIndex=None, keepIds=False, extraParticleIdentifier='EP'):
         """Write out a model to a PDB file.
 
@@ -402,11 +402,39 @@ class PDBFile(object):
                     else:
                         atomName = atom.name
                     coords = positions[posIndex]
-                    line = "%s%5s %-4s %3s %s%4s%1s   %s%s%s  1.00  0.00          %2s  " % (
-                        recordName, _formatIndex(atomIndex, 5), atomName, resName, chainName, resId, resIC, _format_83(coords[0]),
-                        _format_83(coords[1]), _format_83(coords[2]), symbol)
+
+                    # Occupancy & B-factor (safe defaults)
+                    occ = occupancies[posIndex] if occupancies is not None else 1.00
+                    bf  = bfactors[posIndex] if bfactors is not None else 0.00
+                    
+                    # line = "%s%5s %-4s %3s %s%4s%1s   %s%s%s  %4.2f  %4.2f          %2s  " % (
+                    #     recordName, _formatIndex(atomIndex, 5), atomName, resName, chainName, resId, resIC, _format_83(coords[0]),
+                    #     _format_83(coords[1]), _format_83(coords[2]), occ, bf, symbol)
+                    altLoc = " "
+                    tail = "  "   # columns 79–80
+                    line = (
+                        "{:<6s}{:>5d} {:^4s}{:1s}{:>3s} {:1s}{:>4d}{:1s}   "
+                        "{:8.3f}{:8.3f}{:8.3f}"
+                        "{:6.2f}{:6.2f}          "
+                        "{:>2s}{:2s}"
+                    ).format(
+                        recordName,      # 1–6
+                        int(atomIndex),  # 7–11
+                        atomName,        # 13–16
+                        altLoc,          # 17
+                        resName,         # 18–20
+                        chainName,       # 22
+                        int(resId),      # 23–26
+                        resIC,           # 27
+                        coords[0], coords[1], coords[2],         # 31–54
+                        occ,             # 55–60
+                        bf,              # 61–66
+                        symbol,          # 77–78
+                        tail             # 79–80
+                    )
+                    
                     if len(line) != 80:
-                        raise ValueError('Fixed width overflow detected')
+                        raise ValueError(f"Line length {len(line)} != 80:\n{line!r}")
                     print(line, file=file)
                     posIndex += 1
                     atomIndex += 1

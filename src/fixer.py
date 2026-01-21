@@ -6,6 +6,7 @@ import numpy as np
 from pathlib import Path
 from openmm.app.element import hydrogen
 import openmm.app as app
+from openmm.unit import angstrom
 from prody import parsePDB, writePDB, AtomGroup
 from sklearn.cluster import KMeans
 from uuid import uuid1
@@ -155,41 +156,61 @@ class LociFixer(PDBFixer):
             self.missingTerminals = {}
             self.addMissingAtoms()
 
-
         # We only fix if N<500 or %<20% of residues have missing atoms
-        # if nMissingResidues < 500:
-        #     self.addMissingAtoms()
-        #     return
+        if nMissingResidues < 500:
+            self.addMissingAtoms()
+            return
         # If >2000 res for 10,000 res system, we do not fix
-        # elif len(self.missingAtoms) > 0.2 * self.topology.getNumResidues():
-        #     LOGGER.warn(
-        #         f"Too many residues with missing atoms {len(self.missingAtoms)} "
-        #         f"out of {self.topology.getNumResidues()}. No fix needed")
-        #     to_delete = []
-        #     for res, atoms in self.missingAtoms.items():
-        #         if res.name != 'CYS':
-        #             to_delete.append(res)
-        #         else:
-        #             for atom in atoms:
-        #                 # Remove not SG atoms from f.missingAtoms[res]
-        #                 if atom.name != 'SG':
-        #                     self.missingAtoms[res].remove(atom)
-        #     # Now delete the entries after iteration
-        #     for res in to_delete:
-        #         del self.missingAtoms[res]
-        #     self.missingAtoms = {}
-        #     self.missingTerminals = {}
-        #     self.addMissingAtoms()
-        #     return
+        elif len(self.missingAtoms) > 0.2 * self.topology.getNumResidues():
+            LOGGER.warn(
+                f"Too many residues with missing atoms {len(self.missingAtoms)} "
+                f"out of {self.topology.getNumResidues()}. No fix needed")
+            to_delete = []
+            for res, atoms in self.missingAtoms.items():
+                if res.name != 'CYS':
+                    to_delete.append(res)
+                else:
+                    for atom in atoms:
+                        # Remove not SG atoms from f.missingAtoms[res]
+                        if atom.name != 'SG':
+                            self.missingAtoms[res].remove(atom)
+            # Now delete the entries after iteration
+            for res in to_delete:
+                del self.missingAtoms[res]
+            self.missingAtoms = {}
+            self.missingTerminals = {}
+            self.addMissingAtoms()
+            return
     
     def saveTopology(self, savePath, keepIds=True, modify_chain=None):
         """Save topology to a pdb file
 
         In our setting, we reset the chainID using ```chainName = chr(ord('A')+chainIndex%26)```
         """
+        orig_atoms = list(self.structure.iter_atoms())
+        orig_meta = {
+            (atom.chain_id, atom.residue_number, atom.name): 
+            (atom.temperature_factor, atom.occupancy)
+            for atom in orig_atoms
+        }
+        # Restore bfactors
+        bfactors = []
+        occupancies = []
+        for atom in self.topology.atoms():
+            key = (atom.residue.chain.id, int(atom.residue.id), atom.name)
+            if key in orig_meta:
+                bf, occ = orig_meta[key]
+                bf = bf.value_in_unit(angstrom * angstrom)
+            else:
+                # Newly created atom or residue
+                bf, occ = 0.00, 1.00   # sensible defaults
+            bfactors.append(bf)
+            occupancies.append(occ)
+
         with open(savePath, 'w') as out_f:
             out_f.write('HEADER\n')
-            PDBFile.writeFile(self.topology, self.positions, out_f, keepIds=keepIds, modify_chain=modify_chain)
+            PDBFile.writeFile(self.topology, self.positions, out_f, keepIds=keepIds, modify_chain=modify_chain,
+                bfactors=bfactors, occupancies=occupancies)
 
 def createMutationfile(pdbpath, chid, mutation, out=None):
     LOGGER.info(f"Creating mutation file for {mutation} in {pdbpath}")
@@ -514,7 +535,6 @@ def fixPDB(pdb, format='asu',
         if has_dum_atom:
             f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
             f.saveTopology(savePath=out)
-            LOGGER.info(out)
             out = buildCGmembrane(out, folder=folder, filename=filename, refresh=refresh)
         else:
             f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)

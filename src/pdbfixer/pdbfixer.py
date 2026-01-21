@@ -296,6 +296,7 @@ class PDBFixer(object):
         structure = PdbStructure(file)
         pdb = PDBFile(structure)
         self.topology = pdb.topology
+        self.structure = structure
         self.positions = pdb.positions
         self.sequences = [Sequence(s.chain_id, s.residues) for s in structure.sequences]
         self.modifiedResidues = [ModifiedResidue(r.chain_id, r.number, r.residue_name, r.standard_name) for r in structure.modified_residues]

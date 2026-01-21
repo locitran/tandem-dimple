@@ -112,11 +112,11 @@ def evaluate_model(model, x, y):
     auc = roc_auc_score(y_true, y_prob)   # y_true: 0/1, y_prob: float probs
 
     return {
-        "accuracy": accuracy, 
-        "auc": auc, 
-        "precision": precision, 
-        "recall": recall, 
-        "f1": f1
+        "Accuracy": accuracy, 
+        "AUC": auc, 
+        "Precision": precision, 
+        "Recall": recall, 
+        "F1": f1
     }
 
 

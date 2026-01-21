@@ -352,7 +352,7 @@ class Tandem(Features):
                 for metric in final_df.index
             ]
 
-        final_df.insert(0, "metric", final_df.index)
+        final_df.insert(0, "Metric", final_df.index)
         final_df.reset_index(drop=True, inplace=True)
         final_df.to_csv(f"{job_dir}/test_evaluation.csv", index=False)
         

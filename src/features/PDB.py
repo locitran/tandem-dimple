@@ -269,7 +269,12 @@ class PDBfeatures:
                 # and environment is very low beta (confidence)
                 else:
                     system = pdb.ca.select('beta >= 50')
-                    environment = pdb.ca.select('beta < 50')
+                    selstr = (
+                        "(name CA and beta < 50) or "
+                        "(resname NE1 and name Q1) or "
+                        "(nucleic and name P C4' C2)"
+                    )
+                    environment = pdb.select(selstr)
                     if environment is None:
                         gnm = GNM()
                         LOGGER.info('Building GNM model on the whole structure')
@@ -1256,7 +1261,7 @@ def calcPDBfeatures(
                     pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                 # AF custom PDB file
                 elif custom_PDB is not None and format == 'af':
-                    pdbPath = custom_PDB
+                    pdbPath = fixPDB(custom_PDB, format='custom', folder=job_directory, refresh=refresh)
                     pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                 # Not custom PDB
                 else:
