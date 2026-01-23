@@ -452,15 +452,20 @@ class PDBfeatures:
                     d['GNM_MC2_'+env]           = MC2
                 else: # env == 'full'
                     for c in self.chids:
-                        sel = f'chain `{c}`'
-                        chid_which, sel = sliceAtoms(pdb.ca, sel)
-                        chain_length = len(chid_which)
+                        # Among pdb.ca, select chain {c} --> which
+                        which, sel = sliceAtoms(pdb.ca, f'chain `{c}`')
+                        chain_length = len(which)
                         for f in features:
                             self.feats[c][f] = np.full(chain_length, np.nan)
-                        if self.format == 'af':
-                            which, sel = sliceAtoms(pdb.ca.select('beta >= 50'), sel)
+                        
+                            # Among pdb.ca.select(f'chain `{c}`'), select beta >= 50 --> which_ca (in chain)
+                            which_ca, _ = sliceAtoms(sel, 'beta >= 50')
+
+                            # Among pdb.ca.select('beta >= 50'), select chain {c} --> which_chid (in envGNM)
+                            which_chid, _ = sliceAtoms(pdb.ca.select('beta >= 50'), sel)
                         else:
-                            which = chid_which
+                            which_ca = which
+                            which_chid = which
                         # protein features
                         self.feats[c]['GNM_rmsf_overall_'+env]  = rmsf_overall
                         self.feats[c]['GNM_Ventropy_'+env]      = Ventropy
@@ -470,14 +475,14 @@ class PDBfeatures:
                         self.feats[c]['GNM_SEall_'+env]         = SEall
                         self.feats[c]['GNM_SE20_'+env]          = SE20
                         # residue features
-                        self.feats[c]['GNM_V1_'+env]            = V1[which]
-                        self.feats[c]['GNM_rankV1_'+env]        = rankV1[which]
-                        self.feats[c]['GNM_V2_'+env]            = V2[which]
-                        self.feats[c]['GNM_rankV2_'+env]        = rankV2[which]
-                        self.feats[c]['GNM_displacement_'+env]  = displacement[which]
-                        self.feats[c]['GNM_co_rank_'+env]       = co_rank[which]
-                        self.feats[c]['GNM_MC1_'+env]           = MC1[which]
-                        self.feats[c]['GNM_MC2_'+env]           = MC2[which]
+                        self.feats[c]['GNM_V1_'+env][which_ca]            = V1[which_chid]
+                        self.feats[c]['GNM_rankV1_'+env][which_ca]        = rankV1[which_chid]
+                        self.feats[c]['GNM_V2_'+env][which_ca]           = V2[which_chid]
+                        self.feats[c]['GNM_rankV2_'+env][which_ca]        = rankV2[which_chid]
+                        self.feats[c]['GNM_displacement_'+env][which_ca]  = displacement[which_chid]
+                        self.feats[c]['GNM_co_rank_'+env][which_ca]       = co_rank[which_chid]
+                        self.feats[c]['GNM_MC1_'+env][which_ca]           = MC1[which_chid]
+                        self.feats[c]['GNM_MC2_'+env][which_ca]           = MC2[which_chid]
             except Exception as e:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
