@@ -457,7 +457,8 @@ class PDBfeatures:
                         chain_length = len(which)
                         for f in features:
                             self.feats[c][f] = np.full(chain_length, np.nan)
-                        
+
+                        if self.format == 'af':
                             # Among pdb.ca.select(f'chain `{c}`'), select beta >= 50 --> which_ca (in chain)
                             which_ca, _ = sliceAtoms(sel, 'beta >= 50')
 
@@ -466,6 +467,7 @@ class PDBfeatures:
                         else:
                             which_ca = which
                             which_chid = which
+                            
                         # protein features
                         self.feats[c]['GNM_rmsf_overall_'+env]  = rmsf_overall
                         self.feats[c]['GNM_Ventropy_'+env]      = Ventropy
