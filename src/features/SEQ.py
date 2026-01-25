@@ -380,9 +380,9 @@ def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS,
             seq = SEQfeatures(acc, SAV_coords[indices]['SAV_coords'], 
                               recover_pickle=not(refresh), **kwargs)
         except Exception as e:
-            msg = traceback.format_exc()
+            # msg = traceback.format_exc()
             seq = str(e)
-            LOGGER.warn(msg)
+            LOGGER.warn(e)
             continue
         try:
             features[indices] = seq.calcFeatures(sel_feats)
