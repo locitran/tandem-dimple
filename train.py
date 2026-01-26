@@ -55,12 +55,20 @@ if __name__ == "__main__":
     #     seed=73,
     # )
 
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet=TANDEM_GJB2,
+    #     name="TANDEM_GJB2",
+    #     seed=73,
+    # )
+
     reproduce_transfer_learning_model(
         base_models=TANDEM_v1dot1,
-        TANDEM_testSet=TANDEM_GJB2,
-        name="TANDEM_GJB2",
+        TANDEM_testSet='/home/loci/main/tandem_website_dev/tandem/jobs/PKD1_test/features_high_confidence.csv',
+        name="TANDEM_PKD",
         seed=73,
     )
+
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=16, seed=0)
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=33, seed=0)
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=16, seed=100)

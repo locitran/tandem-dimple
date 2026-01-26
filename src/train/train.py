@@ -841,25 +841,25 @@ def reproduce_transfer_learning_model(
             model.save(f"{model_dir}/model_fold_{fold_idx+1}.h5")
             TEST_models.append(model)
 
-        ####################### Make predictions on nan data #######################
-        df_VUS = pd.DataFrame(columns=['SAV_coords', 0, 1, 2])
-        df_VUS['SAV_coords'] = VUS_coords
-        # df_VUS['SAV_coords'] = GJB2_nan_SAV_coords
-        # Make prediction
-        for idx, model in enumerate(TEST_models):
-            pred = model.predict(VUS_ds)
-            pred = pred[:, 1]
-            df_VUS[idx] = pred
-        df_VUS.to_csv(f'{model_dir}/VUS_pathogenicity_prob.csv', index=False)
-        df_VUS_prob_list.append(df_VUS[[0, 1, 2]].copy()) # Save the probability of pathogenicity
-        LOGGER.info(f"Save df_VUS to {f'{model_dir}/VUS_pathogenicity_prob.csv'}")
+        # ####################### Make predictions on nan data #######################
+        # df_VUS = pd.DataFrame(columns=['SAV_coords', 0, 1, 2])
+        # df_VUS['SAV_coords'] = VUS_coords
+        # # df_VUS['SAV_coords'] = GJB2_nan_SAV_coords
+        # # Make prediction
+        # for idx, model in enumerate(TEST_models):
+        #     pred = model.predict(VUS_ds)
+        #     pred = pred[:, 1]
+        #     df_VUS[idx] = pred
+        # df_VUS.to_csv(f'{model_dir}/VUS_pathogenicity_prob.csv', index=False)
+        # df_VUS_prob_list.append(df_VUS[[0, 1, 2]].copy()) # Save the probability of pathogenicity
+        # LOGGER.info(f"Save df_VUS to {f'{model_dir}/VUS_pathogenicity_prob.csv'}")
 
-        for idx in range(3):
-            df_VUS[idx] = df_VUS[idx].apply(lambda x: 1 if x > 0.5 else 0)
-        df_VUS['final'] = df_VUS[[0, 1, 2]].mode(axis=1)[0]
-        df_VUS.to_csv(f'{model_dir}/VUS_pathogenicity_pred.csv', index=False)
-        df_VUS_pred_list.append(df_VUS[[0, 1, 2]].copy())
-        LOGGER.info(f"Save df_VUS to {f'{model_dir}/VUS_pathogenicity_pred.csv'}")
+        # for idx in range(3):
+        #     df_VUS[idx] = df_VUS[idx].apply(lambda x: 1 if x > 0.5 else 0)
+        # df_VUS['final'] = df_VUS[[0, 1, 2]].mode(axis=1)[0]
+        # df_VUS.to_csv(f'{model_dir}/VUS_pathogenicity_pred.csv', index=False)
+        # df_VUS_pred_list.append(df_VUS[[0, 1, 2]].copy())
+        # LOGGER.info(f"Save df_VUS to {f'{model_dir}/VUS_pathogenicity_pred.csv'}")
 
         # Plot training history
         folds_history = [pd.read_csv(f'{model_dir}/history_fold_{j}.csv') for j in range(1, 4)]
@@ -987,37 +987,37 @@ def reproduce_transfer_learning_model(
         best.loc[f'std_{model_idx}'] = after_train_overall.loc['std']
         best.loc[f'sem_{model_idx}'] = after_train_overall.loc['sem']
 
-    # Concatenate all predictions
-    df_VUS_prob = pd.concat(df_VUS_prob_list, axis=1)
-    df_VUS_pred = pd.concat(df_VUS_pred_list, axis=1)
-    # Add SAV_coords at first column
-    df_VUS_prob.insert(0, 'SAV_coords', VUS_coords)
-    df_VUS_pred.insert(0, 'SAV_coords', VUS_coords)
+    # # Concatenate all predictions
+    # df_VUS_prob = pd.concat(df_VUS_prob_list, axis=1)
+    # df_VUS_pred = pd.concat(df_VUS_pred_list, axis=1)
+    # # Add SAV_coords at first column
+    # df_VUS_prob.insert(0, 'SAV_coords', VUS_coords)
+    # df_VUS_pred.insert(0, 'SAV_coords', VUS_coords)
 
-    # Rename columns
-    df_VUS_prob.columns = ['SAV_coords'] + list(range(15))
-    df_VUS_pred.columns = ['SAV_coords'] + list(range(15))
+    # # Rename columns
+    # df_VUS_prob.columns = ['SAV_coords'] + list(range(15))
+    # df_VUS_pred.columns = ['SAV_coords'] + list(range(15))
 
-    # Mode predictions of 15 models:
-    df_VUS_pred['final'] = df_VUS_pred[[i for i in range(15)]].mode(axis=1)[0]
-    df_VUS_pred['ratio'] = df_VUS_pred[[i for i in range(15)]].apply(lambda x: x.value_counts().max()/x.value_counts().sum(), axis=1)
+    # # Mode predictions of 15 models:
+    # df_VUS_pred['final'] = df_VUS_pred[[i for i in range(15)]].mode(axis=1)[0]
+    # df_VUS_pred['ratio'] = df_VUS_pred[[i for i in range(15)]].apply(lambda x: x.value_counts().max()/x.value_counts().sum(), axis=1)
     # Average of one decision as probability: Only the model gives that decision
     # Make decision using voting by using 15 models (do not be biased by models)
 
-    preds = df_VUS_pred['final'].values
-    for i, pred in enumerate(preds):
-        # np.where from df_prob.iloc[i, 1:] == pred
-        # Take the average of the probabilities
-        # print the average
-        pred_probs = df_VUS_prob.iloc[i, 1:]
-        pred_probs = pred_probs[df_VUS_pred.iloc[i, 1:-2] == pred]
-        prob = pred_probs.mean()
-        prob_sem = pred_probs.sem()
-        df_VUS_pred.loc[i, 'final_prob'] = prob
-        df_VUS_pred.loc[i, 'final_prob_sem'] = prob_sem
+    # preds = df_VUS_pred['final'].values
+    # for i, pred in enumerate(preds):
+    #     # np.where from df_prob.iloc[i, 1:] == pred
+    #     # Take the average of the probabilities
+    #     # print the average
+    #     pred_probs = df_VUS_prob.iloc[i, 1:]
+    #     pred_probs = pred_probs[df_VUS_pred.iloc[i, 1:-2] == pred]
+    #     prob = pred_probs.mean()
+    #     prob_sem = pred_probs.sem()
+    #     df_VUS_pred.loc[i, 'final_prob'] = prob
+    #     df_VUS_pred.loc[i, 'final_prob_sem'] = prob_sem
 
-    df_VUS_prob.to_csv(f'{log_dir}/VUS_pathogenicity_prob_total.csv', index=False)
-    df_VUS_pred.to_csv(f'{log_dir}/VUS_pathogenicity_pred_total.csv', index=False)
+    # df_VUS_prob.to_csv(f'{log_dir}/VUS_pathogenicity_prob_total.csv', index=False)
+    # df_VUS_pred.to_csv(f'{log_dir}/VUS_pathogenicity_pred_total.csv', index=False)
 
     baseline.to_csv(f'{log_dir}/baseline.csv', index=False)
     best.to_csv(f'{log_dir}/best.csv', index=False)

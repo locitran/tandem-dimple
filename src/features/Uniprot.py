@@ -88,8 +88,8 @@ class UniprotMapping:
         if recover_pickle:
             try:
                 self.recoverPickle(**kwargs)
-            except Exception:
-                LOGGER.warn(f'Unable to recover pickle: UniprotMap-{acc}.pkl')
+            except Exception as e:
+                LOGGER.warn(f'Unable to recover pickle: UniprotMap-{acc}.pkl because\n {e}')
                 self.refresh()
         else:
             self.refresh()
@@ -583,7 +583,8 @@ class UniprotMapping:
                     hits[idx] = (res_map, chain_len, chain_len, '', '', -999)
                     break
                 else:
-                    confidence = customPDBmapping['confidence'][c][pdb_resid]
+                    # This line needs to be reviewed
+                    confidence = customPDBmapping['confidence'][c][pdb_resid-1]
                     if confidence < 50:
                         hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence} (chain {c})'
                         continue
@@ -617,7 +618,7 @@ class UniprotMapping:
         return pickle_path
 
     def recoverPickle(self, days=30*6, **kwargs):
-        folder = kwargs.get('folder', '.')
+        folder = kwargs.get('folder', 'data')
         folder = os.path.join(folder, 'pickles/uniprot')
         filename = kwargs.get('filename', self.acc)
         filename = 'UniprotMap-' + filename + '.pkl'
