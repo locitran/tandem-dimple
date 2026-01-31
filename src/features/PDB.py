@@ -465,9 +465,9 @@ class PDBfeatures:
                             # Among pdb.ca.select('beta >= 50'), select chain {c} --> which_chid (in envGNM)
                             which_chid, _ = sliceAtoms(pdb.ca.select('beta >= 50'), sel)
                         else:
-                            which_ca = which
-                            which_chid = which
-                            
+                            which_ca = np.arange(chain_length) # Select all CA in chain c
+                            which_chid = which # Select chain c among all chains
+                        
                         # protein features
                         self.feats[c]['GNM_rmsf_overall_'+env]  = rmsf_overall
                         self.feats[c]['GNM_Ventropy_'+env]      = Ventropy

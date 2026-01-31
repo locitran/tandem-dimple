@@ -1,0 +1,72 @@
+#,genomic,protein,exon,classification,SAV
+1,c.38T>G,p.(Leu13Arg),1,Pathogenic,P21817 L13R
+2,c.103T>C,p.(Cys35Arg),2,Pathogenic,P21817 C35R
+3,c.130C>T,p.(Arg44Cys),2,Pathogenic,P21817 R44C
+5,c.487C>T,p.(Arg163Cys),6,Pathogenic,P21817 R163C
+4,c.488G>T,p.(Arg163Leu),6,Pathogenic,P21817 R163L
+6,c.529C>T,p.(Arg177Cys),6,Likely Pathogenic,P21817 R177C
+7,c.742G>A,p.(Gly248Arg),9,Pathogenic,P21817 G248R
+9,c.1021G>C,p.(Gly341Arg),11,Pathogenic,P21817 G341R
+11,c.1024G>A,p.(Glu342Lys),11,Pathogenic,P21817 E342K
+12,c.1201C>T,p.(Arg401Cys),12,Pathogenic,P21817 R401C
+13,c.1202G>A,p.(Arg401His),12,Pathogenic,P21817 R401H
+14,c.1565A>C,p.(Tyr522Ser),14,Pathogenic,P21817 Y522S
+15,c.1565A>G,p.(Tyr522Cys),14,Likely Pathogenic,P21817 Y522C
+16,c.1589G>A,p.(Arg530His),15,Likely pathogenic,P21817 R530H
+17,c.1597C>T,p.(Arg533Cys),15,Pathogenic,P21817 R533C
+18,c.1615T>C,p.(Phe539Leu),15,Likely Pathogenic,P21817 F539L
+19,c.1654C>T,p.(Arg552Trp),15,Pathogenic,P21817 R552W
+20,c.1840C>T,p.(Arg614Cys),17,Pathogenic,P21817 R614C
+21,c.1841G>T,p.(Arg614Leu),17,Pathogenic,P21817 R614L
+22,c.5132A>G,p.(Tyr1711Cys),34,Pathogenic,P21817 Y1711C
+23,c.5183C>T,p.(Ser1728Phe),34,Likely Pathogenic,P21817 S1728F
+24,c.6487C>T,p.(Arg2163Cys),39,Pathogenic,P21817 R2163C
+25,c.6488G>A,p.(Arg2163His),39,Pathogenic,P21817 R2163H
+26,c.6488G>C,p.(Arg2163Pro),39,Likely pathogenic,P21817 R2163P
+27,c.6488G>T,p.(Arg2163Leu),39,likely pathogenic,P21817 R2163L
+28,c.6502G>A,p.(Val2168Met),39,Pathogenic,P21817 V2168M
+29,c.6612C>G,p.(His2204Gln),40,Likely pathogenic,P21817 H2204Q
+30,c.6617C>G,p.(Thr2206Arg),40,Pathogenic,P21817 T2206R
+31,c.6617C>T,p.(Thr2206Met),40,Pathogenic,P21817 T2206M
+32,c.6628G>T,p.(Val2210Phe),40,Likely Pathogenic,P21817 V2210F
+33,c.6838G>A,p.(Val2280Ile),42,Pathogenic,P21817 V2280I
+34,c.6863T>C,p.(Leu2288Ser),42,Pathogenic,P21817 L2288S
+35,c.7007G>A,p.(Arg2336His),43,Pathogenic,P21817 R2336H
+37,c.7048G>A,p.(Ala2350Thr),44,Pathogenic,P21817 A2350T
+38,c.7063C>T,p.(Arg2355Trp),44,Pathogenic,P21817 R2355W
+39,c.7090T>G,p.(Phe2364Val),44,Likely pathogenic,P21817 F2364V
+40,c.7124G>C,p.(Gly2375Ala),44,Pathogenic,P21817 G2375A
+41,c.7282G>A,p.(Ala2428Thr),45,Pathogenic,P21817 A2428T
+42,c.7291G>T,p.(Asp2431Tyr),45,Pathogenic,P21817 D2431Y
+43,c.7300G>A,p.(Gly2434Arg),45,Pathogenic,P21817 G2434R
+44,c.7304G>A,p.(Arg2435His),45,Pathogenic,P21817 R2435H
+45,c.7304G>T,p.(Arg2435Leu),45,Likely pathogenic,P21817 R2435L
+46,c.7310C>T,p.(Ala2437Val),45,Likely pathogenic,P21817 A2437V
+47,c.7354C>T,p.(Arg2452Trp),46,Pathogenic,P21817 R2452W
+48,c.7360C>T,p.(Arg2454Cys),46,Pathogenic,P21817 R2454C
+49,c.7361G>A,p.(Arg2454His),46,Pathogenic,P21817 R2454H
+50,c.7372C>T,p.(Arg2458Cys),46,Pathogenic,P21817 R2458C
+51,c.7373G>A,p.(Arg2458His),46,Pathogenic,P21817 R2458H
+52,c.7522C>T,p.(Arg2508Cys),47,Pathogenic,P21817 R2508C
+53,c.7523G>A,p.(Arg2508His),47,Pathogenic,P21817 R2508H
+54,c.8026C>T,p.(Arg2676Trp),50,Likely pathogenic,P21817 R2676W
+55,c.8638G>A,p.(Glu2880Lys),56,Likely pathogenic,P21817 E2880K
+56,c.9310G>A,p.(Glu3104Lys),63,Pathogenic,P21817 E3104K
+57,c.11315G>A,p.(Arg3772Gln),79,Likely pathogenic,P21817 R3772Q
+58,c.11416G>A,p.(Gly3806Arg),80,Pathogenic,P21817 G3806R
+59,c.11708G>A,p.(Arg3903Gln),85,Likely pathogenic,P21817 R3903Q
+60,c.11969G>T,p.(Gly3990Val),87,Pathogenic,P21817 G3990V
+61,c.12533G>T,p.(Gly4178Val),90,Likely pathogenic,P21817 G4178V
+62,c.12700G>T,p.(Val4234Leu),91,Likely pathogenic,P21817 V4234L
+63,c.12700G>C,p.(Val4234Leu),91,Likely pathogenic,P21817 V4234L
+65,c.14209C>T,p.(Arg4737Trp),98,Likely pathogenic,P21817 R4737W
+64,c.14210G>A,p.(Arg4737Gln),98,Pathogenic,P21817 R4737Q
+66,c.14471T>C,p.(Leu4824Pro),100,Likely pathogenic,P21817 L4824P
+67,c.14477C>T,p.(Thr4826Ile),100,Pathogenic,P21817 T4826I
+68,c.14497C>T,p.(His4833Tyr),100,Pathogenic,P21817 H4833Y
+69,c.14512C>G,p.(Leu4838Val),101,Pathogenic,P21817 L4838V
+70,c.14545G>A,p.(Val4849Ile),101,Pathogenic,P21817 V4849I
+71,c.14582G>A,p.(Arg4861His),101,Likely Pathogenic,P21817 R4861H
+72,c.14627A>G,p.(Lys4876Arg),101,Pathogenic,P21817 K4876R
+73,c.14813T>C,p.(Ile4938Thr),103,Pathogenic,P21817 I4938T
+74,c.14918C>T,p.(Pro4973Leu),104,Likely pathogenic,P21817 P4973L

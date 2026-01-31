@@ -357,6 +357,60 @@ class PDBFixer(object):
                 for row in modData.getRowList():
                     self.modifiedResidues.append(ModifiedResidue(row[asymIdCol], int(row[resNumCol]), row[resNameCol], row[standardResCol]))
 
+        # Add self.structure record here
+        # ------------------------------------------------------------------
+        # Add a minimal PDB-like structure adapter for downstream compatibility
+        # ------------------------------------------------------------------
+
+        atomSite = block.getObj('atom_site')
+        if atomSite is not None:
+
+            class _CIFAtom:
+                def __init__(self, chain_id, residue_number, name, bfactor, occupancy):
+                    self.chain_id = chain_id
+                    self.residue_number = residue_number
+                    self.name = name
+                    self.temperature_factor = bfactor
+                    self.occupancy = occupancy
+
+
+            class _CIFStructure:
+                def __init__(self, atoms):
+                    self._atoms = atoms
+
+                def iter_atoms(self):
+                    return iter(self._atoms)
+
+
+            # Parse atom-level metadata from mmCIF
+            atomData = block.getObj('atom_site')
+            atoms = []
+
+            if atomData is not None:
+                chainCol = atomData.getAttributeIndex('auth_asym_id')
+                resNumCol = atomData.getAttributeIndex('auth_seq_id')
+                atomNameCol = atomData.getAttributeIndex('auth_atom_id')
+                bfactorCol = atomData.getAttributeIndex('B_iso_or_equiv')
+                occCol = atomData.getAttributeIndex('occupancy')
+
+                for row in atomData.getRowList():
+                    try:
+                        atoms.append(
+                            _CIFAtom(
+                                chain_id=row[chainCol],
+                                residue_number=int(row[resNumCol]),
+                                name=row[atomNameCol],
+                                bfactor = unit.Quantity(float(row[bfactorCol]), unit.angstrom**2),
+                                occupancy=float(row[occCol]),
+                            )
+                        )
+                    except Exception:
+                        # skip malformed rows safely
+                        continue
+
+        # Attach CIF-backed structure
+        self.structure = _CIFStructure(atoms)
+
     def _addAtomsToTopology(self, heavyAtomsOnly, omitUnknownMolecules):
         """Create a new Topology in which missing atoms have been added.
 

@@ -204,6 +204,7 @@ models/different_number_of_layers/20250423-1234-tandem/n_hidden-5/shap_values_GJ
 models/different_number_of_layers/20250423-1234-tandem/n_hidden-5/shap_values_fold_1_Jun19.npy
 
 rhapsody/
+rhapsody_modify/
 
 .gradio
 .vscode

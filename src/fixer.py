@@ -187,6 +187,8 @@ class LociFixer(PDBFixer):
 
         In our setting, we reset the chainID using ```chainName = chr(ord('A')+chainIndex%26)```
         """
+        bfactors = None
+        occupancies = None
         orig_atoms = list(self.structure.iter_atoms())
         orig_meta = {
             (atom.chain_id, atom.residue_number, atom.name): 
@@ -206,7 +208,8 @@ class LociFixer(PDBFixer):
                 bf, occ = 0.00, 1.00   # sensible defaults
             bfactors.append(bf)
             occupancies.append(occ)
-
+        bfactors = None
+        occupancies = None
         with open(savePath, 'w') as out_f:
             out_f.write('HEADER\n')
             PDBFile.writeFile(self.topology, self.positions, out_f, keepIds=keepIds, modify_chain=modify_chain,
@@ -579,6 +582,7 @@ def fixPDB(pdb, format='asu',
             return out
         pdbpath = fetchPDB_BiologicalAssembly(pdb, assemblyID, format='cif', 
                                         refresh=refresh, folder=RAW_PDB_DIR)
+        LOGGER.info(pdbpath)
         f = LociFixer(pdbpath)
         f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
         f.saveTopology(savePath=out)
