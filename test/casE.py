@@ -4,7 +4,8 @@ addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, addpath) # /home/newloci
 
 from tandem.src.main import run
-
+case_wt_complete = "/home/loci/main/tandem_website_dev/tandem/data/casE/case_wt_complete.pdb"
+_4tvx_chainA_wRNA = '/home/loci/main/tandem_website_dev/tandem/data/casE/4tvx_chainA_wRNA.pdb'
 DV1_query = [
     'Q46897 9 A K',
     'Q46897 43 K R',
@@ -38,19 +39,25 @@ DV6b_query = [
 
 td_DV1 = run(
     query=DV1_query,
-    job_name='CasE_DV1',
+    job_name='CasE_DV1_4DZD',
+    custom_PDB='4DZD',
     refresh=False,
+    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )
 
 td_DV2 = run(
     query=DV2_query,
-    job_name='CasE_DV2',
+    job_name='CasE_DV2_4DZD',
+    custom_PDB='4DZD',
     refresh=False,
+    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )
 
 td_DV6b = run(
     query=DV6b_query,
-    job_name='CasE_DV6b',
+    job_name='CasE_DV6b_4DZD',
+    custom_PDB='4DZD',
     refresh=False,
+    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )
 

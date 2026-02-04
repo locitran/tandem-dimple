@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 import numpy as np
 import random
+import json
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -656,6 +657,23 @@ def reproduce_transfer_learning_model(
     # Save train data (train+val) for shap analysis
     testset_train = test_knw[2][train_indices]
     np.save(f'{log_dir}/shap_background.npy', testset_train)
+
+    # Extract test SAVs
+    test_SAV_coords = np.array(SAV_coords)[test_indices]
+    test_labels = labels[test_indices]
+
+    # Build JSON-friendly structure
+    test_sav_data = {
+        "num_test_savs": len(test_SAV_coords),
+        "savs": [{"SAV_coords": sav, "label": int(lbl)}
+            for sav, lbl in zip(test_SAV_coords, test_labels)]}
+
+    # Save to JSON
+    out_json = os.path.join(log_dir, "test_SAVs.json")
+    with open(out_json, "w") as f:
+        json.dump(test_sav_data, f, indent=2)
+
+    LOGGER.info(f"Saved {len(test_SAV_coords)} test SAVs to {out_json}")
 
     kf = StratifiedKFold(n_splits=3, random_state=seed, shuffle=True)
     folds = []

@@ -2,8 +2,8 @@
 # from src.train.optimization import test_batch_size, test_different_numberOfneurons, visualization_optimization
 from src.train.train import train_foundation_model, train_transfer_learning_model
 from src.train.train import reproduce_foundation_model, reproduce_transfer_learning_model, reproduce_direct_learning_model
-from src.utils.settings import TANDEM_GJB2, TANDEM_RYR1, TANDEM_v1dot1, TANDEM_R20000, CLUSTER
-from src.utils.settings import RHAPSODY_R20000, RHAPSODY_GJB2, RHAPSODY_RYR1, RHAPSODY_FEATS
+from src.utils.settings import TANDEM_GJB2, TANDEM_RYR1, TANDEM_v1dot1, TANDEM_R20000, CLUSTER, TANDEM_RYR1_V2026
+from src.utils.settings import RHAPSODY_R20000, RHAPSODY_GJB2, RHAPSODY_RYR1, RHAPSODY_FEATS, RHAPSODY_RYR1_V2026
 from src.features import TANDEM_FEATS
 if __name__ == "__main__":
 #     # train_model(
@@ -14,11 +14,10 @@ if __name__ == "__main__":
     # )
     # featset = list(dynamics_feat.keys())
     # reproduce_foundation_model(
-    #     name='tandem_dyn',
+    #     name='reproduce_foundation_model_RYR1_v2026',
     #     featds=TANDEM_R20000,
-    #     featset=featset,
     #     gjb2ds=TANDEM_GJB2,
-    #     ryr1ds=TANDEM_RYR1,
+    #     ryr1ds=TANDEM_RYR1_V2026,
     #     clstr=CLUSTER,
     # )
     # train_foundation_model(
@@ -30,16 +29,14 @@ if __name__ == "__main__":
     #     clstr=CLUSTER,
     # )
 
-
-    # reproduce_foundation_model(
-    #     name='reproduce_foundation_model',
-    #     featds=RHAPSODY_R20000,
-    #     featset=RHAPSODY_FEATS,
-    #     gjb2ds=RHAPSODY_GJB2,
-    #     ryr1ds=RHAPSODY_RYR1,
-    #     clstr=CLUSTER,
-    # )
-    
+    reproduce_foundation_model(
+        name='RhapsodyDNN',
+        featds=RHAPSODY_R20000,
+        featset=RHAPSODY_FEATS,
+        gjb2ds=RHAPSODY_GJB2,
+        ryr1ds=RHAPSODY_RYR1,
+        clstr=CLUSTER,
+    )
 
     # train_transfer_learning_model(
     #     base_model='/home/loci/tandem_website/tandem/logs/train_plus_val_foundation_model/20251230-1711/model_train_plus_val.h5',
@@ -55,19 +52,52 @@ if __name__ == "__main__":
     #     seed=73,
     # )
 
+# RYR1
+##############################################################################################################################
     # reproduce_transfer_learning_model(
     #     base_models=TANDEM_v1dot1,
-    #     TANDEM_testSet=TANDEM_GJB2,
-    #     name="TANDEM_GJB2",
+    #     TANDEM_testSet=TANDEM_RYR1_V2026,
+    #     name="TANDEM_RYR1_V2026",
+    #     seed=21,
+    # )
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet=TANDEM_RYR1_V2026,
+    #     name="TANDEM_RYR1_V2026",
     #     seed=73,
     # )
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet=TANDEM_RYR1_V2026,
+    #     name="TANDEM_RYR1_V2026",
+    #     seed=0,
+    # )
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet=TANDEM_RYR1_V2026,
+    #     name="TANDEM_RYR1_V2026",
+    #     seed=100,
+    # )
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet=TANDEM_RYR1_V2026,
+    #     name="TANDEM_RYR1_V2026",
+    #     seed=5,
+    # )
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet=TANDEM_RYR1_V2026,
+    #     name="TANDEM_RYR1_V2026",
+    #     seed=2004,
+    # )
+##############################################################################################################################
 
-    reproduce_transfer_learning_model(
-        base_models=TANDEM_v1dot1,
-        TANDEM_testSet='/home/loci/main/tandem_website_dev/tandem/jobs/PKD1_test/features_high_confidence.csv',
-        name="TANDEM_PKD",
-        seed=73,
-    )
+    # reproduce_transfer_learning_model(
+    #     base_models=TANDEM_v1dot1,
+    #     TANDEM_testSet='/home/loci/main/tandem_website_dev/tandem/jobs/PKD1_test/features_high_confidence.csv',
+    #     name="TANDEM_PKD",
+    #     seed=73,
+    # )
 
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=16, seed=0)
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_RYR1, name="Direct_train_RYR1_2026Jan12", nHidden=2, nNeurons=33, seed=0)

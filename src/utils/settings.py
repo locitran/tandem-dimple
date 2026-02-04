@@ -32,14 +32,22 @@ FEAT_STATS = ROOT_DIR + '/data/R20000/stats/features_stats.csv'
 TANDEM_R20000 = ROOT_DIR + '/data/R20000/final_features.csv'
 TANDEM_GJB2 = ROOT_DIR + '/data/GJB2/final_features.csv'
 TANDEM_RYR1 = ROOT_DIR + '/data/RYR1/RYR1-features.csv'
+TANDEM_RYR1_V2026 = ROOT_DIR + '/data/RYR1/features_v20260127.csv'
 # TANDEM_RYR1 = ROOT_DIR + '/data/RYR1/final_features.csv'
 TANDEM_PKD1 = ROOT_DIR + '/data/PKD1/final_features_PKD1.csv'
 
 RHAPSODY_R20000 = ROOT_DIR + '/data/R20000/rhd_final_features.csv'
 RHAPSODY_GJB2 = ROOT_DIR + '/data/GJB2/rhd_final_features.csv'
 RHAPSODY_RYR1 = ROOT_DIR + '/data/RYR1/rhd_final_features.csv'
+RHAPSODY_RYR1_V2026 = ROOT_DIR + '/data/RYR1/rhd_features_v20260127.csv'
 RHAPSODY_PKD1 = ROOT_DIR + '/data/PKD1/rhd_final_features_PKD1.csv'
 RHAPSODY_FEATS = ['ANM_MSF-chain', 'ANM_MSF-reduced', 'ANM_MSF-sliced', 'ANM_effectiveness-chain', 'ANM_effectiveness-reduced', 'ANM_effectiveness-sliced', 'ANM_sensitivity-chain', 'ANM_sensitivity-reduced', 'ANM_sensitivity-sliced', 'BLOSUM', 'Delta_PSIC', 'Delta_SASA', 'EVmut-DeltaE_epist', 'EVmut-DeltaE_indep', 'EVmut-mut_aa_freq', 'EVmut-wt_aa_cons', 'GNM_MSF-chain', 'GNM_MSF-reduced', 'GNM_MSF-sliced', 'GNM_effectiveness-chain', 'GNM_effectiveness-reduced', 'GNM_effectiveness-sliced', 'GNM_sensitivity-chain', 'GNM_sensitivity-reduced', 'GNM_sensitivity-sliced', 'SASA', 'SASA_in_complex', 'entropy', 'ranked_MI', 'stiffness-chain', 'stiffness-reduced', 'stiffness-sliced', 'wt_PSIC']
+
+PRED_RHAPSODY_RYR1_V2026 = ROOT_DIR + '/data/RYR1/rhd-predictions_v20260127.txt'
+# PRED_RHAPSODY_GJB2 = ROOT_DIR + '/data/RYR1/AlphaMissense-Search-P29033.tsv'
+
+PRED_ALPHAMISSENSE_RYR1 = ROOT_DIR + '/data/RYR1/AlphaMissense-Search-P21817.tsv'
+PRED_ALPHAMISSENSE_GJB2 = ROOT_DIR + '/data/RYR1/AlphaMissense-Search-P29033.tsv'
 
 TANDEM_v1dot1 = os.path.join(ROOT_DIR, 'models', 'TANDEM')
 TANDEM_v1dot1_GJB2 = os.path.join(ROOT_DIR, 'models', 'TANDEM_GJB2')

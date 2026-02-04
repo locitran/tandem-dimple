@@ -1,5 +1,8 @@
 import os
 import numpy as np
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 from ..features import TANDEM_FEATS, all_feat, dynamics_feat, structure_feat, sequence_feat
@@ -195,3 +198,23 @@ def plotLoss(
             bbox_inches='tight',   # avoid cutting off labels
         )
     plt.close()
+
+def plot_confusion_matrix(y_true, y_pred, title='Confusion matrix'):
+    fig = plt.figure(figsize=(5, 5))
+    sns.heatmap(confusion_matrix(y_true, y_pred), annot=True, fmt='2d', cmap='Blues')#, normalize='true')
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title(title, fontsize=20)
+    plt.rcParams.update({'font.size': 18})
+    plt.show()
+
+def styled_legend(ax, handles, ncol=1, loc='upper right'):
+    legend = ax.legend(
+        handles=handles,
+        loc=loc, ncol=ncol, fontsize=8, title_fontsize=9, frameon=True,
+        borderpad=0.3, labelspacing=0.5, handletextpad=0.5, columnspacing=0.5
+    )
+    frame = legend.get_frame()
+    frame.set_facecolor('none')
+    frame.set_edgecolor('grey')
+    return legend
