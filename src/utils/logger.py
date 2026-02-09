@@ -12,6 +12,7 @@ import datetime
 import logging.handlers
 import numbers
 import warnings
+import re
 
 __all__ = ['PackageLogger', 'LOGGING_LEVELS', 'LOGGER']
 
@@ -33,6 +34,25 @@ now = datetime.datetime.now
 warnings.filterwarnings("ignore", message=".*failed to parse occupancy.*")
 warnings.filterwarnings("ignore", message=".*failed to parse beta-factor.*")
 
+# Patterns to strip from log files on close.
+_LOG_FILTER_PATTERNS = [
+    re.compile(r".*failed to parse occupancy.*"),
+    re.compile(r".*failed to parse beta-factor.*"),
+]
+
+def _filter_logfile(path, patterns):
+    try:
+        with open(path, "r") as f:
+            lines = f.readlines()
+        with open(path, "w") as f:
+            for line in lines:
+                if any(p.search(line) for p in patterns):
+                    continue
+                f.write(line)
+    except Exception:
+        # Best-effort filtering; do not break logging on failure.
+        return
+    
 class PackageLogger(object):
 
     """A class for package wide logging functionality."""
@@ -246,6 +266,7 @@ class PackageLogger(object):
                     self.info("Logging stopped at {0}".format(str(now())))
                     handler.close()
                     root_logger.removeHandler(handler)
+                    _filter_logfile(filename, _LOG_FILTER_PATTERNS)
                     self.info("Closing logfile: {0}".format(filename))
                     return
         self.warning("Logfile '{0}' was not found.".format(filename))

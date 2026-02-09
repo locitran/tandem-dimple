@@ -1,6 +1,6 @@
-Logging into file: /mnt/nas_1/YangLab/loci/tandem/logs/reproduce_foundation_model/20250930-1304/log.txt
-Logging started at 2025-09-30 13:04:11.404437
-Start Time = 20250930-1304
+Logging into file: /home/loci/main/tandem_website_dev/tandem/logs/RhapsodyDNN/20260203-1709/log.txt
+Logging started at 2026-02-03 17:09:23.461293
+Start Time = 20260203-1709
 Tensorflow Version: 2.17.0
 Tensorflow Version should be 2.17
 Feature set: ['ANM_MSF-chain', 'ANM_MSF-reduced', 'ANM_MSF-sliced', 'ANM_effectiveness-chain', 'ANM_effectiveness-reduced', 'ANM_effectiveness-sliced', 'ANM_sensitivity-chain', 'ANM_sensitivity-reduced', 'ANM_sensitivity-sliced', 'BLOSUM', 'Delta_PSIC', 'Delta_SASA', 'EVmut-DeltaE_epist', 'EVmut-DeltaE_indep', 'EVmut-mut_aa_freq', 'EVmut-wt_aa_cons', 'GNM_MSF-chain', 'GNM_MSF-reduced', 'GNM_MSF-sliced', 'GNM_effectiveness-chain', 'GNM_effectiveness-reduced', 'GNM_effectiveness-sliced', 'GNM_sensitivity-chain', 'GNM_sensitivity-reduced', 'GNM_sensitivity-sliced', 'SASA', 'SASA_in_complex', 'entropy', 'ranked_MI', 'stiffness-chain', 'stiffness-reduced', 'stiffness-sliced', 'wt_PSIC']
@@ -76,32 +76,34 @@ Training Configuration:
 +-----------+------------+----------+--------------------------+---------------------+
 |  Training | Batch Size | N Epochs |           Loss           |       Metrics       |
 +-----------+------------+----------+--------------------------+---------------------+
-|  Training |    300     |   300    | categorical_crossentropy | ['accuracy', 'AUC'] |
+|  Training |    300     |   2000   | categorical_crossentropy | ['accuracy', 'AUC'] |
 | Optimizer |   5e-05    |  Nadam   |            -             |          -          |
 +-----------+------------+----------+--------------------------+---------------------+
+Restoring model weights from the end of the best epoch: 262.
+Epoch 263: best epoch
 You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
-Fold 1 - val_loss: 0.51, val_accuracy: 77.1%, val_auc: 0.84, val_precision: 0.77, val_recall: 0.77, val_f1: 0.77, test_loss: 0.45, test_accuracy: 81.0%, test_auc: 0.88, test_precision: 0.81, test_recall: 0.81, test_f1: 0.81, RYR1_loss: 0.55, RYR1_accuracy: 76.7%, RYR1_auc: 0.82, RYR1_precision: 0.77, RYR1_recall: 0.77, RYR1_notnan_f1: 0.77, GJB2_loss: 0.34, GJB2_accuracy: 93.6%, GJB2_auc: 0.94, GJB2_precision: 0.94, GJB2_recall: 0.94, GJB2_notnan_f1: 0.94
+Fold 1 - val_acc: 77.1%, val_auc: 0.78, val_precision: 0.90, val_recall: 0.81, val_f1: 0.85, test_acc: 81.0%, test_auc: 0.80, test_precision: 0.89, test_recall: 0.87, test_f1: 0.88, RYR1_acc: 76.7%, RYR1_auc: 0.83, RYR1_precision: 0.71, RYR1_recall: 0.89, RYR1_f1: 0.79, GJB2_acc: 93.6%, GJB2_auc: 0.95, GJB2_precision: 1.00, GJB2_recall: 0.86, GJB2_f1: 0.93
 Restoring model weights from the end of the best epoch: 51.
 Epoch 52: best epoch
 You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
-Fold 2 - val_loss: 0.49, val_accuracy: 78.2%, val_auc: 0.86, val_precision: 0.78, val_recall: 0.78, val_f1: 0.78, test_loss: 0.43, test_accuracy: 83.3%, test_auc: 0.90, test_precision: 0.83, test_recall: 0.83, test_f1: 0.83, RYR1_loss: 0.57, RYR1_accuracy: 71.1%, RYR1_auc: 0.79, RYR1_precision: 0.71, RYR1_recall: 0.71, RYR1_notnan_f1: 0.71, GJB2_loss: 0.40, GJB2_accuracy: 87.2%, GJB2_auc: 0.92, GJB2_precision: 0.87, GJB2_recall: 0.87, GJB2_notnan_f1: 0.87
+Fold 2 - val_acc: 78.2%, val_auc: 0.80, val_precision: 0.82, val_recall: 0.89, val_f1: 0.85, test_acc: 83.3%, test_auc: 0.82, test_precision: 0.89, test_recall: 0.90, test_f1: 0.90, RYR1_acc: 71.1%, RYR1_auc: 0.84, RYR1_precision: 0.65, RYR1_recall: 0.93, RYR1_f1: 0.76, GJB2_acc: 87.2%, GJB2_auc: 0.92, GJB2_precision: 0.86, GJB2_recall: 0.86, GJB2_f1: 0.86
 Restoring model weights from the end of the best epoch: 182.
 Epoch 183: best epoch
 You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
-Fold 3 - val_loss: 0.54, val_accuracy: 75.1%, val_auc: 0.82, val_precision: 0.75, val_recall: 0.75, val_f1: 0.75, test_loss: 0.43, test_accuracy: 81.9%, test_auc: 0.89, test_precision: 0.82, test_recall: 0.82, test_f1: 0.82, RYR1_loss: 0.58, RYR1_accuracy: 74.4%, RYR1_auc: 0.78, RYR1_precision: 0.74, RYR1_recall: 0.74, RYR1_notnan_f1: 0.74, GJB2_loss: 0.39, GJB2_accuracy: 80.9%, GJB2_auc: 0.92, GJB2_precision: 0.81, GJB2_recall: 0.81, GJB2_notnan_f1: 0.81
+Fold 3 - val_acc: 75.1%, val_auc: 0.84, val_precision: 0.71, val_recall: 0.87, val_f1: 0.78, test_acc: 81.9%, test_auc: 0.81, test_precision: 0.88, test_recall: 0.90, test_f1: 0.89, RYR1_acc: 74.4%, RYR1_auc: 0.83, RYR1_precision: 0.67, RYR1_recall: 0.96, RYR1_f1: 0.79, GJB2_acc: 80.9%, GJB2_auc: 0.93, GJB2_precision: 0.76, GJB2_recall: 0.86, GJB2_f1: 0.81
 Restoring model weights from the end of the best epoch: 105.
 Epoch 106: best epoch
 You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
-Fold 4 - val_loss: 0.53, val_accuracy: 75.3%, val_auc: 0.83, val_precision: 0.75, val_recall: 0.75, val_f1: 0.75, test_loss: 0.42, test_accuracy: 83.4%, test_auc: 0.90, test_precision: 0.83, test_recall: 0.83, test_f1: 0.83, RYR1_loss: 0.59, RYR1_accuracy: 70.0%, RYR1_auc: 0.77, RYR1_precision: 0.70, RYR1_recall: 0.70, RYR1_notnan_f1: 0.70, GJB2_loss: 0.40, GJB2_accuracy: 83.0%, GJB2_auc: 0.92, GJB2_precision: 0.83, GJB2_recall: 0.83, GJB2_notnan_f1: 0.83
+Fold 4 - val_acc: 75.3%, val_auc: 0.83, val_precision: 0.74, val_recall: 0.87, val_f1: 0.80, test_acc: 83.4%, test_auc: 0.81, test_precision: 0.89, test_recall: 0.91, test_f1: 0.90, RYR1_acc: 70.0%, RYR1_auc: 0.84, RYR1_precision: 0.63, RYR1_recall: 0.98, RYR1_f1: 0.77, GJB2_acc: 83.0%, GJB2_auc: 0.92, GJB2_precision: 0.79, GJB2_recall: 0.86, GJB2_f1: 0.83
 Restoring model weights from the end of the best epoch: 84.
 Epoch 85: best epoch
 You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
-Fold 5 - val_loss: 0.51, val_accuracy: 75.7%, val_auc: 0.84, val_precision: 0.76, val_recall: 0.76, val_f1: 0.76, test_loss: 0.43, test_accuracy: 83.5%, test_auc: 0.90, test_precision: 0.84, test_recall: 0.84, test_f1: 0.84, RYR1_loss: 0.59, RYR1_accuracy: 70.0%, RYR1_auc: 0.78, RYR1_precision: 0.70, RYR1_recall: 0.70, RYR1_notnan_f1: 0.70, GJB2_loss: 0.39, GJB2_accuracy: 87.2%, GJB2_auc: 0.93, GJB2_precision: 0.87, GJB2_recall: 0.87, GJB2_notnan_f1: 0.87
+Fold 5 - val_acc: 75.7%, val_auc: 0.82, val_precision: 0.76, val_recall: 0.89, val_f1: 0.82, test_acc: 83.5%, test_auc: 0.81, test_precision: 0.89, test_recall: 0.91, test_f1: 0.90, RYR1_acc: 70.0%, RYR1_auc: 0.83, RYR1_precision: 0.63, RYR1_recall: 0.96, RYR1_f1: 0.76, GJB2_acc: 87.2%, GJB2_auc: 0.93, GJB2_precision: 0.86, GJB2_recall: 0.86, GJB2_f1: 0.86
 -----------------------------------------------------------------
-Vali - loss: 0.51±0.01, accuracy: 76.3±0.6%, auc: 0.84±0.01
-Test - loss: 0.43±0.01, accuracy: 82.6±0.5%, auc: 0.89±0.00
-GJB2 - loss: 0.38±0.01, accuracy: 86.4±2.2%, auc: 0.93±0.00
-RYR1 - loss: 0.57±0.01, accuracy: 72.4±1.3%, auc: 0.79±0.01
+Vali - accuracy: 76.3±0.6%, auc: 0.81±0.01, precision: 0.79±0.03, recall: 0.87±0.02, f1: 0.82±0.01
+Test - accuracy: 82.6±0.5%, auc: 0.81±0.00, precision: 0.89±0.00, recall: 0.90±0.01, f1: 0.89±0.00
+GJB2 - accuracy: 86.4±2.2%, auc: 0.93±0.01, precision: 0.86±0.04, recall: 0.86±0.00, f1: 0.86±0.02
+RYR1 - accuracy: 72.4±1.3%, auc: 0.83±0.00, precision: 0.66±0.02, recall: 0.94±0.02, f1: 0.77±0.01
 -----------------------------------------------------------------
-5 out of the last 5 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x7f014a6691c0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
-6 out of the last 6 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x7f014a6368e0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+5 out of the last 74 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x76a80c59a8e0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+6 out of the last 75 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x76a7e4667e20> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.

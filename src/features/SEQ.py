@@ -202,7 +202,8 @@ class SEQfeatures(UniprotMapping):
         rankdMI = 0.
         n = 0
         for ID, Pfam in PF_dict.items():
-            if isinstance(Pfam['mapping'], dict):
+            mapping = Pfam.get('mapping')
+            if isinstance(mapping, dict) and (resid - 1) in mapping:
                 n += 1
                 idx = Pfam['mapping'][resid - 1]
                 entropy += Pfam['entropy'][idx]

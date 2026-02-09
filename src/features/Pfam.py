@@ -165,16 +165,16 @@ def parse_hmmscan(filename: str, pfam_data: dict):
                     'locations': []
                 }
             dom = {
-                'ali_start': int(cols[17]),
-                'ali_end': int(cols[18]),
-                'seq_start': int(cols[19]),
-                'seq_end': int(cols[20]),
-                'hmm_start': int(cols[15]),
-                'hmm_end': int(cols[16]),
-                'hmm_length': int(cols[2]),
-                'score': score_dom,
-                'evalue': float(cols[12]),
-                'significance': significance,
+                # alignment coordinates in the query sequence (positions in your protein where the HMM alignment starts/ends).
+                'ali_start': int(cols[17]), 'ali_end': int(cols[18]),
+                # envelope coordinates in the query sequence (the full domain region on the sequence, often slightly wider than the aligned core).
+                'seq_start': int(cols[19]), 'seq_end': int(cols[20]),
+                # alignment coordinates in the Pfam HMM (positions along the model that align to the sequence).
+                'hmm_start': int(cols[15]), 'hmm_end': int(cols[16]),
+                'hmm_length': int(cols[2]), # total length of the Pfam HMM (model length).
+                'score': score_dom, # domain bit score (strength of the domain match).
+                'evalue': float(cols[12]), # domain E‑value.
+                'significance': significance, # 1 if both domain and sequence scores pass Pfam GA thresholds, else 0.
             }
             data[seq_id][acc]['locations'].append(dom)
     os.remove(filename)

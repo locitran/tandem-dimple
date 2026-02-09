@@ -1,20 +1,13 @@
 import os
+
 import numpy as np
-from sklearn.metrics import confusion_matrix
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
-import pandas as pd 
-import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
-import scipy.stats as stats
-import pandas as pd 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-from scipy import stats  # make sure this is imported
+from pathlib import Path
+from matplotlib.patches import Patch
+from scipy import stats
+from sklearn.metrics import confusion_matrix
 
 from ..features import TANDEM_FEATS, all_feat, dynamics_feat, structure_feat, sequence_feat
 
@@ -48,6 +41,28 @@ feat_hatches = np.array([
 
 featnames = np.array([all_feat[f] for f in featSet])
 n_features = len(featnames)
+
+def star_from_p(p, alpha=0.05):
+    try:
+        return "*" if (p is not None) and np.isfinite(p) and (p < alpha) else ""
+    except Exception:
+        return ""
+
+def annotate_sig(ax, x1, x2, y, h, text, lw=0.5, fs=8, clip_on=False, text_offset=0.3):
+    """
+    Draw a significance bracket from x1 to x2 at height y with vertical height h
+    and put 'text' (e.g., '*') above it.
+    """
+    if not text:
+        return
+    x1, x2 = (x1, x2) if x1 <= x2 else (x2, x1)
+    ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=lw, c="k", clip_on=clip_on)
+    ax.text((x1 + x2) / 2, y + h + text_offset, text, ha="center", va="bottom", fontsize=fs)
+
+def _ensure_ylim(ax, needed):
+    y0, y1 = ax.get_ylim()
+    if needed > y1:
+        ax.set_ylim(y0, needed)
 
 def _plotSHAP_bar(
         phi,
@@ -203,11 +218,7 @@ def plotLoss(
 
     if filename:
         filepath = os.path.join(folder, filename)
-        plt.savefig(
-            filepath,
-            dpi=300,               # higher resolution (300–600 for papers)
-            bbox_inches='tight',   # avoid cutting off labels
-        )
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
     plt.close()
 
 def plot_confusion_matrix(y_true, y_pred, title='Confusion matrix'):
@@ -230,17 +241,22 @@ def styled_legend(ax, handles, ncol=1, loc='upper right'):
     frame.set_edgecolor('grey')
     return legend
 
-def pl_gene_general_performance():
-    def annotate_sig(ax, x1, x2, y, h, text, lw=0.5, fs=8):
-        """
-        Draw a significance bracket from x1 to x2 at height y with vertical height h
-        and put 'text' (e.g., '*') above it.
-        """
-        if not text:  # nothing to show
-            return
-        ax.plot([x1, x1, x2, x2], [y, y+h, y+h, y], lw=lw, c="k")
-        ax.text((x1 + x2) / 2, y + h + 0.3, text, ha="center", va="bottom", fontsize=fs)
-
+def pl_gene_general_performance(
+    tandem,
+    rhapsodyDNN,
+    rhapsody_R20000_metrics,
+    alphamissense_R20000_metrics,
+    rhapsody_GJB2_metrics,
+    alphamissense_GJB2_metrics,
+    rhapsody_RYR1_metrics,
+    alphamissense_RYR1_metrics,
+    param,
+    txt_abv_bar,
+    alpha=0.05,
+    show_bar_values=False,
+    show_sigstars=True,
+    save_path=None,
+):
     def add_sigstars_for_panel(
         ax, means, sems,
         p_vs_rhapsodyDNN, p_vs_rhapsody, p_vs_alpha,
@@ -285,11 +301,7 @@ def pl_gene_general_performance():
 
             # ensure visibility
             ymax_needed = y_base + max(level-1, 0)*level_gap + bar_h + 2.0
-            y0, y1 = ax.get_ylim()
-            if ymax_needed > y1:
-                ax.set_ylim(y0, ymax_needed)
-
-
+            _ensure_ylim(ax, ymax_needed)
 
     # R20000
     tandem_r20000_test = [tandem['test_accuracy'].values, tandem['test_auc'].values, tandem['test_precision'].values, tandem['test_recall'].values, tandem['test_f1'].values]
@@ -372,11 +384,12 @@ def pl_gene_general_performance():
         ax_RYR1.bar(np.arange(len(RYR1_mean[i])) + i * 0.2, RYR1_mean[i]*100, yerr=RYR1_sem[i]*100, 
             label=exp_labels[i], **param, hatch=data_hatches[i], error_kw=error_params, color=data_colors[i])
 
-        # Add text on top of the bars
-        for j in range(len(data_mean[i])):
-        #     ax_r20000.text(j + i * 0.2, data_mean[i][j]*100 + data_sem[i][j]*100 + txt_abv_bar, f'{data_mean[i][j]*100:.1f}', ha='center', va='bottom', fontsize=5)
-        #     ax_GJB2.text(j + i * 0.2, GJB2_mean[i][j]*100 + GJB2_sem[i][j]*100 + txt_abv_bar, f'{GJB2_mean[i][j]*100:.1f}', ha='center', va='bottom', fontsize=5)
-            ax_RYR1.text(j + i * 0.2, RYR1_mean[i][j]*100 + RYR1_sem[i][j]*100 + txt_abv_bar, f'{RYR1_mean[i][j]*100:.1f}', ha='center', va='bottom', fontsize=5)
+        if show_bar_values:
+            # Add text on top of the bars
+            for j in range(len(data_mean[i])):
+                ax_r20000.text(j + i * 0.2, data_mean[i][j]*100 + data_sem[i][j]*100 + txt_abv_bar, f'{data_mean[i][j]*100:.1f}', ha='center', va='bottom', fontsize=5)
+                ax_GJB2.text(j + i * 0.2, GJB2_mean[i][j]*100 + GJB2_sem[i][j]*100 + txt_abv_bar, f'{GJB2_mean[i][j]*100:.1f}', ha='center', va='bottom', fontsize=5)
+                ax_RYR1.text(j + i * 0.2, RYR1_mean[i][j]*100 + RYR1_sem[i][j]*100 + txt_abv_bar, f'{RYR1_mean[i][j]*100:.1f}', ha='center', va='bottom', fontsize=5)
 
     for x in ax:
         x.grid(axis='y', linestyle='--', linewidth=0.1)
@@ -402,94 +415,75 @@ def pl_gene_general_performance():
     # --- add significance stars (alpha = 0.05) ---
     bar_width = 0.2  # matches your i * 0.2 offsets
 
-    # R20000: [RhapsodyDNN, Tandem, Rhapsody, AlphaMissense]
-    add_sigstars_for_panel(
-        ax_r20000,
-        means=[data_mean[0], data_mean[1], data_mean[2], data_mean[3]],
-        sems =[data_sem[0],  data_sem[1],  data_sem[2],  data_sem[3]],
-        p_vs_rhapsodyDNN=tandem_rhapsodyDNN_r20000,
-        p_vs_rhapsody   =tandem_rhapsody_r20000,
-        p_vs_alpha      =tandem_alphamissense_r20000,
-        alpha=0.05,
-        width=bar_width,
-    )
+    if show_sigstars:
+        # R20000: [RhapsodyDNN, Tandem, Rhapsody, AlphaMissense]
+        add_sigstars_for_panel(
+            ax_r20000,
+            means=[data_mean[0], data_mean[1], data_mean[2], data_mean[3]],
+            sems =[data_sem[0],  data_sem[1],  data_sem[2],  data_sem[3]],
+            p_vs_rhapsodyDNN=tandem_rhapsodyDNN_r20000,
+            p_vs_rhapsody   =tandem_rhapsody_r20000,
+            p_vs_alpha      =tandem_alphamissense_r20000,
+            alpha=alpha,
+            width=bar_width,
+        )
 
-    # GJB2
-    add_sigstars_for_panel(
-        ax_GJB2,
-        means=[GJB2_mean[0], GJB2_mean[1], GJB2_mean[2], GJB2_mean[3]],
-        sems =[GJB2_sem[0],  GJB2_sem[1],  GJB2_sem[2],  GJB2_sem[3]],
-        p_vs_rhapsodyDNN=tandem_rhapsodyDNN_GJB2,
-        p_vs_rhapsody   =tandem_rhapsody_GJB2,
-        p_vs_alpha      =tandem_alphamissense_GJB2,
-        alpha=0.05,
-        width=bar_width,
-    )
+        # GJB2
+        add_sigstars_for_panel(
+            ax_GJB2,
+            means=[GJB2_mean[0], GJB2_mean[1], GJB2_mean[2], GJB2_mean[3]],
+            sems =[GJB2_sem[0],  GJB2_sem[1],  GJB2_sem[2],  GJB2_sem[3]],
+            p_vs_rhapsodyDNN=tandem_rhapsodyDNN_GJB2,
+            p_vs_rhapsody   =tandem_rhapsody_GJB2,
+            p_vs_alpha      =tandem_alphamissense_GJB2,
+            alpha=alpha,
+            width=bar_width,
+        )
 
-    # RYR1
-    # add_sigstars_for_panel(
-    #     ax_RYR1,
-    #     means=[RYR1_mean[0], RYR1_mean[1], RYR1_mean[2], RYR1_mean[3]],
-    #     sems =[RYR1_sem[0],  RYR1_sem[1],  RYR1_sem[2],  RYR1_sem[3]],
-    #     p_vs_rhapsodyDNN=tandem_rhapsodyDNN_RYR1,
-    #     p_vs_rhapsody   =tandem_rhapsody_RYR1,
-    #     p_vs_alpha      =tandem_alphamissense_RYR1,
-    #     alpha=0.05,
-    #     width=bar_width,
-    # )
+        # RYR1
+        add_sigstars_for_panel(
+            ax_RYR1,
+            means=[RYR1_mean[0], RYR1_mean[1], RYR1_mean[2], RYR1_mean[3]],
+            sems =[RYR1_sem[0],  RYR1_sem[1],  RYR1_sem[2],  RYR1_sem[3]],
+            p_vs_rhapsodyDNN=tandem_rhapsodyDNN_RYR1,
+            p_vs_rhapsody   =tandem_rhapsody_RYR1,
+            p_vs_alpha      =tandem_alphamissense_RYR1,
+            alpha=alpha,
+            width=bar_width,
+        )
 
     # Remove background of the plot, transparent
     # fig.set_facecolor('none')  # or 'none' for transparent
     # plt.setp(ax, facecolor='none')  # Set axes background to transparent
     # plt.savefig('/mnt/nas_1/YangLab/loci/tandem/models/5metrics_disease_general_models.png', bbox_inches='tight', transparent=True, dpi=300)
 
+    if save_path:
+        save_path = Path(save_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()
     plt.close()
 
-def pl_gene_specific_performance():
-    def star_from_p(p, alpha=0.05):
-        try:
-            return "*" if (p is not None) and np.isfinite(p) and (p < alpha) else ""
-        except Exception:
-            return ""
-
-    def annotate_sig(ax, x1, x2, y, h=0.8, text="", lw=0.8, fs=8):
-        """Draw a significance bracket from x1 to x2 at height y, with text above."""
-        if not text:
-            return
-        x1, x2 = (x1, x2) if x1 <= x2 else (x2, x1)
-        ax.plot([x1, x1, x2, x2], [y, y+h, y+h, y], lw=lw, c="k", clip_on=False)
-        ax.text((x1 + x2) / 2, y + h + 0.3, text, ha="center", va="bottom", fontsize=fs)
-
+def pl_gene_specific_performance(
+    tf_gjb2_after,
+    tf_ryr1_after,
+    tf_gjb2_before,
+    tf_ryr1_before,
+    rhapsody_R20000_metrics,
+    alphamissense_R20000_metrics,
+    rhapsody_GJB2_test_metrics,
+    alphamissense_GJB2_test_metrics,
+    rhapsody_RYR1_test_metrics,
+    alphamissense_RYR1_test_metrics,
+    txt_abv_bar,
+    alpha=0.05,
+    show_bar_values=False,
+    show_sigstars=True,
+    save_path=None,
+):
     # --- main function ---
     def add_transfer_sigstars(ax, means, sems, pvals, idx_transfer, compare_indices,
                             bar_width, alpha=0.05, base_pad=1.0, level_gap=1.0, bar_h=0.3):
-        """
-        Add significance brackets for a panel where bars are grouped by metric and
-        offset horizontally by bar_width: x = metric_index + j*bar_width.
-
-        Parameters
-        ----------
-        ax : matplotlib Axes
-            The axes to annotate.
-        means : np.ndarray, shape (n_metrics, n_bars)
-            Mean values (already scaled to plotting units, e.g., percentage).
-        sems : np.ndarray, shape (n_metrics, n_bars)
-            SEM values (same scale as means). Can be zeros for single values.
-        pvals : np.ndarray, shape (n_metrics, K)
-            p-values comparing the transfer model to each comparator.
-            Column order must correspond to `compare_indices`.
-        idx_transfer : int
-            Index of the transfer model bar within each metric group.
-        compare_indices : list[int]
-            Bar indices to compare against the transfer bar (e.g., [1,2,3]).
-        bar_width : float
-            Horizontal spacing used when drawing bars within a metric group.
-        alpha : float
-            Significance threshold for drawing a star (with multi-level stars handled internally).
-        base_pad, level_gap, bar_h : floats
-            Layout params for bracket vertical placement.
-        """
         means = np.asarray(means)
         sems  = np.asarray(sems)
         pvals = np.asarray(pvals)
@@ -512,15 +506,16 @@ def pl_gene_specific_performance():
                                 x_positions[j_idx],
                                 y_base + level*level_gap,
                                 h=bar_h,
-                                text=s)
+                                text=s,
+                                lw=0.8,
+                                fs=8,
+                                clip_on=False)
                     level += 1
 
             # ensure space for brackets if any were drawn
             if level > 0:
-                y0, y1 = ax.get_ylim()
                 need = y_base + (level-1)*level_gap + bar_h + 2.0
-                if need > y1:
-                    ax.set_ylim(y0, need)
+                _ensure_ylim(ax, need)
 
 
     # # Precision, Recall, F1
@@ -548,7 +543,6 @@ def pl_gene_specific_performance():
         [tf_ryr1_after['test_f1'].values,           tf_ryr1_before['test_f1'].values,       rhapsody_RYR1_test_metrics['f1_score'], alphamissense_RYR1_test_metrics['f1_score']],
     ]
 
-    include_rhapsody = True
     pvalues_gjb2 = []
     for tf_gjb2, fd_gjb2, rhd_gjb2, alm_gjb2 in gjb2_test:
         _, tf_fd_gjb2 = stats.ttest_ind(tf_gjb2, fd_gjb2)
@@ -601,34 +595,6 @@ def pl_gene_specific_performance():
         'color': ['lightcoral', 'lightblue', 'orange', 'lightgreen']
     }
 
-
-    ########################################################################
-    if not include_rhapsody:
-        # Keep indices (drop Rhapsody): R20000: [0,1,2,4], GJB2/RYR1: [0,1,3]
-        r20000_keep = [0, 1, 2, 4]
-        gjb2_keep   = [0, 1, 3]
-        ryr1_keep   = [0, 1, 3]
-
-        r20000_test_mean = r20000_test_mean[:, r20000_keep]
-        r20000_test_sem  = r20000_test_sem[:,  r20000_keep]
-        gjb2_test_mean   = gjb2_test_mean[:,   gjb2_keep]
-        gjb2_test_sem    = gjb2_test_sem[:,    gjb2_keep]
-        ryr1_test_mean   = ryr1_test_mean[:,   ryr1_keep]
-        ryr1_test_sem    = ryr1_test_sem[:,    ryr1_keep]
-
-        def subset_plot(plot, keep):
-            return {
-                'label': [plot['label'][k] for k in keep],
-                'hatch': [plot['hatch'][k] for k in keep],
-                'color': [plot['color'][k] for k in keep],
-            }
-
-        r20000_test_plot = subset_plot(r20000_test_plot, [0,1,2,4])  # drop Rhapsody
-        gjb2_test_plot   = subset_plot(gjb2_test_plot,   [0,1,3])    # drop Rhapsody
-        ryr1_test_plot   = subset_plot(ryr1_test_plot,   [0,1,3])    # drop Rhapsody
-    ########################################################################
-
-
     fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 4), sharey=True, dpi=300, width_ratios=[1.25, 1, 1])
     # Space the subplots
     plt.subplots_adjust(wspace=0, hspace=0)
@@ -653,8 +619,9 @@ def pl_gene_specific_performance():
             width=0.18,
         )
         # Add text labels above bars
-        # for x, h, e in zip(bar_x, bar_heights, bar_errors):
-            # ax_r20000.text(x, h + e + txt_abv_bar, f'{h:.1f}', ha='center', va='bottom', fontsize=5)
+        if show_bar_values:
+            for x, h, e in zip(bar_x, bar_heights, bar_errors):
+                ax_r20000.text(x, h + e + txt_abv_bar, f'{h:.1f}', ha='center', va='bottom', fontsize=5)
         
         # GJB2 plot
         bar_x = np.array([i + j * 0.2 for j in range(len(gjb2_test_mean[0]))])
@@ -672,8 +639,9 @@ def pl_gene_specific_performance():
             width=0.2,
         )
         # Add text labels above bars
-        # for x, h, e in zip(bar_x, bar_heights, bar_errors):
-            # ax_GJB2.text(x, h + e + txt_abv_bar, f'{h:.1f}', ha='center', va='bottom', fontsize=5)
+        if show_bar_values:
+            for x, h, e in zip(bar_x, bar_heights, bar_errors):
+                ax_GJB2.text(x, h + e + txt_abv_bar, f'{h:.1f}', ha='center', va='bottom', fontsize=5)
 
         # RYR1 plot
         bar_x = np.array([i + j * 0.2 for j in range(len(ryr1_test_mean[0]))])
@@ -691,8 +659,9 @@ def pl_gene_specific_performance():
             width=0.2,
         )
         # Add text labels above bars
-        for x, h, e in zip(bar_x, bar_heights, bar_errors):
-            ax_RYR1.text(x, h + e + txt_abv_bar, f'{h:.1f}', ha='center', va='bottom', fontsize=5)
+        if show_bar_values:
+            for x, h, e in zip(bar_x, bar_heights, bar_errors):
+                ax_RYR1.text(x, h + e + txt_abv_bar, f'{h:.1f}', ha='center', va='bottom', fontsize=5)
 
 
     # Define custom handles
@@ -769,31 +738,34 @@ def pl_gene_specific_performance():
     ax_r20000.set_yticks(np.arange(0, 105, 5))
     ax_r20000.set_yticklabels([str(y) if y % 10 == 0 else "" for y in np.arange(0, 105, 5)], fontsize=10)
 
-    # # --- Significance annotations: GJB2 (transfer vs others) ---
-    # GJB2 panel: bar order = [TANDEM_GJB2 (transfer), TANDEM, Rhapsody, AlphaMissense]
-    add_transfer_sigstars(
-        ax=ax_GJB2,
-        means=gjb2_test_mean,         # shape (5, 4) in percent already
-        sems=gjb2_test_sem,           # shape (5, 4)
-        pvals=pvalues_gjb2,           # columns correspond to [vs TANDEM, vs Rhapsody, vs Alpha]
-        idx_transfer=0,               # TANDEM_GJB2
-        compare_indices=[1, 2, 3],    # compare to TANDEM, Rhapsody, Alpha
-        bar_width=0.2,                # matches your plotting width/offset
-    )
+    if show_sigstars:
+        # --- Significance annotations: GJB2 (transfer vs others) ---
+        # GJB2 panel: bar order = [TANDEM_GJB2 (transfer), TANDEM, Rhapsody, AlphaMissense]
+        add_transfer_sigstars(
+            ax=ax_GJB2,
+            means=gjb2_test_mean,         # shape (5, 4) in percent already
+            sems=gjb2_test_sem,           # shape (5, 4)
+            pvals=pvalues_gjb2,           # columns correspond to [vs TANDEM, vs Rhapsody, vs Alpha]
+            idx_transfer=0,               # TANDEM_GJB2
+            compare_indices=[1, 2, 3],    # compare to TANDEM, Rhapsody, Alpha
+            bar_width=0.2,                # matches your plotting width/offset
+            alpha=alpha,
+        )
 
-    # RYR1 panel: bar order = [TANDEM_RYR1 (transfer), TANDEM, Rhapsody, AlphaMissense]
-    # add_transfer_sigstars(
-    #     ax=ax_RYR1,
-    #     means=ryr1_test_mean,         # shape (5, 4)
-    #     sems=ryr1_test_sem,           # shape (5, 4)
-    #     pvals=pvalues_ryr1,           # columns: [vs TANDEM, vs Rhapsody, vs Alpha]
-    #     idx_transfer=0,               # TANDEM_RYR1
-    #     compare_indices=[1, 2, 3],
-    #     bar_width=0.2,
-    # )
+        # RYR1 panel: bar order = [TANDEM_RYR1 (transfer), TANDEM, Rhapsody, AlphaMissense]
+        add_transfer_sigstars(
+            ax=ax_RYR1,
+            means=ryr1_test_mean,         # shape (5, 4)
+            sems=ryr1_test_sem,           # shape (5, 4)
+            pvals=pvalues_ryr1,           # columns: [vs TANDEM, vs Rhapsody, vs Alpha]
+            idx_transfer=0,               # TANDEM_RYR1
+            compare_indices=[1, 2, 3],
+            bar_width=0.2,
+        )
 
-    # plt.setp(ax, facecolor='none')  # Set axes background to transparent
-    # fig.set_facecolor('none')  # or 'none' for transparent
-    # plt.savefig('/mnt/nas_1/YangLab/loci/tandem/models/5metrics_disease_specific_models.png', bbox_inches='tight', transparent=True, dpi=300)
+    if save_path:
+        save_path = Path(save_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()
     plt.close()
