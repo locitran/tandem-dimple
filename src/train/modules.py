@@ -11,8 +11,6 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score, accuracy_score
 import seaborn as sns
 
-from ..olds.model import DNN
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Assign using 10 CPUs
 # tf.config.threading.set_intra_op_parallelism_threads(10)

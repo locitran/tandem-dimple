@@ -19,6 +19,7 @@ from prody.utilities import openURL
 from Bio.pairwise2 import align as bioalign
 from Bio.pairwise2 import format_alignment
 
+
 from ..utils.logger import LOGGER
 from ..download import fetchPDB, fetchPDB_BiologicalAssembly, fetchAF2
 from ..utils.settings import RAW_PDB_DIR, one2three
@@ -467,13 +468,51 @@ class UniprotMapping:
             raise RuntimeError(m)
 
     def _parseGraphQLforPDB(self, PDBID):
-        """Parse the graphQL response to extract the assemblies and OPM info.
-        More info at https://www.rcsb.org/docs/programmatic-access/web-apis-overview#data-api
-        """
+        """Extract assembly IDs and OPM flag from RCSB data for a PDB entry."""
+        PDBID = PDBID.upper()
+
+        # Primary path: use py-rcsb-api.
+        try:
+            from rcsbapi.data import DataQuery
+            query = DataQuery(
+                input_type="entries",
+                input_ids=[PDBID],
+                return_data_list=[
+                    "assemblies.rcsb_assembly_container_identifiers.rcsb_id",
+                    "polymer_entities.rcsb_polymer_entity_annotation.type",
+                ],
+            )
+            data = query.exec()
+            payload = data.get('data', {})
+            entries = payload.get('entries')
+            if isinstance(entries, list) and len(entries) > 0:
+                entry = entries[0]
+            else:
+                # Backward compatibility in case an alternative shape is returned.
+                entry = payload.get('entry')
+            if not isinstance(entry, dict):
+                return [], False
+
+            assemblies = []
+            for ele in entry.get('assemblies') or []:
+                assembly = (ele.get('rcsb_assembly_container_identifiers') or {}).get('rcsb_id')
+                if assembly:
+                    assemblies.append(assembly)
+
+            opm = False
+            for ele in entry.get('polymer_entities') or []:
+                annotations = ele.get('rcsb_polymer_entity_annotation') or []
+                if any(entity.get('type') == 'OPM' for entity in annotations):
+                    opm = True
+                    break
+            return assemblies, opm
+        except Exception as e:
+            LOGGER.warn(f'py-rcsb-api query failed for {PDBID}: {e}. Falling back to direct GraphQL.')
+
+        # Fallback path: direct GraphQL request (legacy behavior).
         query = (
             f'{{\n'
             f'  entry(entry_id: "{PDBID}") {{\n'
-            f'    rcsb_id\n'
             f'    assemblies {{\n'
             f'      rcsb_assembly_container_identifiers {{\n'
             f'        rcsb_id\n'
@@ -481,30 +520,6 @@ class UniprotMapping:
             f'    }}\n'
             f'    polymer_entities {{\n'
             f'      rcsb_polymer_entity_annotation {{\n'
-            f'        annotation_id\n'
-            f'        assignment_version\n'
-            f'        description\n'
-            f'        name\n'
-            f'        provenance_source\n'
-            f'        type\n'
-            f'      }}\n'
-            f'      entity_poly {{\n'
-            f'        nstd_linkage\n'
-            f'        nstd_monomer\n'
-            f'        pdbx_seq_one_letter_code\n'
-            f'        pdbx_seq_one_letter_code_can\n'
-            f'        pdbx_sequence_evidence_code\n'
-            f'        pdbx_strand_id\n'
-            f'        pdbx_target_identifier\n'
-            f'        rcsb_artifact_monomer_count\n'
-            f'        rcsb_conflict_count\n'
-            f'        rcsb_deletion_count\n'
-            f'        rcsb_entity_polymer_type\n'
-            f'        rcsb_insertion_count\n'
-            f'        rcsb_mutation_count\n'
-            f'        rcsb_non_std_monomer_count\n'
-            f'        rcsb_prd_id\n'
-            f'        rcsb_sample_sequence_length\n'
             f'        type\n'
             f'      }}\n'
             f'    }}\n'
@@ -514,24 +529,26 @@ class UniprotMapping:
         encoded_query = urllib.parse.quote(query)
         url = f'https://data.rcsb.org/graphql?query={encoded_query}'
 
-        # Parse the graphQL
-        response = requests.get(url)
+        response = requests.get(url, timeout=20)
+        response.raise_for_status()
         data = response.json()
-        if data['data']['entry'] is None:
+        entry = data.get('data', {}).get('entry')
+        if entry is None:
             return [], False
-        # Extract the assemblies and OPM info
-        assemblies = [ele['rcsb_assembly_container_identifiers']['rcsb_id'] for ele in data['data']['entry']['assemblies']]
+
+        assemblies = []
+        for ele in entry.get('assemblies') or []:
+            assembly = (ele.get('rcsb_assembly_container_identifiers') or {}).get('rcsb_id')
+            if assembly:
+                assemblies.append(assembly)
+
         opm = False
-        for ele in data['data']['entry']['polymer_entities']:
-            if opm:
+        for ele in entry.get('polymer_entities') or []:
+            annotations = ele.get('rcsb_polymer_entity_annotation') or []
+            if any(entity.get('type') == 'OPM' for entity in annotations):
+                opm = True
                 break
-            if ele['rcsb_polymer_entity_annotation'] is None:
-                break
-            for entity in ele['rcsb_polymer_entity_annotation']:
-                if entity['type'] == 'OPM':
-                    opm = True
-                    break
-        return assemblies, opm # (e.g. ['1KV3-1', '1KV3-2', '1KV3-3'], False)
+        return assemblies, opm  # e.g. (['1KV3-1', '1KV3-2', '1KV3-3'], False)
         
     def mapMultipleRes2CustomPDBs(self, resids, wt_aas):
         nSAVs = len(resids)
@@ -1039,4 +1056,3 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
     n = sum(mapped_SAVs['Asymmetric_PDB_length'] != 0)
     LOGGER.report(f'{n} out of {nSAVs} SAVs have been mapped to PDB in %.1fs.', '_mapSAVs2PDB')
     return mapped_SAVs
-

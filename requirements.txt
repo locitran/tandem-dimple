@@ -3,6 +3,7 @@ scipy==1.13.0
 biopython==1.79
 dill==0.4.0
 requests==2.32.4
+rcsb-api
 pandas==2.2.3
 OpenMM==8.2.0
 propka==3.5.1

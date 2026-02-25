@@ -250,6 +250,9 @@ class PDBfeatures:
                 if self.format != 'af':
                     system = pdb.ca
                     self._checkNumCalphas(system)
+                    membrane = pdb.select('resname NE1 and name Q1')
+                    if membrane is not None:
+                        LOGGER.info(f'Membrane nodes detected: {membrane.numAtoms()}')
                     selstr = '(resname NE1 name Q1) or ' # membrane NE1 atoms
                     selstr += '(nucleic name P C4\' C2)' # nucleic atoms
                     environment = pdb.select(selstr)
@@ -269,6 +272,9 @@ class PDBfeatures:
                 # and environment is very low beta (confidence)
                 else:
                     system = pdb.ca.select('beta >= 50')
+                    membrane = pdb.select('resname NE1 and name Q1')
+                    if membrane is not None:
+                        LOGGER.info(f'Membrane nodes detected: {membrane.numAtoms()}')
                     selstr = (
                         "(name CA and beta < 50) or "
                         "(resname NE1 and name Q1) or "
