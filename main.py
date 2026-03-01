@@ -48,6 +48,7 @@ def run_tandem_job():
             custom_PDB=params["STR"],
             job_name=f"{session_id}/{job_name}",
             pretrained_model_folder=pretrained_model_folder,
+            refresh=bool(params.get("refresh", False)),
         )
         LOGGER.info(f"Inference result: ok")
 

@@ -1,10 +1,10 @@
 import os
 import sys
-# addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-# sys.path.insert(0, addpath) # /home/newloci
+addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, addpath) # /home/newloci
 
-# from tandem.src.main import run
-from src.main import run
+from tandem.src.main import run
+# from src.main import run
 
 sav_list = [
     "O00189 271 R H",

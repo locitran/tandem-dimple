@@ -28,6 +28,7 @@ class Tandem(Features):
         super().__init__(query, refresh, **kwargs)
         self.setR20000()
         self.models = self.setModels()
+
     #### -------- Calculate predictions ------- #####
 
     def setModels(self, folder=TANDEM_v1dot1):
@@ -220,6 +221,7 @@ class Tandem(Features):
                 _classif = self.data['tandem_dimple']['classification'][i]
                 plotSHAP_bar(_featImp, individualSHAP_title.format(sav, _classif), 
                             tandem_dimple_shap, sav, globalshap=False)
+
             
     #### -------- Transfer learning ------- #####
 

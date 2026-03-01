@@ -1,4 +1,5 @@
 import os 
+import shutil
 import datetime
 import numpy as np
 from .core import Tandem
@@ -7,6 +8,7 @@ from .utils.logger import LOGGER
 from .utils.settings import TANDEM_v1dot1
 
 __all__ = ['run']
+FILE_EXPLANATION_TEMPLATE = os.path.join(os.path.dirname(__file__), "File_Explanation.txt")
 
 def toSAV_coords(SAVs):
     """
@@ -56,6 +58,8 @@ def run(
 
     job_directory = os.path.join(ROOT_DIR, 'jobs', job_name)
     os.makedirs(job_directory, exist_ok=True)
+    if os.path.isfile(FILE_EXPLANATION_TEMPLATE):
+        shutil.copy2(FILE_EXPLANATION_TEMPLATE, os.path.join(job_directory, "File_Explanation.txt"))
     
     ## LOGGER
     logfile = os.path.join(job_directory, 'log.txt')
@@ -91,7 +95,7 @@ def run(
         t.setConfig(config)
         t.train()
     else:
-        t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='predictions')
+        t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='Main_Predictions')
         t.plotSHAP(folder=job_directory)
 
     for label in LOGGER._reports:
