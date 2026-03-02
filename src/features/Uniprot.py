@@ -14,6 +14,7 @@ import re
 import traceback
 
 import prody
+from rcsbapi.data import DataQuery
 from prody import parsePDB, Atomic
 from prody.utilities import openURL
 from Bio.pairwise2 import align as bioalign
@@ -471,9 +472,8 @@ class UniprotMapping:
         """Extract assembly IDs and OPM flag from RCSB data for a PDB entry."""
         PDBID = PDBID.upper()
 
-        # Primary path: use py-rcsb-api.
         try:
-            from rcsbapi.data import DataQuery
+            
             query = DataQuery(
                 input_type="entries",
                 input_ids=[PDBID],
@@ -507,48 +507,8 @@ class UniprotMapping:
                     break
             return assemblies, opm
         except Exception as e:
-            LOGGER.warn(f'py-rcsb-api query failed for {PDBID}: {e}. Falling back to direct GraphQL.')
-
-        # Fallback path: direct GraphQL request (legacy behavior).
-        query = (
-            f'{{\n'
-            f'  entry(entry_id: "{PDBID}") {{\n'
-            f'    assemblies {{\n'
-            f'      rcsb_assembly_container_identifiers {{\n'
-            f'        rcsb_id\n'
-            f'      }}\n'
-            f'    }}\n'
-            f'    polymer_entities {{\n'
-            f'      rcsb_polymer_entity_annotation {{\n'
-            f'        type\n'
-            f'      }}\n'
-            f'    }}\n'
-            f'  }}\n'
-            f'}}'
-        )
-        encoded_query = urllib.parse.quote(query)
-        url = f'https://data.rcsb.org/graphql?query={encoded_query}'
-
-        response = requests.get(url, timeout=20)
-        response.raise_for_status()
-        data = response.json()
-        entry = data.get('data', {}).get('entry')
-        if entry is None:
+            LOGGER.warn(f'py-rcsb-api query failed for {PDBID}: {e}.')
             return [], False
-
-        assemblies = []
-        for ele in entry.get('assemblies') or []:
-            assembly = (ele.get('rcsb_assembly_container_identifiers') or {}).get('rcsb_id')
-            if assembly:
-                assemblies.append(assembly)
-
-        opm = False
-        for ele in entry.get('polymer_entities') or []:
-            annotations = ele.get('rcsb_polymer_entity_annotation') or []
-            if any(entity.get('type') == 'OPM' for entity in annotations):
-                opm = True
-                break
-        return assemblies, opm  # e.g. (['1KV3-1', '1KV3-2', '1KV3-3'], False)
         
     def mapMultipleRes2CustomPDBs(self, resids, wt_aas):
         nSAVs = len(resids)

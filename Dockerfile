@@ -15,7 +15,7 @@ RUN apt update --quiet \
     && apt install --yes --quiet software-properties-common \
     && apt install --yes --quiet cd-hit prottest ncbi-blast+ \
     && apt install --yes --quiet hmmer mafft clustalw muscle \
-    && apt install --yes --quiet gcc g++ python3.11-dev \
+    && apt install --yes --quiet gcc g++ python3.11-dev libgfortran5 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -31,7 +31,7 @@ ENV CONDA_DEFAULT_ENV=tandem
 ENV CONDA_PREFIX=/opt/conda/envs/tandem
 ENV PATH=/opt/conda/envs/tandem/bin:$PATH
 # ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib:$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib
+# ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib
 
 # --- Step 5: Run server ---
 EXPOSE 5000

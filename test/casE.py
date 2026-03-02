@@ -40,24 +40,24 @@ DV6b_query = [
 td_DV1 = run(
     query=DV1_query,
     job_name='CasE_DV1_4DZD',
-    custom_PDB='4DZD',
-    refresh=False,
+    custom_PDB=case_wt_complete,
+    refresh=True,
     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )
 
-td_DV2 = run(
-    query=DV2_query,
-    job_name='CasE_DV2_4DZD',
-    custom_PDB='4DZD',
-    refresh=False,
-    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
-)
+# td_DV2 = run(
+#     query=DV2_query,
+#     job_name='CasE_DV2_4DZD',
+#     custom_PDB='4DZD',
+#     refresh=True,
+#     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
+# )
 
-td_DV6b = run(
-    query=DV6b_query,
-    job_name='CasE_DV6b_4DZD',
-    custom_PDB='4DZD',
-    refresh=False,
-    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
-)
+# td_DV6b = run(
+#     query=DV6b_query,
+#     job_name='CasE_DV6b_4DZD',
+#     custom_PDB='4DZD',
+#     refresh=True,
+#     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
+# )
 

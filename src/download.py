@@ -2,6 +2,7 @@ import os
 import logging
 import requests
 import urllib.request
+from urllib.parse import urlparse
 from .utils.logger import LOGGER
 
 __all__ = ['pdb_summary', 'fetchPDB', 'fetchPDB_BiologicalAssembly']
@@ -122,30 +123,62 @@ def fetch_fasta(accs, **kwargs):
     return output_path
 
 def fetchAF2(acc, **kwargs):
-    """Fetch a PDB file from AlphaFold2 database."""
-    
-    folder = kwargs.get('folder', '.')
-    refresh = kwargs.get('refresh', False)
-    version = kwargs.get('version', 4)
+    """Fetch AlphaFold structure file by UniProt accession."""
+    folder = kwargs.get("folder", ".")
+    refresh = kwargs.get("refresh", False)
+    prefer_format = str(kwargs.get("prefer_format", "pdb")).lower()
+    timeout = kwargs.get("timeout", 20)
+    uid = (acc or "").strip().upper()
+
+    if not uid:
+        LOGGER.info("Failed to fetch from AlphaFold2 database: empty UniProt accession.")
+        return None
+
     os.makedirs(folder, exist_ok=True)
 
-    # Define the URL and output path
-    name = f'AF-{acc}-F1-model_v{version}.pdb'
-    outpath = os.path.join(folder, name)
-    url = f"https://alphafold.ebi.ac.uk/files/{name}"
-    
-    outpath = os.path.abspath(outpath)
-    # Check if the file already exists
-    if not refresh:
-        if os.path.exists(outpath):
-            return outpath
-    
-    # Fetch the file
+    api_url = f"https://alphafold.ebi.ac.uk/api/prediction/{uid}"
     try:
-        urllib.request.urlretrieve(url, outpath)
+        resp = requests.get(api_url, timeout=timeout)
+        if resp.status_code == 404:
+            LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database HTTP 404.")
+            return None
+        resp.raise_for_status()
+        payload = resp.json()
+        if not isinstance(payload, list) or len(payload) == 0:
+            LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database: empty API payload.")
+            return None
+    except Exception as e:
+        LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database {e}.")
+        return None
+
+    entry = payload[0]
+    pdb_url = entry.get("pdbUrl")
+    cif_url = entry.get("cifUrl")
+    if prefer_format == "cif":
+        file_url = cif_url or pdb_url
+    else:
+        file_url = pdb_url or cif_url
+
+    if not file_url:
+        LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database: no file URL in API.")
+        return None
+
+    filename = os.path.basename(urlparse(file_url).path)
+    outpath = os.path.abspath(os.path.join(folder, filename))
+
+    if not refresh and os.path.exists(outpath):
+        return outpath
+
+    try:
+        with requests.get(file_url, stream=True, timeout=timeout) as stream:
+            stream.raise_for_status()
+            with open(outpath, "wb") as f:
+                for chunk in stream.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
         return outpath
     except Exception as e:
-        LOGGER.info(f"Failed to fetch {acc} from AlphaFold2 database {e}.")
+        LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database {e}.")
         return None
 
 def fetchPDB(pdbID, **kwargs):

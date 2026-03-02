@@ -166,7 +166,7 @@ def _parse(unique_chain):
         LOGGER.warning(f'Error parsing {unique_chain}, {e}')
         return None
 
-def get_consurf(unique_chain, folder='.') -> pd.DataFrame:
+def get_consurf(unique_chain, folder='.'):
     """Run the Consurf database for a protein.
 
     Returns:
@@ -320,118 +320,5 @@ def calcConSurf(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     col_sum_excl_diag = kirchhoff.sum(axis=1) / diag_kirchhoff
     features['ACNR'][target_match] = col_sum_excl_diag
     
-    LOGGER.report('ConSurf features calculated in %.2fs.', label='_calcConSurf')
-    return features
-
-def calcConSurf_old(pdb, chids, resids, wt_aas, folder='.'):
-    """Retrieve consurf and ACNR scores for the target and contact residues
-    folder is used to store the file of consurf relatives in case of running stand_alone_consurf
-
-    target (tgt), contact (cnt)
-    """
-    assert len(chids) == len(resids) == len(wt_aas), 'chids, resids, and wt_aas must have the same length'
-    _dtype = np.dtype([
-        ('consurf', 'f4'), 
-        ('ACNR', 'f4'),
-        ('consurf_color', 'i4'),
-    ])
-    features = np.full(len(chids), np.nan, dtype=_dtype)
-    
-    # Read the PDB file
-    # custom or alphafold
-    if os.path.isfile(pdb):
-        pdbID = pdb
-        pdb = parsePDB(pdb, model=1)
-    else: # pdbID 
-        pdbID = pdb
-        pdbpath = fetchPDB(pdbID, format='pdb', folder=RAW_PDB_DIR)
-        if pdbpath is not None:
-            pdb = parsePDB(pdbpath, model=1)
-        else:
-            raise ValueError(f'Cannot download {pdbID}')
-        
-    pdb_chids = set(pdb.ca.getChids())
-    ca = pdb.protein.ca
-    LOGGER.timeit('_calcConSurf')
-    for i, (tgt_chid, tgt_resid, wt_aa) in enumerate(zip(chids, resids, wt_aas)):
-        if tgt_chid not in pdb_chids:
-            LOGGER.warn(f'{tgt_chid} not in {pdbID}')
-            continue
-        # LOGGER.info(f"Processing {pdbID} {tgt_uniqueChain} {wt_aa}")
-        tgt_chain = ca.select(f'chain {tgt_chid}').copy()
-        target = tgt_chain.select(f'resnum `{tgt_resid}` and resname {one2three[wt_aa]}')
-        if target is None:
-            LOGGER.warn(f'{pdbID} {tgt_chid} {tgt_resid} not found')
-            continue
-        try: # Get consurf file for the target
-            df_tgt = getConSurffile(pdbID, tgt_chid, folder=folder)
-        except Exception as e: 
-            msg = traceback.format_exc()
-            LOGGER.warn(f'Error processing {pdbID} {tgt_chid}: {msg}')
-            continue
-    
-        # LOGGER.info(f"Processing {pdbID} {tgt_chid} {tgt_resid}")
-        contacts = findNeighbors(target, 7.3, ca)
-        contacts = [contact for (target, contact, distance) in contacts if distance != 0]
-        tgt_consurf_seq = df_tgt.SEQ.to_string(index=False).replace('\n', '').replace(' ', '')
-        tgt_seq = tgt_chain.getSequence()
-        # Map the indices
-        tgt_indices, tgt_consurf_indices, _ = mapIndices(tgt_seq, tgt_consurf_seq)
-        tgt_resindex = target.getResindices()[0]
-        
-        # Retrieve consurf scores for target
-        tgt_idx = np.where(tgt_indices == tgt_resindex)[0][0]
-        tgt_idx = tgt_consurf_indices[tgt_idx]
-        tgt_score = float(df_tgt.loc[tgt_idx]['SCORE'])
-        tgt_color = df_tgt.loc[tgt_idx]['COLOR'] # some cases color contains "*" -> remove it
-
-        if isinstance(tgt_color, str) and '*' in tgt_color:
-            tgt_color = int(tgt_color.split('*')[0]) + 10
-        else:
-            tgt_color = int(tgt_color)
-
-        features['consurf'][i] = tgt_score
-        features['consurf_color'][i] = tgt_color
-        LOGGER.info(f'Target {target}, {tgt_chid}, {tgt_resid}, {tgt_resindex},  {tgt_score}')
-        # Retrieve consurf scores for contacts
-        cnt_scores = []
-        for contact in contacts:
-            cnt_chid = contact.getChid()
-            cnt_resnum = contact.getResnum()
-            cnt_resicode = contact.getIcode()
-            cnt_resname = contact.getResname()
-            # Reset residue indices
-            cnt_chain = ca.select(f'chain {cnt_chid}').copy()
-            cnt_reindex = cnt_chain.select(f'resnum `{cnt_resnum}` and resname {cnt_resname}')
-            if cnt_reindex is None:
-                LOGGER.warn(f'{pdbID} {cnt_chid} {cnt_resnum} not found')
-                continue
-            cnt_resindex = cnt_reindex.getResindices()[0]
-            LOGGER.info(f'Contact {contact}, {cnt_resnum}, {contact.getResname()} {cnt_resindex}, {cnt_chid}')
-            if cnt_chid == tgt_chid:
-                cnt_idx = np.where(tgt_indices == cnt_resindex)[0][0]
-                cnt_idx = tgt_consurf_indices[cnt_idx]
-                s = float(df_tgt.loc[cnt_idx]['SCORE'])
-                cnt_scores.append(s)
-            else:
-                cnt_seq = cnt_chain.getSequence()
-                if len(cnt_seq) <= 35:
-                    LOGGER.warn(f'{pdbID} {cnt_chid} too short no consurf {len(cnt_seq)}')
-                    continue
-                try:
-                    df_cnt = getConSurffile(pdbID, cnt_chid, folder=folder)
-                except Exception as e:
-                    LOGGER.warn(f'Error process Contact {pdbID} {cnt_chid}: {str(e)}')
-                    continue
-                cnt_consurf_seq = df_cnt.SEQ.to_string(index=False).replace('\n', '').replace(' ', '')
-                cnt_indices, cnt_consurf_indices, _ = mapIndices(cnt_seq, cnt_consurf_seq)
-                # LOGGER.info(f'Contact {cnt_indices}, {cnt_consurf_indices}')
-                # Retrieve consurf scores for contact
-                cnt_idx = np.where(cnt_indices == cnt_resindex)[0][0]
-                cnt_idx = cnt_consurf_indices[cnt_idx]
-                s = float(df_cnt.loc[cnt_idx]['SCORE'])
-                cnt_scores.append(s)
-                LOGGER.info(f'Contact {contact}, {cnt_resnum}, {contact.getResname()} {cnt_resindex}, {cnt_chid} {s}')
-        features['ACNR'][i] = np.nanmean(cnt_scores)
     LOGGER.report('ConSurf features calculated in %.2fs.', label='_calcConSurf')
     return features
