@@ -461,8 +461,6 @@ def buildNE1(opm_file, folder='.', filename=None, radius_node=3.1, thick=16.6,
         folder='/mnt/nas_1/YangLab/loci/tandem/data/GJB2/structures/',
         filename='8qa2_opm_25Apr03-',
         radius_node=3.1, thick=16.6, rr=15, radius_membrane=55, remove=False)
-    
-        
     """
     try:
         f = open(opm_file, 'r')

@@ -391,6 +391,11 @@ class UniprotMapping:
                 res_mappings[i]['>opm:PDB_coords'] = "Cannot map"
                 res_mappings[i]['>bas:PDB_coords'] = "Cannot map"
                 continue
+            # Cannot map if PDBID is a custom PDB with long title with .pdb extension
+            elif PDBID.endswith('.pdb'):
+                res_mappings[i]['>opm:PDB_coords'] = "Cannot map, custom PDB"
+                res_mappings[i]['>bas:PDB_coords'] = "Cannot map, custom PDB"
+                continue
             if PDBID not in groups:
                 groups[PDBID] = {'asu_map': [], 'index': []}
             groups[PDBID]['asu_map'].append(asu_map)
@@ -430,8 +435,8 @@ class UniprotMapping:
             # Loop over all assemblies
             for assembly in assemblies:
                 id = assembly.split('-')[1]
-                basPath = fetchPDB_BiologicalAssembly(PDBID, id, format='cif', 
-                                                      folder=folder, refresh=self._refresh)
+                basPath = fetchPDB_BiologicalAssembly(
+                    PDBID, id, format='cif', folder=folder, refresh=self._refresh)
                 pdb = parsePDB(basPath)
                 # Restrict protein size
                 try:
