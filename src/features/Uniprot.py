@@ -173,6 +173,7 @@ class UniprotMapping:
         """
         assert isinstance(PDB, str), "PDB must be a string."
         is_alphafold = False
+        customPDB = PDB
         try:
             if os.path.isfile(PDB):
                 pdb = parsePDB(PDB, model=1, subset='calpha')
@@ -193,6 +194,7 @@ class UniprotMapping:
                     pdb = parsePDB(pdbpath, model=1, subset='calpha')
                     is_alphafold = True
                     title = af_acc
+                    customPDB = af_acc
                 else:
                     # PDB is a PDBID
                     LOGGER.info(f'Fetching PDB {PDB}...')
@@ -205,7 +207,7 @@ class UniprotMapping:
                 ' or PDB file might be corrupted.\n'
                 f'PDB error: {e}')
             LOGGER.error(msg)
-
+            
         if is_alphafold:
             LOGGER.info(f'AlphaFold2 structure detected: {title}')
 
@@ -239,7 +241,7 @@ class UniprotMapping:
         self.customPDBmapping = customPDBmapping
         # align selected chains with BioPython module pairwise2
         self._calcCustomAlignments(chains_to_align)
-        return customPDBmapping
+        return customPDB
 
     def alignAllPDBs(self, chain='longest'):
         """Aligns the Uniprot sequence with the sequences of all PDBs in the
@@ -980,7 +982,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
         try:
             U2P_map = UniprotMapping(acc, recover_pickle=not(refresh), **kwargs)
             if custom_PDB is not None:
-                U2P_map.alignCustomPDB(custom_PDB)
+                custom_PDB = U2P_map.alignCustomPDB(custom_PDB)
         except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(f'Error while mapping {acc}: {msg}')
@@ -1031,4 +1033,4 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
             U2P_map.savePickle(**kwargs)
     n = sum(mapped_SAVs['Asymmetric_PDB_length'] != 0)
     LOGGER.report(f'{n} out of {nSAVs} SAVs have been mapped to PDB in %.1fs.', '_mapSAVs2PDB')
-    return mapped_SAVs
+    return mapped_SAVs, custom_PDB

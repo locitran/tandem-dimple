@@ -544,7 +544,7 @@ def fixPDB(pdb, format='asu',
         return out
     else:
         if format == 'af':
-            return fetchAF2(pdb, refresh=refresh, folder=RAW_PDB_DIR)
+            return fetchAF2(afid=pdb, refresh=refresh, folder=RAW_PDB_DIR)
         elif format == 'opm':
             out = os.path.join(folder, f'{pdb}-ne1.pdb')
             if os.path.isfile(out) and not refresh:

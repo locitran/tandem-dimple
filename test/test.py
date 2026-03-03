@@ -31,13 +31,38 @@ sav_list = [
 ]
 td = run(
     query=sav_list, # List of SAVs to be analyzed
-    job_name='test4', # Define where the job will be saved
+    job_name='test/test1', # Define where the job will be saved
     refresh=True, # Set to True to refresh the calculation
     custom_PDB='AF-O00189-F1',
-    # custom_PDB='O00189',
-    # custom_PDB='3L81',
-    # custom_PDB='1G0d',
-    # custom_PDB='/home/loci/main/tandem_website_dev/tandem/test/AF-O00189-F1-model_v6.pdb',
     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )   
 
+td = run(
+    query=sav_list, # List of SAVs to be analyzed
+    job_name='test/test2', # Define where the job will be saved
+    refresh=True, # Set to True to refresh the calculation
+    custom_PDB='O00189',
+    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
+)   
+
+td = run(
+    query=sav_list, # List of SAVs to be analyzed
+    job_name='test/test3', # Define where the job will be saved
+    refresh=True, # Set to True to refresh the calculation
+    custom_PDB='3L81',
+    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
+)   
+td = run(
+    query=sav_list, # List of SAVs to be analyzed
+    job_name='test/test4', # Define where the job will be saved
+    refresh=True, # Set to True to refresh the calculation
+    custom_PDB='/home/loci/main/tandem_website_dev/tandem/test/AF-O00189-F1-model_v6.pdb',
+    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
+)  
+
+td = run(
+    query=sav_list, # List of SAVs to be analyzed
+    job_name='test/test5', # Define where the job will be saved
+    refresh=True, # Set to True to refresh the calculation
+    uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
+)   
