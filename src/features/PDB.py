@@ -23,7 +23,6 @@ from .naccess import calcAccessibility
 from .consurf import calcConSurf
 from .hbplus import calcHbond
 from .PropKa import calcChargepH7
-from .Uniprot import verifyAF
 
 MAX_NUM_RESIDUES = 21000
 """Hard-coded maximum size of PDB structures that can be handled by the
@@ -55,8 +54,7 @@ DYN_FEATS = ['GNM_Ventropy', 'GNM_rmsf_overall',
              'ANM_stiffness']
 """List of available dynamical features."""
 
-PDB_FEATS = STR_FEATS + [f + e for f in DYN_FEATS
-                         for e in ['_chain', '_reduced', '_sliced', '_full']]
+PDB_FEATS = STR_FEATS + [f + e for f in DYN_FEATS for e in ['_chain', '_reduced', '_sliced', '_full']]
 
 class PDBfeatures:
 
@@ -1233,23 +1231,22 @@ def calcPDBfeatures(
     if custom_PDB is not None and os.path.isfile(custom_PDB):
         custom_PDB = os.path.abspath(custom_PDB)
         pdbID = custom_PDB.split('/')[-1]
-        # Check if custom_PDB is a alphafold structure
-        if verifyAF(custom_PDB):
-            LOGGER.info(f"Custom PDB {custom_PDB} is an alphafold structure.")
-            for i, SAV in enumerate(mapped_SAVs):
-                if "Cannot map" not in SAV['Asymmetric_PDB_coords']:
-                    groups[pdbID]['af'].append(i)
-        else: # Not alphafold --> Assign custom
-            for i, SAV in enumerate(mapped_SAVs):
-                if "Cannot map" not in SAV['Asymmetric_PDB_coords']:
-                    groups[pdbID]['custom'].append(i)
+        for i, SAV in enumerate(mapped_SAVs):
+            if "Cannot map" in SAV['Asymmetric_PDB_coords']:
+                continue
+            is_af = bool(SAV['is_alphafold'])
+            if is_af:
+                groups[pdbID]['af'].append(i)
+            else:
+                groups[pdbID]['custom'].append(i)
     else: # This includes custom_PDB as pdbID
         for i, SAV in enumerate(mapped_SAVs):
             pdb_len = int(SAV['Asymmetric_PDB_length'])
             if pdb_len == 0:
                 continue
             pdbID = SAV['Asymmetric_PDB_coords'].split()[0]
-            if pdbID.startswith("AF-"):
+            is_af = bool(SAV['is_alphafold'])
+            if is_af:
                 groups[pdbID]['af'].append(i)
             elif "Cannot map" not in SAV['OPM_PDB_coords']:
                 groups[pdbID]['opm'].append(i)
@@ -1276,7 +1273,7 @@ def calcPDBfeatures(
                     pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                 # AF custom PDB file
                 elif custom_PDB is not None and format == 'af':
-                    pdbPath = fixPDB(custom_PDB, format='custom', folder=job_directory, refresh=refresh)
+                    pdbPath = fixPDB(custom_PDB, format='af', folder=job_directory, refresh=refresh)
                     pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                 # Not custom PDB
                 else:

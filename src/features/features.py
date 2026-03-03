@@ -161,12 +161,13 @@ class Features:
         cols = ['SAV_coords', 'Unique_SAV_coords', 'Asymmetric_PDB_coords', 'Uniprot_sequence_length',
                 'BioUnit_PDB_coords', 'OPM_PDB_coords', 'Asymmetric_PDB_resolved_length']
         if not self._isColSet('Asymmetric_PDB_coords'):
-            Uniprot2PDBmap = mapSAVs2PDB(
+            Uniprot2PDBmap, custom_PDB = mapSAVs2PDB(
                 self.data['SAV_coords'], custom_PDB=self.custom_PDB, 
                 refresh=self.refresh, **self.options
             )
             for col in cols:
                 self.data[col] = Uniprot2PDBmap[col]
+        self.custom_PDB = custom_PDB
         self.Uniprot2PDBmap = Uniprot2PDBmap
 
     def getUniprot2PDBmap(self, **kwargs):

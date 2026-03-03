@@ -1,14 +1,27 @@
 import os 
+import re
 import logging
 import requests
 import urllib.request
 from urllib.parse import urlparse
 from .utils.logger import LOGGER
+import prody
+import numpy as np
+from prody import parsePDB
 
 __all__ = ['pdb_summary', 'fetchPDB', 'fetchPDB_BiologicalAssembly']
 
 pdbe_prefix = 'https://www.ebi.ac.uk/pdbe'
 
+def _url_exists(url: str, timeout=10) -> bool:
+    try:
+        r = requests.head(url, allow_redirects=True, timeout=timeout)
+        if r.status_code == 405:  # some servers disallow HEAD
+            r = requests.get(url, stream=True, timeout=timeout)
+        return r.status_code == 200
+    except requests.RequestException:
+        return False
+    
 def get_url(url):
     """
     Makes a request to a URL. Returns a JSON of the results
@@ -122,64 +135,190 @@ def fetch_fasta(accs, **kwargs):
     LOGGER.info(f"\n✅ Saved to: {output_path}")
     return output_path
 
-def fetchAF2(acc, **kwargs):
-    """Fetch AlphaFold structure file by UniProt accession."""
+def fetchAF2(afid, **kwargs):
+    """Fetch AlphaFold structure file.
+    Only two formats: cif and pdb.
+
+    Example:
+    fetchAF2("AF-O00189-F1-model_v6") --> fetches AF model v6 if available, else raises ValueError
+    """
     folder = kwargs.get("folder", ".")
     refresh = kwargs.get("refresh", False)
     prefer_format = str(kwargs.get("prefer_format", "pdb")).lower()
     timeout = kwargs.get("timeout", 20)
-    uid = (acc or "").strip().upper()
 
-    if not uid:
-        LOGGER.info("Failed to fetch from AlphaFold2 database: empty UniProt accession.")
-        return None
-
+    afid = (afid or "").strip()
     os.makedirs(folder, exist_ok=True)
 
-    api_url = f"https://alphafold.ebi.ac.uk/api/prediction/{uid}"
-    try:
-        resp = requests.get(api_url, timeout=timeout)
-        if resp.status_code == 404:
-            LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database HTTP 404.")
-            return None
-        resp.raise_for_status()
-        payload = resp.json()
-        if not isinstance(payload, list) or len(payload) == 0:
-            LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database: empty API payload.")
-            return None
-    except Exception as e:
-        LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database {e}.")
-        return None
+    if not afid:
+        raise ValueError("Empty AlphaFold ID.")
+    if not re.fullmatch(r"AF-[A-Z0-9]{6,10}-F\d+-MODEL_V\d+", afid, re.I):
+        raise ValueError(f"Invalid normalized AlphaFold ID: {afid}")
 
-    entry = payload[0]
-    pdb_url = entry.get("pdbUrl")
-    cif_url = entry.get("cifUrl")
-    if prefer_format == "cif":
-        file_url = cif_url or pdb_url
-    else:
-        file_url = pdb_url or cif_url
+    if prefer_format not in ("pdb", "cif"):
+        prefer_format = "pdb"
 
-    if not file_url:
-        LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database: no file URL in API.")
-        return None
+    def _download(url: str):
+        filename = os.path.basename(urlparse(url).path)
+        outpath = os.path.abspath(os.path.join(folder, filename))
+        if (not refresh) and os.path.exists(outpath):
+            return outpath
 
-    filename = os.path.basename(urlparse(file_url).path)
-    outpath = os.path.abspath(os.path.join(folder, filename))
-
-    if not refresh and os.path.exists(outpath):
-        return outpath
-
-    try:
-        with requests.get(file_url, stream=True, timeout=timeout) as stream:
-            stream.raise_for_status()
+        with requests.get(url, stream=True, timeout=timeout) as r:
+            if r.status_code != 200:
+                return None
             with open(outpath, "wb") as f:
-                for chunk in stream.iter_content(chunk_size=8192):
+                for chunk in r.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
         return outpath
+
+    url_pdb = f"https://alphafold.ebi.ac.uk/files/{afid}.pdb"
+    url_cif = f"https://alphafold.ebi.ac.uk/files/{afid}.cif"
+    if prefer_format == "pdb":
+        out = _download(url_pdb) or _download(url_cif)
+    else:
+        out = _download(url_cif) or _download(url_pdb)
+    if out is None:
+        raise ValueError(f"AlphaFold file not found for {afid} (.pdb/.cif).")
+    return out
+
+def customPDB2AFID(customPDB: str, version=None, strict_version=True) -> str:
+    """
+    Returns canonical AF filename stem: AF-<ACC>-F1-model_vN
+
+    strict_version=True:
+      - if version specified but unavailable -> raise ValueError
+    strict_version=False:
+      - if version specified but unavailable -> fallback to latest API record
+    Example:
+    print(customPDB2AFID("O00189"))
+    print(customPDB2AFID("AF-O00189-F1"))
+    print(customPDB2AFID("AF-O00189-F1-model_v6"))
+    print(customPDB2AFID("AF-O00189-F1-model_v4"))
+    """
+    r_AF_w_model = re.compile(r'^AF-([A-Za-z0-9]{6,10})-F\d+-model_v(\d+)$', re.I) # AF-O00189-F1-model_v6
+    r_AF_wo_model = re.compile(r'^AF-([A-Za-z0-9]{6,10})-F\d+$', re.I) # AF-O00189-F1
+    r_UNIPROT_ACC = re.compile(r'^(?:[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})$', re.I) # O00189
+
+    # acc, version_in_input = _extract_acc_and_version(customPDB)
+    # Extracted version from input
+    version_in_input = None
+    if m := r_AF_w_model.fullmatch(customPDB):
+        acc = m.group(1).upper()
+        version_in_input = int(m.group(2))
+    elif m := r_AF_wo_model.fullmatch(customPDB):
+        acc = m.group(1).upper()
+    elif m := r_UNIPROT_ACC.fullmatch(customPDB):
+        acc = m.group(0).upper()
+    else: 
+        raise ValueError(f"Unsupported customPDB format: {customPDB}")
+    
+    # If version specified, verify availability
+    target_version = version if version is not None else version_in_input
+    if target_version is not None:
+        afid = f"AF-{acc}-F1-model_v{int(target_version)}"
+        pdb_url = f"https://alphafold.ebi.ac.uk/files/{afid}.pdb"
+        cif_url = f"https://alphafold.ebi.ac.uk/files/{afid}.cif"
+        if _url_exists(pdb_url) or _url_exists(cif_url):
+            return afid
+        if strict_version:
+            raise ValueError(f"Requested AlphaFold version v{target_version} not available for {acc}")
+
+    # Resolve latest via API
+    api_url = f"https://alphafold.ebi.ac.uk/api/prediction/{acc}"
+    r = requests.get(api_url, timeout=20)
+    r.raise_for_status()
+    data = r.json()
+    if not isinstance(data, list) or not data:
+        raise ValueError(f"No AlphaFold prediction found for {acc}")
+
+    rec = data[0]
+    entry = rec.get("entryId") or rec.get("modelEntityId")
+    if entry:
+        # entry may be AF-...-F1; normalize to model_vN if possible from URLs
+        # Prefer extracting exact model from pdbUrl/cifUrl when present
+        for key in ("pdbUrl", "cifUrl"):
+            u = rec.get(key) or ""
+            m = re.search(r'(AF-[A-Za-z0-9]{6,10}-F\d+-model_v\d+)\.(?:pdb|cif)$', u)
+            if m:
+                return m.group(1)
+        # fallback
+        return f"{entry}-model_v4" if "-model_v" not in entry else entry
+
+    raise ValueError(f"Unable to resolve AlphaFold ID for {acc}")
+
+def verifyAF(pdbpath, return_message=False):
+    """Check if a structure file is likely from AlphaFold.
+
+    Rules:
+    1) Text marker rule: file content contains "alphafold" or
+       "alphafoldserver.com/output-terms" (any extension) -> AlphaFold.
+    2) CIF rule: >=20% atoms have B-factor >= 50 -> AlphaFold.
+    3) Generic confidence rule: all B-factors < 100 and >=50% atoms have
+       B-factor >= 50 -> AlphaFold.
+    """
+
+    def _out(flag: bool, msg: str):
+        return (flag, msg) if return_message else flag
+
+    try:
+        raw_path = os.fspath(pdbpath)
+    except TypeError:
+        return _out(False, "Input is not a valid filesystem path.")
+
+    path = os.path.abspath(raw_path)
+    title = os.path.basename(path)
+    stem = os.path.splitext(title)[0]
+    ext = os.path.splitext(path)[1].lower()
+
+    # Fast path by AlphaFold-style filename (case-insensitive)
+    # Accepts: AF-O00189-F1, AF-O00189-F1-model_v6 (+ any extension)
+    if re.match(r'^AF-[A-Za-z0-9]{6,10}-F\d+(?:-model_v\d+)?$', stem, re.I):
+        return _out(True, "Filename matches AlphaFold naming pattern.")
+
+    if not os.path.isfile(path):
+        return _out(False, f"File not found: {path}")
+
+    # Rule 1: marker text in file content (any extension)
+    try:
+        with open(path, 'r', errors='ignore') as f:
+            head = f.read(65536).lower()
+        if ("alphafoldserver.com/output-terms" in head) or ("alphafold" in head):
+            return _out(True, "Detected AlphaFold marker text `alphafoldserver.com/output-terms` in file content.")
     except Exception as e:
-        LOGGER.info(f"Failed to fetch {uid} from AlphaFold2 database {e}.")
-        return None
+        LOGGER.warn(f"verifyAF: unable to read file text from {path}: {e}")
+
+    # Parse B-factors for rules 2 and 3
+    ag = None
+    try:
+        if ext in (".cif", ".mmcif") and hasattr(prody, "parseMMCIF"):
+            ag = prody.parseMMCIF(path)
+        if ag is None:
+            ag = parsePDB(path, model=1)
+    except Exception as e:
+        return _out(False, f"Failed to parse structure for B-factor analysis: {e}")
+
+    if ag is None:
+        return _out(False, "Unable to parse structure (AtomGroup is None).")
+
+    betas = ag.getBetas()
+    if betas is None or len(betas) == 0:
+        return _out(False, "No B-factor data available.")
+
+    betas = np.asarray(betas, dtype=float)
+    frac_ge50 = float(np.mean(betas >= 50.0))
+    all_lt100 = bool(np.all(betas < 100.0))
+
+    # Rule 2: CIF-specific threshold
+    if ext in (".cif", ".mmcif") and frac_ge50 >= 0.20:
+        return _out(True, f"CIF rule matched: {frac_ge50:.1%} atoms have B-factor >= 50.")
+
+    # Rule 3: generic confidence rule
+    if all_lt100 and frac_ge50 >= 0.50:
+        return _out(True, f"Confidence rule matched: all B-factors < 100 and {frac_ge50:.1%} atoms >= 50.")
+
+    return _out(False, f"Rules not matched (fraction>=50: {frac_ge50:.1%}, all<100: {all_lt100}).")
 
 def fetchPDB(pdbID, **kwargs):
     """Fetch a PDB file from RCSB PDB database."""

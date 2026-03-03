@@ -187,8 +187,6 @@ class LociFixer(PDBFixer):
 
         In our setting, we reset the chainID using ```chainName = chr(ord('A')+chainIndex%26)```
         """
-        bfactors = None
-        occupancies = None
         orig_atoms = list(self.structure.iter_atoms())
         orig_meta = {
             (atom.chain_id, atom.residue_number, atom.name): 
@@ -202,14 +200,15 @@ class LociFixer(PDBFixer):
             key = (atom.residue.chain.id, int(atom.residue.id), atom.name)
             if key in orig_meta:
                 bf, occ = orig_meta[key]
-                bf = bf.value_in_unit(angstrom * angstrom)
+                if hasattr(bf, "value_in_unit"):
+                    bf = bf.value_in_unit(angstrom * angstrom)
+                bf = float(bf)
+                occ = float(occ)
             else:
                 # Newly created atom or residue
                 bf, occ = 0.00, 1.00   # sensible defaults
             bfactors.append(bf)
             occupancies.append(occ)
-        bfactors = None
-        occupancies = None
         with open(savePath, 'w') as out_f:
             out_f.write('HEADER\n')
             PDBFile.writeFile(self.topology, self.positions, out_f, keepIds=keepIds, modify_chain=modify_chain,
@@ -523,9 +522,9 @@ def removeEND(pdbpath):
 
 def fixPDB(pdb, format='asu', 
            fix_loop=True, replaceNonstandard=True, refresh=False, folder='.'):
-    """pdb could be a PDB file or a PDB ID"""
+
     os.makedirs(folder, exist_ok=True)
-    if format == 'custom' and os.path.isfile(pdb):
+    if os.path.isfile(pdb):
         # Take the filename from the custom_PDB
         filename = pdb.split('/')[-1].split('.')[0]
         out = os.path.join(folder, f'{filename}.pdb')
@@ -540,49 +539,45 @@ def fixPDB(pdb, format='asu',
         else:
             f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
             f.saveTopology(savePath=out)
-
-    elif format == 'opm':
-        out = os.path.join(folder, f'{pdb}-ne1.pdb')
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
+        return out
+    else:
+        if format == 'af':
+            return fetchAF2(afid=pdb, refresh=refresh, folder=RAW_PDB_DIR)
+        elif format == 'opm':
+            out = os.path.join(folder, f'{pdb}-ne1.pdb')
+            if os.path.isfile(out) and not refresh:
+                LOGGER.info(f"File {out} already exists")
+                return out
+            pdbpath = fetchPDB(pdb, format=format, refresh=refresh, folder=RAW_PDB_DIR)
+            f = LociFixer(pdbpath)
+            f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
+            opm_path = os.path.join(folder, f'{pdb}-opm.pdb')
+            f.saveTopology(savePath=opm_path)
+            out = buildCGmembrane(opm_path, folder=folder, filename=pdb, refresh=refresh)
             return out
-        pdbpath = fetchPDB(pdb, format=format, refresh=refresh, folder=RAW_PDB_DIR)
-        f = LociFixer(pdbpath)
-        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard, keepElement=['DUM'])
-        opm_path = os.path.join(folder, f'{pdb}-opm.pdb')
-        f.saveTopology(savePath=opm_path)
-        out = buildCGmembrane(opm_path, folder=folder, filename=pdb, refresh=refresh)
-
-    elif format == 'asu':
-        out = os.path.join(folder, f'{pdb}.pdb')
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
+        elif format == 'asu':
+            out = os.path.join(folder, f'{pdb}.pdb')
+            if os.path.isfile(out) and not refresh:
+                LOGGER.info(f"File {out} already exists")
+                return out
+            pdbpath = fetchPDB(pdb, format='pdb', refresh=refresh, folder=RAW_PDB_DIR)
+            f = LociFixer(pdbpath)
+            f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
+            f.saveTopology(savePath=out)
             return out
-        pdbpath = fetchPDB(pdb, format='pdb', refresh=refresh, folder=RAW_PDB_DIR)
-        f = LociFixer(pdbpath)
-        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
-        f.saveTopology(savePath=out)
-
-    elif format == 'af':
-        out = os.path.join(folder, f'{pdb}.pdb')
-        acc = pdb.split('-')[1]
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
+        elif format.startswith('bas'):
+            assemblyID = int(format[3:])
+            out = os.path.join(folder, f'{pdb}-{assemblyID}.pdb')
+            if os.path.isfile(out) and not refresh:
+                LOGGER.info(f"File {out} already exists")
+                return out
+            pdbpath = fetchPDB_BiologicalAssembly(pdb, assemblyID, format='cif', 
+                                            refresh=refresh, folder=RAW_PDB_DIR)
+            LOGGER.info(pdbpath)
+            f = LociFixer(pdbpath)
+            f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
+            f.saveTopology(savePath=out)
             return out
-        pdbpath = fetchAF2(acc, refresh=refresh, folder=RAW_PDB_DIR)
-        return pdbpath
-    
-    else: # format == bas*
-        assemblyID = int(format[3:])
-        out = os.path.join(folder, f'{pdb}-{assemblyID}.pdb')
-        if os.path.isfile(out) and not refresh:
-            LOGGER.info(f"File {out} already exists")
-            return out
-        pdbpath = fetchPDB_BiologicalAssembly(pdb, assemblyID, format='cif', 
-                                        refresh=refresh, folder=RAW_PDB_DIR)
-        LOGGER.info(pdbpath)
-        f = LociFixer(pdbpath)
-        f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
-        f.saveTopology(savePath=out)
-    LOGGER.info(f"Fixed PDB file {out}")
-    return out
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+        

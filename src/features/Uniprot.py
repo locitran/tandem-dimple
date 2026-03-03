@@ -8,8 +8,6 @@ import dill as pickle
 import datetime
 import time
 import numpy as np
-import urllib.parse
-import requests 
 import re
 import traceback
 
@@ -22,7 +20,7 @@ from Bio.pairwise2 import format_alignment
 
 
 from ..utils.logger import LOGGER
-from ..download import fetchPDB, fetchPDB_BiologicalAssembly, fetchAF2
+from ..download import fetchPDB, fetchPDB_BiologicalAssembly, fetchAF2, customPDB2AFID, verifyAF
 from ..utils.settings import RAW_PDB_DIR, one2three
 
 __author__ = "Luca Ponzoni"
@@ -53,19 +51,6 @@ def queryUniprot(*args, n_attempts=3, dt=1, **kwargs):
     else:
         _ = openURL('http://www.uniprot.org/')
     return prody.queryUniprot(*args, **kwargs)
-
-def verifyAF(pdbpath):
-    """Check if the PDB file is an AlphaFold structure."""
-    pdbpath = os.path.abspath(pdbpath)
-    title = os.path.basename(pdbpath)
-    if title.startswith('AF-'):
-        return True
-    if os.path.isfile(pdbpath):
-        with open(pdbpath, 'r') as f:
-            first_line = f.readline()
-            if 'alphafoldserver.com/output-terms' in first_line:
-                return True
-    return False
 
 class UniprotMapping:
 
@@ -116,11 +101,12 @@ class UniprotMapping:
         self._align_algo_args = ['localxs', -0.5, -0.1]
         self._align_algo_kwargs = {'one_alignment_only': True}
         self.timestamp = str(datetime.datetime.utcnow())
-        self.AF2 = [rec[key][1][1] for key in rec.keys()
-                    if key.startswith('dbRef') and ('type', 'AlphaFoldDB') in rec[key]]
-        if len(self.AF2) > 0:
-            self.AF2 = self.AF2[0]
+        try:
+            self.AF2 = customPDB2AFID(self.uniq_acc, strict_version=False)
             self._initiateAF2mapping()
+        except Exception as e:
+            LOGGER.info(f"Unable to parse {self.uniq_acc} as an AlphaFold2 custom PDB identifier: {e}")
+            self.AF2 = None
         return
 
     def getPDBmappings(self, PDBID=None):
@@ -182,46 +168,57 @@ class UniprotMapping:
         sel_maps = {c: rec['maps'][c] for c in chains_to_align}
         return sel_alignms, sel_maps
 
-    def alignCustomPDB(self, PDB, title=None, folder=RAW_PDB_DIR):
+    def alignCustomPDB(self, PDB, folder=RAW_PDB_DIR):
         """Aligns the Uniprot sequence with the sequence from the given PDB.
         """
-        assert isinstance(PDB, (str, Atomic)), \
-            'PDB must be a PDBID or an Atomic instance (e.g. AtomGroup).'
-        if isinstance(PDB, str):
-            try:
-                if os.path.isfile(PDB):
-                    pdb = parsePDB(PDB, model=1, subset='calpha')
+        assert isinstance(PDB, str), "PDB must be a string."
+        is_alphafold = False
+        customPDB = PDB
+        try:
+            if os.path.isfile(PDB):
+                pdb = parsePDB(PDB, model=1, subset='calpha')
+                is_alphafold = verifyAF(PDB)
+                title = os.path.basename(PDB)
+            else:
+                try:
+                    af_acc = customPDB2AFID(PDB, strict_version=False)
+                except Exception as e:
+                    LOGGER.info(f"This {PDB} is not an AlphaFold identifier: {e}")
+                    af_acc = None
+
+                if af_acc is not None:
+                    LOGGER.info(f'Fetching AlphaFold structure for {af_acc}...')
+                    pdbpath = fetchAF2(af_acc, folder=folder, refresh=self._refresh)
+                    if pdbpath is None:
+                        raise ValueError(f'AlphaFold entry not found for {af_acc}.')
+                    pdb = parsePDB(pdbpath, model=1, subset='calpha')
+                    is_alphafold = True
+                    title = af_acc
+                    customPDB = af_acc
                 else:
                     # PDB is a PDBID
                     LOGGER.info(f'Fetching PDB {PDB}...')
                     pdbpath = fetchPDB(PDB, format='pdb', folder=folder, refresh=self._refresh)
                     pdb = parsePDB(pdbpath, model=1, subset='calpha')
-            except Exception as e:
-                msg = (
-                    'Unable to import structure: PDB ID might be invalid'
-                    ' or PDB file might be corrupted.\n'
-                    f'PDB error: {e}')
-                LOGGER.error(msg)
-            if title is None:
-                title = os.path.basename(PDB.strip())
-                title = title.replace(' ', '_')
-        else:
-            pdb = PDB.ca
-            if title is None:
-                title = PDB.getTitle()
-
-        alphafold = verifyAF(PDB)
-        if alphafold:
+                    title = PDB.strip()
+        except Exception as e:
+            msg = (
+                'Unable to import structure: PDB ID might be invalid'
+                ' or PDB file might be corrupted.\n'
+                f'PDB error: {e}')
+            LOGGER.error(msg)
+            
+        if is_alphafold:
             LOGGER.info(f'AlphaFold2 structure detected: {title}')
+
         LOGGER.info(f'Aligning {title}...')
-        # Initilize
         customPDBmapping = {
             'PDB': title,
             'chain_res': {},
             'chain_seq': {},
             'chain_len': {},
             'warnings': [],
-            'alphafold': alphafold,
+            'alphafold': is_alphafold,
             'confidence': {}
         }
         all_chains = set(pdb.getChids())
@@ -237,14 +234,14 @@ class UniprotMapping:
                 customPDBmapping['chain_len'][c] = chain.getResnums().__len__() # chain.numResidues()
             else:
                 customPDBmapping['warnings'].append(f'Chain {c} not found in PDB.')
-            if alphafold:
+            if is_alphafold:
                 confidence = chain.getBetas()
                 customPDBmapping['confidence'][c] = confidence
 
         self.customPDBmapping = customPDBmapping
         # align selected chains with BioPython module pairwise2
         self._calcCustomAlignments(chains_to_align)
-        return customPDBmapping
+        return customPDB
 
     def alignAllPDBs(self, chain='longest'):
         """Aligns the Uniprot sequence with the sequences of all PDBs in the
@@ -391,10 +388,15 @@ class UniprotMapping:
                 res_mappings[i]['>opm:PDB_coords'] = "Cannot map"
                 res_mappings[i]['>bas:PDB_coords'] = "Cannot map"
                 continue
-            # Cannot map if PDBID is a custom PDB with long title with .pdb extension
-            elif PDBID.endswith('.pdb'):
-                res_mappings[i]['>opm:PDB_coords'] = "Cannot map, custom PDB"
-                res_mappings[i]['>bas:PDB_coords'] = "Cannot map, custom PDB"
+            # If ends with ".pdb", strip it
+            elif PDBID.endswith(".pdb"):
+                res_mappings[i]['>opm:PDB_coords'] = "Cannot map, PDBID ends with .pdb"
+                res_mappings[i]['>bas:PDB_coords'] = "Cannot map, PDBID ends with .pdb"
+                continue
+            # If PDBID is not 4 characters, cannot map
+            elif len(PDBID) != 4:
+                res_mappings[i]['>opm:PDB_coords'] = "Cannot map, PDBID is not 4 characters"
+                res_mappings[i]['>bas:PDB_coords'] = "Cannot map, PDBID is not 4 characters"
                 continue
             if PDBID not in groups:
                 groups[PDBID] = {'asu_map': [], 'index': []}
@@ -963,6 +965,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
         ('PDB_resolution', 'f'),
         ('BioUnit_PDB_coords', 'U100'),
         ('OPM_PDB_coords', 'U100'),
+        ('is_alphafold', '?'),
     ])
     nSAVs = len(SAV_coords)
     mapped_SAVs = np.zeros(nSAVs, dtype=PDBmap_dtype)
@@ -979,7 +982,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
         try:
             U2P_map = UniprotMapping(acc, recover_pickle=not(refresh), **kwargs)
             if custom_PDB is not None:
-                U2P_map.alignCustomPDB(custom_PDB)
+                custom_PDB = U2P_map.alignCustomPDB(custom_PDB)
         except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(f'Error while mapping {acc}: {msg}')
@@ -988,9 +991,8 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
         if isinstance(U2P_map, str):
             uniq_coords = U2P_map
             for i in groups[acc]['indices']:
-                mapped_SAVs[i] = (SAV_coords[i], uniq_coords, 0, 
-                                  f'Cannot map, unable to run {acc}', 0, 0, 0, 
-                                  None, None)
+                mapped_SAVs[i] = (
+                    SAV_coords[i], uniq_coords, 0, f'Cannot map, unable to run {acc}', 0, 0, 0, None, None, False)
             continue
 
         resids, wt_aas, mut_aas = zip(*[ele.split()[1:4] for ele in groups[acc]['SAV_coords']])
@@ -1004,6 +1006,16 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
         for i, (SAV_idx, ele) in enumerate(zip(indices, r)):
             asu_coord, c_seq_len, c_resolved_len, bas_coord, opm_coord, resolution = ele
             uniq_coords = f'{U2P_map.uniq_acc} {resids[i]} {wt_aas[i]} {mut_aas[i]}'
+            is_alphafold = False
+            if custom_PDB is not None:
+                is_alphafold = bool(
+                    U2P_map.customPDBmapping is not None
+                    and U2P_map.customPDBmapping.get('alphafold', False)
+                )
+            elif isinstance(asu_coord, str) and not asu_coord.startswith('Cannot map'):
+                pdb_title = asu_coord.split()[0]
+                is_alphafold = pdb_title.upper().startswith('AF-')
+
             mapped_SAVs[SAV_idx] = (
                 SAV_coords[SAV_idx], 
                 uniq_coords, 
@@ -1013,11 +1025,12 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
                 c_resolved_len, 
                 resolution,
                 bas_coord, 
-                opm_coord
+                opm_coord,
+                is_alphafold,
             )
 
         if isinstance(U2P_map, UniprotMapping):
             U2P_map.savePickle(**kwargs)
     n = sum(mapped_SAVs['Asymmetric_PDB_length'] != 0)
     LOGGER.report(f'{n} out of {nSAVs} SAVs have been mapped to PDB in %.1fs.', '_mapSAVs2PDB')
-    return mapped_SAVs
+    return mapped_SAVs, custom_PDB
