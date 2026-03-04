@@ -901,6 +901,21 @@ class UniprotMapping:
             identities[c] = frac
         return
 
+# SAV_coord: <UniProt ID> <mutation site> <WT aa> <mutant aa>
+# SAV: <UniProt ID> <mutation site>
+
+def SAV_coord2SAV(SAV_coords):
+    '''Converts a SAV_coord (e.g., P98161 1227 A S) to a SAV (e.g., P98161 A1227S).'''
+    SAV_coords_splitted = [s.split() for s in SAV_coords]
+    SAVs = [f"{s[0]} {s[2]}{s[1]}{s[3]}" for s in SAV_coords_splitted]
+    return SAVs
+
+def SAV2SAV_coord(SAVs):
+    '''Converts a SAV (e.g., P98161 A1227S) to a SAV_coord (e.g., P98161 1227 A S).'''
+    SAVs_splitted = [s.split() for s in SAVs]
+    SAV_coords = [f"{s[0]} {s[1][1:-1]} {s[1][0]} {s[1][-1]}" for s in SAVs_splitted]
+    return SAV_coords
+
 def simpleConversion(SAV_coords):
     # SAVs field: <UniProt ID> <mutation site>
     SAVs = [s.split() for s in SAV_coords]

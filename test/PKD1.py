@@ -9,7 +9,7 @@ query = ['P98161 1227 A S', 'P98161 1311 A T', 'P98161 140 A V', 'P98161 1422 A 
 
 td = run(
     query=query, # List of SAVs to be analyzed
-    job_name='PKD1_test', # Define where the job will be saved
+    job_name='PKD1_test/test_March03', # Define where the job will be saved
     custom_PDB='/home/loci/main/tandem_website_dev/tandem/data/PKD1/pkd_v20260123.pdb',
     refresh=True, # Set to True to refresh the calculation
     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 

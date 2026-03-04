@@ -285,7 +285,7 @@ class Features:
         if sel_SEQfeats:
             # compute sequence features
             f = calcSEQfeatures(self.Uniprot2PDBmap['SAV_coords'], 
-                refresh=self.refresh, sel_feats=sel_SEQfeats, **self.options)
+                refresh=False, sel_feats=sel_SEQfeats, **self.options) # refresh=False because of mapSAVs2PDB
             all_feats.append(f)
         # build matrix of selected features
         self.featMatrix = self._buildFeatMatrix(self.featSet, all_feats)
