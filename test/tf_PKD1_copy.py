@@ -16,11 +16,11 @@ labels = [s[-1] for s in SAVs]
 SAVs = [s[:-2] for s in SAVs]
 SAVs = SAV2SAV_coord(SAVs)
 
+SAVs = ['P98161 1312 R Q']
 td = run(
     query=SAVs, # List of SAVs to be analyzed
-    job_name='PKD1_test/test_March04_tf', # Define where the job will be saved
+    job_name='PKD1_test/test_March05', # Define where the job will be saved
     custom_PDB='/home/loci/main/tandem_website_dev/tandem/data/PKD1/pkd_v20260123.pdb',
-    labels=labels, # Define labels for the input SAVs
     refresh=False, # Set to True to refresh the calculation
     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )   

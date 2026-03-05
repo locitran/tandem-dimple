@@ -229,8 +229,8 @@ class SEQfeatures(UniprotMapping):
                 f[i]['entropy'] = entropy
                 f[i]['ranked_MI'] = ranked_MI
             except Exception as e:
-                msg = traceback.format_exc()
-                LOGGER.warn(msg)
+                # msg = traceback.format_exc()
+                LOGGER.warn(e)
         return f
     
     def calcPolyPhen2features(self):

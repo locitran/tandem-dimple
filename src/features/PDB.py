@@ -885,14 +885,21 @@ class PDBfeatures:
                 f[name] = 0
             return f
 
+        folder4mut = os.path.join(self.folder, 'mut')
+        os.makedirs(folder4mut, exist_ok=True)
         for i, (chid, resid, wt_aa, mut_aa) in enumerate(zip(chids, resids, wt_aas, mut_aas)):
             chain = pdb.ca[chid].copy()
             d = self.feats[chid]
             try:
                 LOGGER.timeit('_createMutationfile')
                 # Make the file for the mutation
-                wtpath = writePDB(os.path.join(self.folder, f'{self.pdbID}_{chid}.pdb'), pdb.protein[chid].copy())
-                mutpath = createMutationfile(wtpath, chid, mutation=f'{wt_aa}{resid}{mut_aa}')
+                wtpath = os.path.join(folder4mut, f'{self.pdbID}_{chid}.pdb')
+                if os.path.exists(wtpath):
+                    wtfile = wtpath
+                else:
+                    wtfile = writePDB(wtpath, pdb.protein[chid].copy())
+                
+                mutfile = createMutationfile(wtfile, chid, mutation=f'{wt_aa}{resid}{mut_aa}')
                 LOGGER.report('Create Mutation file in %.2fs.', '_createMutationfile')
             except Exception as e:
                 msg = traceback.format_exc()
@@ -909,7 +916,7 @@ class PDBfeatures:
                     if not all([isinstance(d[f], np.ndarray) for f in ['Rg', 'Dcom']]):
                         self.calcRGandDcomfeatures()
                 try:
-                    rg, dcom = calcRGandDcom(mutpath)
+                    rg, dcom = calcRGandDcom(mutfile)
                     f[i]['DELTA_Rg'] = rg - self.feats[chid]['Rg']
                     f[i]['DELTA_Dcom'] = dcom[indices[0]] - self.feats[chid]['Dcom'][indices[0]]
                 except Exception as e:
@@ -922,7 +929,7 @@ class PDBfeatures:
                     if not isinstance(d['SASA'], np.ndarray):
                         self.calcSASAfeatures(chain=chid)
                 try:
-                    sasa = calcAccessibility(mutpath, chain=chid)
+                    sasa = calcAccessibility(mutfile, chain=chid)
                     f[i]['DELTA_SASA'] = sasa.ca[chid].getData('naccess_aa_rel')[indices[0]] - \
                         self.feats[chid]['SASA'][indices[0]]
                 except Exception as e:
@@ -935,7 +942,7 @@ class PDBfeatures:
                     if not isinstance(d['ACR'], np.ndarray):
                         self.calcAGfeatures(chain=chid)
                 try:
-                    ag = calcAG(mutpath, chain=chid)
+                    ag = calcAG(mutfile, chain=chid)
                     f[i]['DELTA_ACR'] = np.mean(ag['AG1']) - self.feats[chid]['ACR']
                 except Exception as e:
                     msg = traceback.format_exc()
@@ -943,25 +950,18 @@ class PDBfeatures:
             if 'DELTA_Hbond' in sel_feats:
                 """
                 DELTA_Hbond is in TANDEM_FEATS['v1.1'] feature set.
-                We will save the features in later use.
-                The format is as follow:
-                self.feats[chid] = {
-                    'D2': {
-                        'A': int,
-                        'C': int,
-                        'E': int,
-                        ...
-                    }
-                }
+                Cache format:
+                self.feats[chid]['DELTA_Hbond'][f'{wt_aa}{resid}'][mut_aa] = float
                 """
                 key1 = f'{wt_aa}{resid}'  # e.g., 'D2'
                 key2 = mut_aa             # e.g., 'A'
-                if key1 not in d:
-                    d[key1] = {}
-                    
-                # If having precomputed feature, go for it :-) 
-                if key2 in d[key1]:
-                    f[i]['DELTA_Hbond'] = d[key1][key2]
+                # Keep per-chain DELTA_Hbond cache and avoid resetting it each iteration.
+                delta_hbond_cache = d.setdefault('DELTA_Hbond', {})
+                residue_cache = delta_hbond_cache.setdefault(key1, {})
+
+                # If having precomputed feature, reuse it.
+                if key2 in residue_cache:
+                    f[i]['DELTA_Hbond'] = residue_cache[key2]
                 else: # No, we calculate it :-(
                     if not 'Hbond' in d:
                         self.calcHbondfeature(chain_list=[chid])
@@ -969,11 +969,11 @@ class PDBfeatures:
                         if not isinstance(d['Hbond'], np.ndarray):
                             self.calcHbondfeature(chain_list=[chid])
                     try:
-                        ag = calcHbond(mutpath, chain_list=[chid])
+                        ag = calcHbond(mutfile, chain_list=[chid])
                         DELTA_Hbond = ag.ca[chid].getData('hbond')[indices[0]] - \
                             self.feats[chid]['Hbond'][indices[0]]
                         f[i]['DELTA_Hbond'] = DELTA_Hbond
-                        d[key1][key2] = DELTA_Hbond
+                        residue_cache[key2] = DELTA_Hbond
                     except Exception:
                         msg = traceback.format_exc()
                         LOGGER.warn(msg)
@@ -988,7 +988,7 @@ class PDBfeatures:
                     f[i]['DELTA_DSS'] = 0 - self.feats[chid]['SSbond'][indices[0]]
                 else:
                     try:       
-                        dss = calcDisulfideBonds(parsePDB(mutpath), distA=2.4)
+                        dss = calcDisulfideBonds(parsePDB(mutfile), distA=2.4)
                         dss_arr = np.zeros(len(self.feats[chid]['SSbond']))
                         for bond in dss:
                             # chid, resnum, icode
@@ -1009,19 +1009,19 @@ class PDBfeatures:
                     if not isinstance(d['charge_pH7'], np.ndarray):
                         self.calcPropKafeature(chain=chid)
                 try:
-                    ag = calcChargepH7(mutpath, chain=chid)
+                    ag = calcChargepH7(mutfile, chain=chid)
                     f[i]['DELTA_charge_pH7'] = ag.ca[chid].getData('charge_pH7')[indices[0]] - \
                         self.feats[chid]['charge_pH7'][indices[0]]
                 except Exception as e:
                     msg = traceback.format_exc()
                     LOGGER.warn(msg)
             
-            # if exist wtpath and mutpath, remove them
-            try: 
-                os.remove(wtpath)
-                os.remove(mutpath)
-            except:
-                pass
+            # # if exist wtpath and mutfile, remove them
+            # try: 
+            #     os.remove(wtpath)
+            #     os.remove(mutfile)
+            # except:
+            #     pass
         return f
 
     def _cov_matrix(self, GVecs, GVals):

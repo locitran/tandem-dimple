@@ -272,10 +272,9 @@ def createMutationfile(pdbpath, chid, mutation, out=None):
     f.addMissingAtoms()
     # Save the mutated PDB file.
     if out is None:
-        pdbpath = os.path.abspath(pdbpath)
-        pdbid = pdbpath.split('/')[-1][:4]
-        folder = '/'.join(pdbpath.split('/')[:-1])
-        out = f'{folder}/{pdbid}_{chid}_{mutation}.pdb'
+        pdbpath_abs = os.path.abspath(pdbpath)
+        basename = os.path.splitext(pdbpath_abs)[0]
+        out = f'{basename}_{mutation}.pdb'
     with open(out, 'w') as out_f:
         out_f.write('HEADER\n')
         PDBFile.writeFile(f.topology, f.positions, out_f, keepIds=True)
