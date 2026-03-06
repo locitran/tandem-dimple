@@ -854,10 +854,10 @@ class PDBfeatures:
                 if self.format == 'custom' or self.format == 'af':
                     # If the format is custom or af, we need to use the pdbPath
                     # And calculate ConSurf based on stand_alone_consurf
-                    folder = os.path.join(self.job_directory, "consurf")
+                    folder = os.path.join(self.job_directory, "consurf", self.pdbID)
                     f = calcConSurf(self.pdbPath, chID, folder=folder, uniref90=self.uniref90)  
                 else:
-                    folder = os.path.join(self.job_directory, "consurf")
+                    folder = os.path.join(self.job_directory, "consurf", self.pdbID)
                     f = calcConSurf(self.pdbID, chID, folder=folder, uniref90=self.uniref90)
                 d['consurf'] = f['consurf']
                 d['ACNR'] = f['ACNR']
@@ -1215,6 +1215,13 @@ def calcPDBfeatures(
     """
     LOGGER.info('Computing strutural and dynamics features from PDB structures...')
     LOGGER.timeit('_calcPDBfeatures')
+    userlog = kwargs.get("userlog")
+
+    def _emit_userlog(level, code, message, action=None, context=None):
+        if userlog is None:
+            return
+        userlog.emit(level, code, "structure", message, action=action, context=context)
+
     # Convert to numpy array
     if isinstance(mapped_SAVs, pd.DataFrame):
         mapped_SAVs = mapped_SAVs.to_records(index=False)
@@ -1289,10 +1296,24 @@ def calcPDBfeatures(
             except Exception:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
+                _emit_userlog(
+                    "error",
+                    "STRUCTURE_PREP_FAILED",
+                    f"Failed to prepare structure '{pdbID}' ({format}).",
+                    action="Verify structure source or provide a valid custom structure.",
+                    context={"pdb_id": str(pdbID), "format": str(format)},
+                )
                 continue
             # Check if PDB file exists 
             if not os.path.isfile(pdbPath):
                 LOGGER.warning(f"File {pdbPath} not found.")
+                _emit_userlog(
+                    "error",
+                    "STRUCTURE_NOT_FOUND",
+                    f"Prepared structure file not found for '{pdbID}' ({format}).",
+                    action="Try rerunning with refresh or verify external structure availability.",
+                    context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath)},
+                )
                 continue
             try:
                 # Load PDB structure and calculate features
@@ -1301,6 +1322,13 @@ def calcPDBfeatures(
             except Exception as e:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
+                _emit_userlog(
+                    "error",
+                    "STRUCTURE_PARSE_FAILED",
+                    f"Failed to read structure '{pdbID}' ({format}) for feature calculation.",
+                    action="Check if the structure file is complete and readable.",
+                    context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath), "error": str(e)},
+                )
                 obj = str(e)    
             # Extract features for SAVs
             if isinstance(obj, str):

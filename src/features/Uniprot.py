@@ -206,7 +206,8 @@ class UniprotMapping:
                 'Unable to import structure: PDB ID might be invalid'
                 ' or PDB file might be corrupted.\n'
                 f'PDB error: {e}')
-            LOGGER.error(msg)
+            LOGGER.warning(msg)
+            raise ValueError(msg) from e
             
         if is_alphafold:
             LOGGER.info(f'AlphaFold2 structure detected: {title}')
@@ -766,7 +767,11 @@ class UniprotMapping:
                     
             # Loop c in set(pdb.getChids()), if pdb[c] cannot be detected, remove it from chain_sel
             for c in set(pdb.getChids()):
-                chain = pdb.select(f'chain {c}')
+                try:
+                    chain = pdb.select(f'chain "^{re.escape(c)}$"')
+                except Exception as e:
+                    LOGGER.warn(f"Cannot select chain {c} from pdbid {PDBID}")
+                    continue
                 if chain:
                     mapping['chain_res'][c] = chain.getResnums()
                     mapping['chain_seq'][c] = chain.getSequence()

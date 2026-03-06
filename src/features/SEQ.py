@@ -230,7 +230,7 @@ class SEQfeatures(UniprotMapping):
                 f[i]['ranked_MI'] = ranked_MI
             except Exception as e:
                 # msg = traceback.format_exc()
-                LOGGER.warn(e)
+                LOGGER.warn(str(e))
         return f
     
     def calcPolyPhen2features(self):

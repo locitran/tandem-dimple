@@ -14,7 +14,7 @@ from Bio.Align import PairwiseAligner
 from ..dynamics.ENM import GNM
 from ..utils.logger import LOGGER
 from ..download import get_content, fetchPDB
-from ..utils.settings import ROOT_DIR, one2three, RAW_PDB_DIR
+from ..utils.settings import ROOT_DIR,RAW_PDB_DIR
 from ..utils.timer import getTimer
 from ..stand_alone_consurf.main import run
 
@@ -26,10 +26,7 @@ consurfDir = ROOT_DIR + '/data/consurf'
 dataDir = consurfDir + '/db/2024-10-08'
 consurfLookup = consurfDir + '/2024-10-08.json'
 customDir = consurfDir + '/db/custom'
-# uniref90_2022_05 = consurfDir + '/uniref90_2022_05.fa'
-uniref90_2022_05 = consurfDir + '/uniref90.fasta'
 uniref90_2022_05 = os.path.join(consurfDir, 'uniref90.fasta')
-# uniref90_2022_05 = consurfDir + '/uniref50.fasta'
 os.makedirs(customDir, exist_ok=True)
 
 timer = getTimer('tandem', verbose=True)
@@ -208,11 +205,10 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     """
     if not os.path.isfile(pdb):
         pdbID = pdb.upper()
-        if pdbID in consurfLookup:
-            if chid in consurfLookup[pdbID]:
-                uniqueChain = consurfLookup[pdbID][chid]
-                consurffile = os.path.join(dataDir, f'{uniqueChain}.tsv')
-                return pd.read_csv(consurffile, sep='\t')
+        if (pdbID in consurfLookup) and (chid in consurfLookup[pdbID]):
+            uniqueChain = consurfLookup[pdbID][chid]
+            consurffile = os.path.join(dataDir, f'{uniqueChain}.tsv')
+            return pd.read_csv(consurffile, sep='\t')
         else:
             pdb = fetchPDB(pdbID, format='pdb', compressed=False, folder=RAW_PDB_DIR)
             if pdb is None:
@@ -226,7 +222,7 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     if os.path.isfile(consurffile):
         return pd.read_csv(consurffile, sep='\t')
     
-    LOGGER.info(f'Running consurf for {pdbID} {chid}')
+    LOGGER.info(f'Running consurf for {pdb} {pdbID} {chid}')
     # If not found, run stand_alone_consurf
     out = run(
         query=pdbID,

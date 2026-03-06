@@ -12,7 +12,7 @@ df = pd.read_csv(file, header=None)
 
 # Convert # P98161 A1227S 0 --> P98161 1227 A S
 SAVs = df[0].tolist()
-labels = [s[-1] for s in SAVs]
+labels = [int(s[-1]) for s in SAVs]
 SAVs = [s[:-2] for s in SAVs]
 SAVs = SAV2SAV_coord(SAVs)
 

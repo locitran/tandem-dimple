@@ -62,12 +62,32 @@ class Features:
         self.custom_PDB = None
         # options
         self.options = kwargs
+        self.userlog = kwargs.get("userlog")
         self.refresh = refresh
         self.saturation_mutagenesis = None
         self.setSAVs(query)
         # map SAVs to PDB structures
         self.Uniprot2PDBmap = None
         self.config = None
+
+    def _emit_userlog(self, level, code, stage, message, action=None, context=None):
+        if self.userlog is None:
+            return
+        self.userlog.emit(level, code, stage, message, action=action, context=context)
+
+    def _map_reason_code(self, reason):
+        text = str(reason).lower()
+        if "out of range" in text:
+            return "MAP_RESID_OUT_OF_RANGE"
+        if "wt residue is" in text:
+            return "MAP_WT_MISMATCH"
+        if "very low confidence region" in text:
+            return "MAP_AF_LOW_CONFIDENCE"
+        if "no hits found" in text:
+            return "MAP_NO_HIT"
+        if "unable to run" in text:
+            return "MAP_ENGINE_FAILED"
+        return "MAP_FAILED"
 
     def _isColSet(self, column):
         assert self.data is not None, 'Data array not initialized.'
@@ -160,6 +180,8 @@ class Features:
         assert self.data is not None, "SAVs not set."
         cols = ['SAV_coords', 'Unique_SAV_coords', 'Asymmetric_PDB_coords', 'Uniprot_sequence_length',
                 'BioUnit_PDB_coords', 'OPM_PDB_coords', 'Asymmetric_PDB_resolved_length']
+        Uniprot2PDBmap = self.Uniprot2PDBmap
+        custom_PDB = self.custom_PDB
         if not self._isColSet('Asymmetric_PDB_coords'):
             Uniprot2PDBmap, custom_PDB = mapSAVs2PDB(
                 self.data['SAV_coords'], custom_PDB=self.custom_PDB, 
@@ -167,6 +189,41 @@ class Features:
             )
             for col in cols:
                 self.data[col] = Uniprot2PDBmap[col]
+
+            fail_total = 0
+            max_emit = 200
+            truncated = 0
+            for i, row in enumerate(Uniprot2PDBmap):
+                asu = row['Asymmetric_PDB_coords']
+                if not isinstance(asu, str) or "Cannot map" not in asu:
+                    continue
+                fail_total += 1
+                if fail_total > max_emit:
+                    truncated += 1
+                    continue
+                sav = row['SAV_coords']
+                code = self._map_reason_code(asu)
+                self._emit_userlog(
+                    "warning",
+                    code,
+                    "mapping",
+                    f"Failed to map SAV '{sav}' to a usable structure: {asu}",
+                    action="Try a custom PDB/AlphaFold structure or verify SAV format.",
+                    context={"sav": sav, "reason": asu},
+                )
+
+            mapped_total = int(np.sum(Uniprot2PDBmap['Asymmetric_PDB_resolved_length'] != 0))
+            self._emit_userlog(
+                "info",
+                "MAPPING_SUMMARY",
+                "mapping",
+                f"Mapped {mapped_total}/{len(Uniprot2PDBmap)} SAVs to structures.",
+                context={
+                    "mapped": mapped_total,
+                    "unmapped": int(len(Uniprot2PDBmap) - mapped_total),
+                    "truncated_events": int(truncated),
+                },
+            )
         self.custom_PDB = custom_PDB
         self.Uniprot2PDBmap = Uniprot2PDBmap
 

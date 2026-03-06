@@ -1,12 +1,10 @@
 import os
 import sys
-addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.insert(0, addpath) # /home/newloci
+addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, addpath) # /tandem/
+os.chdir(addpath)
+from src.main import run
 
-from tandem.src.main import run
-# from src.main import run
-
-sav_list = ["P29033 170 N K"]
 
 sav_list = ["A4D126 53 A T", "A4D2B0 114 H N", "A4D2B0 79 P H", "A8MYU2 768 W R", "A8MYU2 916 N S", "A9YTQ3 57 F S",
             "B2RXH2 113 Q R", "B2RXH2 258 F S", "B2RXH2 26 A T", "B2RXH2 42 Q R",
@@ -18,7 +16,7 @@ sav_list = ["A4D126 53 A T", "A4D2B0 114 H N", "A4D2B0 79 P H", "A8MYU2 768 W R"
             "O00206 443 F L", "O00206 46 Y C", "O00206 474 E K", "O00206 510 Q H", "O00206 73 S R", "O00212 144 R Q", 
             "O00214 184 R S", "O00214 19 F Y", "O00214 36 R C", "O00214 56 M V","O00217 102 R H","O00217 79 P L",
             "O00217 94 R C","O00222 265 I T","O00222 343 R Q","O00222 362 F Y","O00222 368 G D","O00222 392 R Q",
-            "O00222 430 L F","O00232 358 V A","O00238 200 I N","O00238 224 R H","O00238 371 R Q", "O00255 110 G E", 
+            "O00222 430 L F", "O00238 200 I N","O00238 224 R H","O00238 371 R Q", "O00255 110 G E", 
             "O00255 116 E G", "O00255 12 P L", "O00255 135 K I", "O00255 135 K M", "O00255 139 H D", "O00255 139 H P", 
             "O00255 139 H R", "O00255 139 H Y", "O00255 144 F V", "O00255 147 I F", "O00255 148 T P", "O00255 157 L W", 
             "O00255 158 D V", "O00255 158 D Y", "O00255 159 S I", "O00255 160 S F", "O00255 161 G C", "O00255 161 G D", 
@@ -29,7 +27,7 @@ sav_list = ["A4D126 53 A T", "A4D2B0 114 H N", "A4D2B0 79 P H", "A8MYU2 768 W R"
 
 td = run(
     query=sav_list, # List of SAVs to be analyzed
-    job_name='test/test_100SAVs', # Define where the job will be saved
-    refresh=True, # Set to True to refresh the calculation
+    job_name='test/test_100SAVs_Mar6', # Define where the job will be saved
+    refresh=False, # Set to True to refresh the calculation
     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )   

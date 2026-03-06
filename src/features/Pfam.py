@@ -99,22 +99,17 @@ def fetchPfamMSA(acc, alignment='full', compressed=False, folder=TMP_DIR, outnam
 
 def run_hmmscan(fasta_file, hmm_db=HMMDB, folder=TMP_DIR, name=None, cpu=None):
     """Run hmmscan search using the supplied arguments."""
-    if name is None:
-        name = str(uuid1())
-    out = os.path.join(folder, f'{name}_hmmscan_out')
+    # Use FASTA filename stem for outputs, e.g. O00187.fasta -> O00187_hmmscan_out
+    fasta_stem = os.path.splitext(os.path.basename(fasta_file))[0]
+    prefix = fasta_stem if fasta_stem else (name if name is not None else str(uuid1()))
+    out = os.path.join(folder, f'{prefix}_hmmscan_out')
+    stdout_out = os.path.join(folder, f'{prefix}_hmmscan_stdout')
     if cpu is None:
         cpu = min(multiprocessing.cpu_count(), 16)
     cpu = str(cpu)
-    cmd = ['hmmscan',
-           '--notextw',
-           '--cpu', cpu, # Number of parallel CPU workers
-           '--cut_ga',
-           '--domtblout', out, # Output file
-            hmm_db, # HMM database
-            fasta_file] # Fasta file
-    result = subprocess.run(
-        cmd,
-        stdout=open(out, 'w'), # Redirect standard output to the file
+    cmd = ['hmmscan', '--notextw', '--cpu', cpu,  '--cut_ga', '--domtblout', out, hmm_db, fasta_file]
+    result = subprocess.run(cmd,
+        stdout=open(stdout_out, 'w'), # Keep stdout separate from domtbl output
         stderr=subprocess.PIPE, # Suppress stderr
         text=True # Decode stdout to text
     )
@@ -142,8 +137,13 @@ def parse_hmmscan(filename: str, pfam_data: dict):
             name = cols[0]
             acc = cols[1]
             seq_id = cols[3]
-            score_dom = float(cols[13])
-            score_seq = float(cols[7])
+            # Defensive parse: skip malformed rows accidentally mixed into output
+            # (for example alignment annotation lines that are not domtbl rows).
+            try:
+                score_dom = float(cols[13])
+                score_seq = float(cols[7])
+            except (TypeError, ValueError, IndexError):
+                continue
             # Determine which domain hits are significant. The significance 
             # value is 1 if the bit scores for a domain and a sequence are 
             # greater than or equal to the curated gathering thresholds for 

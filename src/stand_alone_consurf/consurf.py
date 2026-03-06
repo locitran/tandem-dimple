@@ -110,18 +110,18 @@ def determine_mode(form, vars):
     if form['pdb_FILE'] is not None:
         vars['pdb_file_name'] = os.path.join(vars['working_dir'], "pdb_file.ent")
         if not (os.path.isfile(form['pdb_FILE']) and os.access(form['pdb_FILE'], os.R_OK)):
-            LOGGER.error("The PDB file needs to be accessible.")
+            LOGGER.error(f"The PDB file {form['pdb_FILE']} needs to be accessible.")
             
         shutil.copy(form['pdb_FILE'], vars['pdb_file_name'])
         if vars['user_msa_file_name'] is not None:
             if not (os.path.isfile(vars['user_msa_file_name']) and os.access(vars['user_msa_file_name'], os.R_OK)):
-                LOGGER.error("The MSA file needs to be accessible.")
+                LOGGER.error(f"The MSA file {vars['user_msa_file_name']} needs to be accessible.")
                 
             MSA_sequences = [] # sequence names
             get_info_from_msa(MSA_sequences, form, vars)
             if form['tree_name'] is not None:
                 if not (os.path.isfile(form['tree_name']) and os.access(form['tree_name'], os.R_OK)):
-                    LOGGER.error("The tree file needs to be accessible.")
+                    LOGGER.error(f"The tree file {form['tree_name']} needs to be accessible.")
                 check_msa_tree_match(MSA_sequences, vars)
                 mode = "_mode_pdb_msa_tree"
             else:
@@ -133,13 +133,13 @@ def determine_mode(form, vars):
     else:
         if vars['user_msa_file_name'] is not None:
             if not (os.path.isfile(vars['user_msa_file_name']) and os.access(vars['user_msa_file_name'], os.R_OK)):
-                LOGGER.error( "The MSA file needs to be accessible.")
+                LOGGER.error(f"The MSA file {vars['user_msa_file_name']} needs to be accessible.")
             MSA_sequences = [] # sequence names
             get_info_from_msa(MSA_sequences, form, vars)
             
             if form['tree_name'] is not None:
                 if not (os.path.isfile(form['tree_name']) and os.access(form['tree_name'], os.R_OK)):
-                    LOGGER.error( "The tree file needs to be accessible.")
+                    LOGGER.error(f"The tree file {form['tree_name']} needs to be accessible.")
                 check_msa_tree_match(MSA_sequences, vars)
                 mode = "_mode_msa_tree"
             else:
