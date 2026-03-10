@@ -27,6 +27,7 @@ def run_tandem_job():
         job_name   = params["job_name"]
         model      = params["model"]
         GJB2_test  = params.get("GJB2_test", None)
+        refresh    = params["refresh"]
         query = toSAV_coords(params["SAV"])
 
         if model in ["TANDEM", "TANDEM-DIMPLE for GJB2", "TANDEM-DIMPLE for RYR1"]:
@@ -48,7 +49,8 @@ def run_tandem_job():
             custom_PDB=params["STR"],
             job_name=f"{session_id}/{job_name}",
             pretrained_model_folder=pretrained_model_folder,
-            refresh=bool(params.get("refresh", False)),
+            refresh=refresh,
+            uniref90="/tandem/data/consurf/uniref90.fasta",
         )
         LOGGER.info(f"Inference result: ok")
 

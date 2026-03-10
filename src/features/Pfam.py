@@ -103,13 +103,12 @@ def run_hmmscan(fasta_file, hmm_db=HMMDB, folder=TMP_DIR, name=None, cpu=None):
     fasta_stem = os.path.splitext(os.path.basename(fasta_file))[0]
     prefix = fasta_stem if fasta_stem else (name if name is not None else str(uuid1()))
     out = os.path.join(folder, f'{prefix}_hmmscan_out')
-    stdout_out = os.path.join(folder, f'{prefix}_hmmscan_stdout')
     if cpu is None:
         cpu = min(multiprocessing.cpu_count(), 16)
     cpu = str(cpu)
     cmd = ['hmmscan', '--notextw', '--cpu', cpu,  '--cut_ga', '--domtblout', out, hmm_db, fasta_file]
     result = subprocess.run(cmd,
-        stdout=open(stdout_out, 'w'), # Keep stdout separate from domtbl output
+        stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE, # Suppress stderr
         text=True # Decode stdout to text
     )

@@ -37,7 +37,7 @@ def run(
     config=None, 
     featSet=None,
     refresh=False,
-    pkl_folder='data',
+    pkl_folder=os.path.join(ROOT_DIR, 'data'),
     uniref90=None,
 ):
     """
