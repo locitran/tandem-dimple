@@ -92,12 +92,16 @@ def run(
         t.getSAVs(filename='SAVs.txt', folder=job_directory)
         t.setFeatSet(featSet)
         
-        if isinstance(features, np.ndarray):
-            t.setFeatureMatrix(features)
-            userlog.emit("info", "FEATURE_MATRIX_PROVIDED", "features", "Using precomputed feature matrix from caller input.",)
-        else:
-            t.setCustomPDB(custom_PDB)
-            t.getUniprot2PDBmap(filename='Uniprot2PDB.txt', folder=job_directory)
+        # if isinstance(features, np.ndarray):
+            # t.setFeatureMatrix(features)
+        #     userlog.emit("info", "FEATURE_MATRIX_PROVIDED", "features", "Using precomputed feature matrix from caller input.",)
+        # else:
+        t.setCustomPDB(custom_PDB)
+        t.getUniprot2PDBmap(filename='Uniprot2PDB.txt', folder=job_directory)
+        t.getFeatMatrix(withSAVs=True, filename='features.csv', folder=job_directory)    
+
+        if isinstance(features, np.ndarray):  
+            t.featMatrix = features
             t.getFeatMatrix(withSAVs=True, filename='features.csv', folder=job_directory)    
 
         if labels:
