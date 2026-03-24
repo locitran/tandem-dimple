@@ -1,3 +1,4 @@
+import json
 import os 
 import shutil
 import datetime
@@ -12,21 +13,6 @@ from .utils.user_log import UserLog
 __all__ = ['run']
 FILE_EXPLANATION_TEMPLATE = os.path.join(os.path.dirname(__file__), "File_Explanation.txt")
 
-def toSAV_coords(SAVs):
-    """
-    >>> a = ['P29033 Y217E', 'P29033 Y217F', 'P29033 Y217T']
-    >>> toSAV_coords(a)
-    ['P29033 217 Y E', 'P29033 217 Y F', 'P29033 217 Y T']
-    """
-    out = []
-    for s in SAVs:
-        acc, wt_resid_mt = s.split()
-        wt = wt_resid_mt[0]
-        mt = wt_resid_mt[-1]
-        resid = wt_resid_mt[0+1:-1]
-        out.append(f"{acc} {resid} {wt} {mt}")
-    return out
-
 def run(
     query,
     labels=None,
@@ -39,6 +25,7 @@ def run(
     refresh=False,
     pkl_folder=os.path.join(ROOT_DIR, 'data'),
     uniref90=None,
+    log_time=False,
 ):
     """
     query: 
@@ -69,6 +56,9 @@ def run(
     userlog = UserLog(userlog_path, defaults={"job_name": job_name},)
     
     ## LOGGER
+    LOGGER._times = {}
+    LOGGER._reports = {}
+    LOGGER._report_times = {}
     logfile = os.path.join(job_directory, 'log.txt')
     LOGGER.start(logfile)
     LOGGER.info(f"Job name: {job_name} started at {datetime.datetime.now()}")
@@ -91,11 +81,6 @@ def run(
         )
         t.getSAVs(filename='SAVs.txt', folder=job_directory)
         t.setFeatSet(featSet)
-        
-        # if isinstance(features, np.ndarray):
-            # t.setFeatureMatrix(features)
-        #     userlog.emit("info", "FEATURE_MATRIX_PROVIDED", "features", "Using precomputed feature matrix from caller input.",)
-        # else:
         t.setCustomPDB(custom_PDB)
         t.getUniprot2PDBmap(filename='Uniprot2PDB.txt', folder=job_directory)
         t.getFeatMatrix(withSAVs=True, filename='features.csv', folder=job_directory)    
@@ -119,6 +104,23 @@ def run(
         for label in LOGGER._reports:
             LOGGER.info(f"  {label}: {LOGGER._reports[label]:.2f}s ({LOGGER._report_times[label]} time(s))")
         LOGGER.report('Run time elapsed in %.2fs.', "_runtime")
+
+        if log_time:
+            log_time_file = os.path.join(job_directory, 'log_time.json')
+            log_time_data = {}
+            for label in sorted(LOGGER._reports):
+                log_time_data[label] = {
+                    "seconds": round(float(LOGGER._reports[label]), 6),
+                    "count": int(LOGGER._report_times.get(label, 1)),
+                }
+            if getattr(t, "Uniprot2PDBmap", None) is not None:
+                for field in ('Uniprot_sequence_length', 'Asymmetric_PDB_length', 
+                    "Asymmetric_PDB_resolved_length", "BioUnit_PDB_length", "OPM_PDB_length"):
+                    values = np.asarray(t.Uniprot2PDBmap[field]).tolist()
+                    log_time_data[field] = values
+            with open(log_time_file, "w", encoding="utf-8") as f:
+                json.dump(log_time_data, f, indent=2)
+
         userlog.emit("info", "JOB_COMPLETED", "job", f"Job '{job_name}' completed successfully.")
         return t
     except Exception as e:

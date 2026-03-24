@@ -855,10 +855,10 @@ class PDBfeatures:
                     # If the format is custom or af, we need to use the pdbPath
                     # And calculate ConSurf based on stand_alone_consurf
                     folder = os.path.join(self.job_directory, "consurf", self.pdbID)
-                    f = calcConSurf(self.pdbPath, chID, folder=folder, uniref90=self.uniref90)  
+                    f = calcConSurf(pdbfile=self.pdbPath, pdbid=self.pdbPath, chid=chID, folder=folder, uniref90=self.uniref90)  
                 else:
                     folder = os.path.join(self.job_directory, "consurf", self.pdbID)
-                    f = calcConSurf(self.pdbID, chID, folder=folder, uniref90=self.uniref90)
+                    f = calcConSurf(pdbfile=self.pdbPath, pdbid=self.pdbID, chid=chID, folder=folder, uniref90=self.uniref90)
                 d['consurf'] = f['consurf']
                 d['ACNR'] = f['ACNR']
                 d['consurf_color'] = f['consurf_color']
@@ -1015,13 +1015,6 @@ class PDBfeatures:
                 except Exception as e:
                     msg = traceback.format_exc()
                     LOGGER.warn(msg)
-            
-            # # if exist wtpath and mutfile, remove them
-            # try: 
-            #     os.remove(wtpath)
-            #     os.remove(mutfile)
-            # except:
-            #     pass
         return f
 
     def _cov_matrix(self, GVecs, GVals):
@@ -1175,10 +1168,26 @@ class PDBfeatures:
                         'GNM_rmsf_overall_full', 'GNM_Ventropy_full', 'GNM_Eigval1_full', 'GNM_Eigval2_full', 
                         'GNM_Eigval5_1_full', 'GNM_SEall_full', 'GNM_SE20_full',
                     ]:
-                        f[name][i] = d[name]
+                        try:
+                            f[name][i] = d[name]
+                        except Exception as e:
+                            value_shape = np.shape(d[name])
+                            LOGGER.warn(
+                                f"Failed to assign protein feature '{name}' for chain {chid} resid {resid}: "
+                                f"type={type(d[name]).__name__}, shape={value_shape}, error={e}"
+                            )
+                            raise
                     else:
                         # residue features
-                        f[name][i] = d[name][indices[0]]
+                        try:
+                            f[name][i] = d[name][indices[0]]
+                        except Exception as e:
+                            value_shape = np.shape(d[name])
+                            LOGGER.warn(
+                                f"Failed to assign residue feature '{name}' for chain {chid} resid {resid}: "
+                                f"indices={indices}, type={type(d[name]).__name__}, shape={value_shape}, error={e}"
+                            )
+                            raise
         return f
 
 def calcPDBfeatures(

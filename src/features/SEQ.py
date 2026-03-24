@@ -169,7 +169,7 @@ class SEQfeatures(UniprotMapping):
             try:
                 LOGGER.info('Processing {}...'.format(PF))
                 # fetch & parse MSA without saving downloaded MSA
-                f = fetchPfamMSA(prefix_PF)
+                f = fetchPfamMSA(prefix_PF, folder=self.job_directory)
                 msa = parseMSA(f, **kwargs)
                 os.remove(f)
                 # slice MSA to match all segments of the Uniprot sequence

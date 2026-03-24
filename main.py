@@ -3,7 +3,7 @@ import os
 import pandas as pd 
 import traceback
 from src.main import run as run_tandem
-from src.main import toSAV_coords
+from src.features.Uniprot import SAV2SAV_coord
 from src.utils.logger import LOGGER
 from src.utils.settings import ROOT_DIR
 from src.features import TANDEM_FEATS
@@ -27,8 +27,7 @@ def run_tandem_job():
         job_name   = params["job_name"]
         model      = params["model"]
         GJB2_test  = params.get("GJB2_test", None)
-        refresh    = params["refresh"]
-        query = toSAV_coords(params["SAV"])
+        query = SAV2SAV_coord(params["SAV"])
 
         if model in ["TANDEM", "TANDEM-DIMPLE for GJB2", "TANDEM-DIMPLE for RYR1"]:
             pretrained_model_folder = os.path.join(ROOT_DIR, 'models', model)
@@ -43,13 +42,13 @@ def run_tandem_job():
             fm = None
 
         run_tandem(
-            query=toSAV_coords(params["SAV"]),
+            query=query,
             labels=params["label"],
             features=fm,
             custom_PDB=params["STR"],
             job_name=f"{session_id}/{job_name}",
             pretrained_model_folder=pretrained_model_folder,
-            refresh=refresh,
+            refresh=params["refresh"],
             uniref90="/tandem/data/consurf/uniref90.fasta",
         )
         LOGGER.info(f"Inference result: ok")

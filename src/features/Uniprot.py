@@ -291,9 +291,10 @@ class UniprotMapping:
                         c_seq_len = sum([i[1]-i[0]+1 for i in intervals]) # defined as by UniProt website, column “Positions”
                         c_resolved_len = chain_len[chainID]
                         coverage_perc = c_resolved_len / self.sequence_length
-
                         if coverage_perc >= 0.5:
                             matches.append((PDBID, chainID, c_seq_len, c_resolved_len, coverage_perc, resolution))
+                        else:
+                            LOGGER.info(f"Low coverage in PDBID {PDBID} chainID {chainID}: {coverage_perc}")
             # sort first by c_resolved_len, resolution, then PDBID and chainID
             matches.sort(key=lambda x: (-x[2], -x[3], -x[4], x[5], x[0][::-1], x[1])) # Smallest score first
         
@@ -303,7 +304,9 @@ class UniprotMapping:
             ('>asu:c_seq_len', 'i4'),
             ('>asu:c_resolved_len', 'i4'),
             ('>bas:PDB_coords', 'U100'),
+            ('>bas:c_seq_len', 'i4'),
             ('>opm:PDB_coords', 'U100'),
+            ('>opm:c_seq_len', 'i4'),
             ('resolution', 'f4'),
         ])
 
@@ -342,7 +345,7 @@ class UniprotMapping:
                             c = '?'
                         # pdbID / chainID / resID / resName
                         res_map = f'{PDBID} {c} {hit[0]} {hit[1]}'
-                        hits[idx] = (res_map, c_seq_len, c_resolved_len, '', '', resolution)
+                        hits[idx] = (res_map, c_seq_len, c_resolved_len, '', 0, '', 0, resolution)
                         break
                 if len(hits[idx]['>asu:PDB_coords']) > 0:
                     break
@@ -362,15 +365,25 @@ class UniprotMapping:
                     hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence}'
                     continue
                 res_map = f'{title} {chid} {resid} {u_aa}'
-                hits[idx] = (res_map, self.AF2mapping['chain_len'], self.AF2mapping['chain_len'],
-                                'Cannot map', 'Cannot map', -999)
+                hits[idx] = (
+                    res_map,
+                    self.AF2mapping['chain_len'],
+                    self.AF2mapping['chain_len'],
+                    'Cannot map',
+                    0,
+                    'Cannot map',
+                    0,
+                    -999,
+                )
 
         # Find corresponding OPM and Assembly PDBs
         asu_coords = hits['>asu:PDB_coords']
         res_mappings = self.mapOPMorAssembly(asu_coords)
         for i, res_map in enumerate(res_mappings):
             hits[i]['>bas:PDB_coords'] = res_map['>bas:PDB_coords']
+            hits[i]['>bas:c_seq_len'] = res_map['>bas:c_seq_len']
             hits[i]['>opm:PDB_coords'] = res_map['>opm:PDB_coords']
+            hits[i]['>opm:c_seq_len'] = res_map['>opm:c_seq_len']
         return hits
 
     def mapOPMorAssembly(self, asu_coords, folder=RAW_PDB_DIR):
@@ -379,7 +392,9 @@ class UniprotMapping:
         """
         res_mappings = np.zeros(len(asu_coords), dtype=[
             ('>bas:PDB_coords', 'U100'),
+            ('>bas:c_seq_len', 'i4'),
             ('>opm:PDB_coords', 'U100'),
+            ('>opm:c_seq_len', 'i4'),
         ])
         # Group hits by PDBID
         groups = {}
@@ -413,6 +428,7 @@ class UniprotMapping:
             if opm:
                 opmPath = fetchPDB(PDBID, format='opm', folder=folder, refresh=self._refresh)
                 pdb = prody.parsePDB(opmPath)
+                opm_len = pdb.ca.numAtoms() if pdb.ca is not None else 0
                 # Loop over all coord
                 for map_idx, asu_map in zip(g_indices, g_asu_maps):
                     chid, resid, aa = asu_map.split()[1:]
@@ -427,6 +443,7 @@ class UniprotMapping:
                             res_mappings[map_idx]['>opm:PDB_coords'] = 'Cannot map, >1 atom found'
                         else:
                             res_mappings[map_idx]['>opm:PDB_coords'] = asu_map
+                            res_mappings[map_idx]['>opm:c_seq_len'] = opm_len
             else:
                 for i in g_indices:
                     res_mappings[i]['>opm:PDB_coords'] = 'Cannot map, no opm info'
@@ -448,6 +465,7 @@ class UniprotMapping:
                     for i in g_indices:
                         res_mappings[i]['>bas:PDB_coords'] = f'Cannot map, {str(e)}'
                     continue
+                bas_len = pdb.ca.numAtoms() if pdb.ca is not None else 0
                 for map_idx, asu_map in zip(g_indices, g_asu_maps):
                     # Correct format: PDBID / chainID / resID / resName / assemblyID
                     bas_coord_splitting = res_mappings[map_idx]['>bas:PDB_coords'].split()
@@ -464,6 +482,7 @@ class UniprotMapping:
                             res_mappings[map_idx]['>bas:PDB_coords'] = f'Cannot map, >1 atom found {PDBID}-{id}'
                         else:
                             res_mappings[map_idx]['>bas:PDB_coords'] = f'{asu_map} {id}'
+                            res_mappings[map_idx]['>bas:c_seq_len'] = bas_len
                                 
                 if np.any(['Cannot map' not in res_mappings[map_idx]['>bas:PDB_coords'] for i in g_indices]):
                     break
@@ -525,7 +544,9 @@ class UniprotMapping:
             ('>asu:c_seq_len', 'i4'),
             ('>asu:c_resolved_len', 'i4'),
             ('>bas:PDB_coords', 'U100'),
+            ('>bas:c_seq_len', 'i4'),
             ('>opm:PDB_coords', 'U100'),
+            ('>opm:c_seq_len', 'i4'),
             ('resolution', 'f4'),
         ])
 
@@ -565,7 +586,7 @@ class UniprotMapping:
                     continue
                 if not alphafold:
                     res_map = f'{title} {c} {pdb_resid} {pdb_aa}'
-                    hits[idx] = (res_map, chain_len, chain_len, '', '', -999)
+                    hits[idx] = (res_map, chain_len, chain_len, '', 0, '', 0, -999)
                     break
                 else:
                     # This line needs to be reviewed
@@ -574,7 +595,7 @@ class UniprotMapping:
                         hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence} (chain {c})'
                         continue
                     res_map = f'{title} {c} {pdb_resid} {pdb_aa}'
-                    hits[idx] = (res_map, chain_len, chain_len, '', '', -999)
+                    hits[idx] = (res_map, chain_len, chain_len, '', 0, '', 0, -999)
                     break
 
             if len(hits[idx]['>asu:PDB_coords']) == 0:
@@ -585,7 +606,9 @@ class UniprotMapping:
         res_mappings = self.mapOPMorAssembly(asu_coords)
         for i, res_map in enumerate(res_mappings):
             hits[i]['>bas:PDB_coords'] = res_map['>bas:PDB_coords']
+            hits[i]['>bas:c_seq_len'] = res_map['>bas:c_seq_len']
             hits[i]['>opm:PDB_coords'] = res_map['>opm:PDB_coords']
+            hits[i]['>opm:c_seq_len'] = res_map['>opm:c_seq_len']
         return hits
 
     def savePickle(self, **kwargs):
@@ -908,7 +931,6 @@ class UniprotMapping:
 
 # SAV_coord: <UniProt ID> <mutation site> <WT aa> <mutant aa>
 # SAV: <UniProt ID> <mutation site>
-
 def SAV_coord2SAV(SAV_coords):
     '''Converts a SAV_coord (e.g., P98161 1227 A S) to a SAV (e.g., P98161 A1227S).'''
     SAV_coords_splitted = [s.split() for s in SAV_coords]
@@ -920,12 +942,6 @@ def SAV2SAV_coord(SAVs):
     SAVs_splitted = [s.split() for s in SAVs]
     SAV_coords = [f"{s[0]} {s[1][1:-1]} {s[1][0]} {s[1][-1]}" for s in SAVs_splitted]
     return SAV_coords
-
-def simpleConversion(SAV_coords):
-    # SAVs field: <UniProt ID> <mutation site>
-    SAVs = [s.split() for s in SAV_coords]
-    SAVs = [f"{s[0]} {s[2]}{s[1]}{s[3]}" for s in SAVs]
-    return SAVs
 
 def seqScanning(Uniprot_coord, sequence=None):
     '''Returns a list of SAVs. If the string 'Uniprot_coord' is just a
@@ -976,15 +992,17 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
     LOGGER.timeit('_mapSAVs2PDB')
     # define a structured array
     PDBmap_dtype = np.dtype([
+        ('UniProtID', 'U25'),
         ('SAV_coords', 'U25'),
         ('Unique_SAV_coords', 'U25'),
         ('Uniprot_sequence_length', 'i'), 
         ('Asymmetric_PDB_coords', 'U100'),
         ('Asymmetric_PDB_length', 'i'), # Chain length
         ('Asymmetric_PDB_resolved_length', 'i'), # Number of resolved residues
-        ('PDB_resolution', 'f'),
         ('BioUnit_PDB_coords', 'U100'),
+        ('BioUnit_PDB_length', 'i'),
         ('OPM_PDB_coords', 'U100'),
+        ('OPM_PDB_length', 'i'),
         ('is_alphafold', '?'),
     ])
     nSAVs = len(SAV_coords)
@@ -1012,7 +1030,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
             uniq_coords = U2P_map
             for i in groups[acc]['indices']:
                 mapped_SAVs[i] = (
-                    SAV_coords[i], uniq_coords, 0, f'Cannot map, unable to run {acc}', 0, 0, 0, None, None, False)
+                    SAV_coords[i], acc, uniq_coords, 0, f'Cannot map, unable to run {acc}', 0, 0, 0, None, 0, None, 0, False)
             continue
 
         resids, wt_aas, mut_aas = zip(*[ele.split()[1:4] for ele in groups[acc]['SAV_coords']])
@@ -1024,7 +1042,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
             r = U2P_map.mapMultipleRes2CustomPDBs(resids, wt_aas)
 
         for i, (SAV_idx, ele) in enumerate(zip(indices, r)):
-            asu_coord, c_seq_len, c_resolved_len, bas_coord, opm_coord, resolution = ele
+            asu_coord, c_seq_len, c_resolved_len, bas_coord, bas_len, opm_coord, opm_len, _ = ele
             uniq_coords = f'{U2P_map.uniq_acc} {resids[i]} {wt_aas[i]} {mut_aas[i]}'
             is_alphafold = False
             if custom_PDB is not None:
@@ -1037,15 +1055,17 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
                 is_alphafold = pdb_title.upper().startswith('AF-')
 
             mapped_SAVs[SAV_idx] = (
+                acc,
                 SAV_coords[SAV_idx], 
                 uniq_coords, 
                 U2P_map.sequence_length, 
                 asu_coord, 
                 c_seq_len, 
                 c_resolved_len, 
-                resolution,
                 bas_coord, 
+                bas_len,
                 opm_coord,
+                opm_len,
                 is_alphafold,
             )
 

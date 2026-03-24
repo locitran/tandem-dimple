@@ -17,8 +17,10 @@ from ..download import get_content, fetchPDB
 from ..utils.settings import ROOT_DIR,RAW_PDB_DIR
 from ..utils.timer import getTimer
 from ..stand_alone_consurf.main import run
+from .. import download
+from .Uniprot import queryUniprot
 
-__all__ = ['calcConSurf', 'get_consurf', 'mapIndices']
+__all__ = ['calcConSurf', 'calcConSurf_v2', 'mapIndices', 'getConSurffile_v2']
 
 CONSURFDB_URL = 'https://consurfdb.tau.ac.il/'
 pdbDir = ROOT_DIR + '/pdbfile/raw'
@@ -163,24 +165,6 @@ def _parse(unique_chain):
         LOGGER.warning(f'Error parsing {unique_chain}, {e}')
         return None
 
-def get_consurf(unique_chain, folder='.'):
-    """Run the Consurf database for a protein.
-
-    Returns:
-    --------
-    df: pd.DataFrame, the conservation data for the protein
-    """
-
-    outpath = os.path.join(folder, f'{unique_chain}.tsv')
-    if os.path.exists(outpath):
-        return pd.read_csv(outpath, sep='\t')
-    else:
-        df = _parse(unique_chain)
-        if df is None:
-            return None
-        df.to_csv(outpath, sep='\t', index=False)
-        return df
-
 def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     """Get the consurf file for a given PDB ID and chain ID.
     pdb: PDB ID or PDB file
@@ -208,11 +192,12 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
         if (pdbID in consurfLookup) and (chid in consurfLookup[pdbID]):
             uniqueChain = consurfLookup[pdbID][chid]
             consurffile = os.path.join(dataDir, f'{uniqueChain}.tsv')
-            return pd.read_csv(consurffile, sep='\t')
-        else:
-            pdb = fetchPDB(pdbID, format='pdb', compressed=False, folder=RAW_PDB_DIR)
-            if pdb is None:
-                raise ValueError(f'Cannot download {pdbID}')
+            if os.path.isfile(consurffile):
+                return pd.read_csv(consurffile, sep='\t')
+                
+        pdb = fetchPDB(pdbID, format='pdb', compressed=False, folder=RAW_PDB_DIR)
+        if pdb is None:
+            raise ValueError(f'Cannot download {pdbID}')
     else:
         pdbID = os.path.basename(pdb).split('.')[0]
 
@@ -230,7 +215,8 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
         chain=chid,
         DB=uniref90,
         work_dir=folder,
-        algorithm="HMMER"
+        algorithm="HMMER",
+        cif=str(pdb).lower().endswith(".cif"),
     )
     # Parse the consurf file
     data = []
@@ -251,26 +237,91 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     df.to_csv(consurffile, sep='\t', index=False)
     return df
 
-def calcConSurf(pdb, chid, folder='.', uniref90=uniref90_2022_05):
+def parseConSurf(out):
+    data = []
+    with open(out, 'r') as f:
+        lines = f.readlines()
+        lines = [line.strip() for line in lines if line.strip() != '']
+        for i, line in enumerate(lines):
+            if line.startswith('POS'):
+                cols = lines[i]
+                lines = lines[i+1:]
+                break
+        cols = [col.strip() for col in cols.split('\t') if col != '']
+        for line in lines:
+            line = line.split('\t')
+            if len(line) == 10 and line[0].isdigit():
+                data.append(line)
+    return pd.DataFrame(data, columns=cols)
+
+def getConSurffile_v2(id, chid, folder='.', uniref90=uniref90_2022_05):
+    """Run stand-alone ConSurf for a PDB ID or UniProt accession and cache the
+    parsed output under customDir.
+
+    Args:
+        id: Either a 4-character PDB ID or a UniProt accession number.
+        chid: Chain identifier for PDB IDs, don't care in case of UniProt accession number.
+        folder: Working directory for stand-alone ConSurf.
+        uniref90: Sequence database path used by stand-alone ConSurf.
+
+    Returns:
+        pd.DataFrame: Parsed ConSurf output.
+    """
+    assert isinstance(id, str), "id must be a string."
+    assert isinstance(chid, str), "chid must be a non-empty string."
+
+    id = id.strip().upper()
+    chid = chid.strip()
+    if len(id) == 4:
+        if (id in consurfLookup) and (chid in consurfLookup[id]):
+            uniqueChain = consurfLookup[id][chid]
+            consurffile = os.path.join(dataDir, f'{uniqueChain}.tsv')
+            if os.path.isfile(consurffile):
+                return pd.read_csv(consurffile, sep='\t')
+    
+        pdb = fetchPDB(id, format='pdb', compressed=False, folder=RAW_PDB_DIR)
+        if pdb is None:
+            raise ValueError(f'Cannot download {id}')
+
+        cache_name = f"{id}_{chid}.tsv"
+        consurffile = os.path.join(customDir, cache_name)
+        if os.path.isfile(consurffile):
+            return pd.read_csv(consurffile, sep='\t')
+
+        LOGGER.info(f'Running stand-alone ConSurf for PDB {id} chain {chid}')
+        out = run(query=id, structure=pdb, chain=chid, DB=uniref90, work_dir=folder, algorithm="HMMER", cif=str(pdb).lower().endswith(".cif"),)
+    else:
+        cache_name = f"{id}.tsv"
+        consurffile = os.path.join(customDir, cache_name)
+        if os.path.isfile(consurffile):
+            return pd.read_csv(consurffile, sep='\t')
+
+        seq = download.uniprot_sequence(id)
+        LOGGER.info(f'Running stand-alone ConSurf for UniProt accession {id}')
+        out = run(query=id, seq=seq, DB=uniref90, work_dir=folder, algorithm="HMMER")
+
+    df = parseConSurf(out)
+    df.to_csv(consurffile, sep='\t', index=False)
+    return df
+
+def calcConSurf(
+        pdbfile,
+        pdbid, 
+        chid, 
+        folder='.', 
+        uniref90=uniref90_2022_05
+    ):
+
     _dtype = np.dtype([
         ('consurf', 'f4'), 
         ('ACNR', 'f4'), # Average contact neighbouring residues
         ('consurf_color', 'i4'),
     ])
-    # Read the PDB file
-    # custom or alphafold
-    if os.path.isfile(pdb):
-        pdbID = pdb
-        pdb = parsePDB(pdb, model=1)
-    else: # pdbID 
-        pdbID = pdb
-        pdbpath = fetchPDB(pdbID, format='pdb', folder=RAW_PDB_DIR, refresh=True)
-        if pdbpath is not None:
-            pdb = parsePDB(pdbpath, model=1)
-        else:
-            raise ValueError(f'Cannot download {pdbID}')
-        
+    assert os.path.isfile(pdbfile), "Must be a file."
+    # assert isinstance(pdbid, str) and len(pdbid) == 4, "pdbid must be a 4-character string."
+
     LOGGER.timeit('_calcConSurf')
+    pdb = parsePDB(pdbfile, model=1)
     ca = pdb.protein.ca
     tgt_chain = ca.select(f'chain {chid}').copy()
     if not tgt_chain:
@@ -279,7 +330,12 @@ def calcConSurf(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     tgt_seq = tgt_chain.getSequence()
     features = np.full(len(tgt_chain), np.nan, dtype=_dtype)
     
-    df_consurf = getConSurffile(pdbID, chid, folder=folder, uniref90=uniref90)
+    try:
+        df_consurf = getConSurffile(pdbid, chid, folder=folder, uniref90=uniref90)
+    except Exception as e:
+        LOGGER.warn(f"Error with getConSurffile pdbid {pdbid} chid {chid}: {str(e)}")
+        return features
+
     # Replace color* --> color+10
     if df_consurf['COLOR'].dtype != int:
         df_consurf['COLOR'] = df_consurf['COLOR'].apply(
@@ -299,22 +355,106 @@ def calcConSurf(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     features['consurf'][target_match] = consurf_scores
     features['consurf_color'][target_match] = consurf_colors
 
-    # Build Kirchhoff matrix 
+    # Build Kirchhoff matrix
     gnm = GNM()
     gnm.buildKirchhoff(tgt_chain, cutoff=7.3)
     kirchhoff = gnm.getKirchhoff()
-    
-    # Replace contact buy consurf score
-    minus1 = np.argwhere(kirchhoff==-1) # Contact , row: target; column: contact
-    kirchhoff[minus1[:, 0], minus1[:, 1]] = features['consurf'][minus1[:, 1]]
-    diag_kirchhoff = np.diag(kirchhoff) # Extract diagonal : number of contacts
-    numnan_kirchhoff = np.sum(np.isnan(kirchhoff), axis=1) # Eliminate nan
-    diag_kirchhoff = diag_kirchhoff - numnan_kirchhoff
 
-    kirchhoff = np.ma.array(kirchhoff)
-    kirchhoff.mask = np.eye(kirchhoff.shape[0], dtype=bool)
-    col_sum_excl_diag = kirchhoff.sum(axis=1) / diag_kirchhoff
-    features['ACNR'][target_match] = col_sum_excl_diag
+    # Average ConSurf scores over valid contacting neighbours only.
+    # Missing neighbour scores remain NaN, but they should not poison
+    # the whole row average.
+    # (kirchhoff == -1): contact && valid_consurf_mask: not nan ConSurf
+    valid_consurf_mask = ~np.isnan(features['consurf']) # 
+    contact_mask = (kirchhoff == -1) & valid_consurf_mask[:, None] 
+    score_matrix = np.where(contact_mask, features['consurf'][None, :], np.nan)
+
+    valid_counts = np.sum(~np.isnan(score_matrix), axis=1) # contact number with a valid ConSurf score - (n, )
+    score_sums = np.nansum(score_matrix, axis=1) # Sum neighboring ConSurf scores - (n, )
+    valid_rows = valid_counts > 0
+    features['ACNR'][valid_rows] = score_sums[valid_rows] / valid_counts[valid_rows]
+    LOGGER.report('ConSurf features calculated in %.2fs.', label='_calcConSurf')
+    return features
+
+
+def calcConSurf_v2(
+        pdbfile,
+        id,
+        chid,
+        folder='.',
+        uniref90=uniref90_2022_05
+    ):
+    """Calculate ConSurf-based residue features using getConSurffile_v2.
+
+    Args:
+        pdbfile: Structure file used for patching scores to residues.
+        id: Either a 4-character PDB ID or a UniProt accession.
+        chid: Target structure chain for pdbfile.
+        folder: Working directory for stand-alone ConSurf.
+        uniref90: Sequence database path used by stand-alone ConSurf.
+    """
+    _dtype = np.dtype([
+        ('consurf', 'f4'),
+        ('ACNR', 'f4'),
+        ('consurf_color', 'i4'),
+    ])
+
+    assert os.path.isfile(pdbfile), "pdbfile must be an existing file."
+
+    LOGGER.timeit('_calcConSurf')
+    pdb = parsePDB(pdbfile, model=1)
+    ca = pdb.protein.ca
+    if ca is None:
+        raise ValueError(f'Cannot find protein C-alpha atoms in {pdbfile}')
+
+    tgt_chain = ca.select(f'chain {chid}')
+    if tgt_chain is None:
+        raise ValueError(f'Cannot find chain {chid} in {pdbfile}')
+    tgt_chain = tgt_chain.copy()
+
+    tgt_seq = tgt_chain.getSequence()
+    features = np.full(len(tgt_chain), np.nan, dtype=_dtype)
+
+    try:
+        df_consurf = getConSurffile_v2(id=id, chid=chid, folder=folder, uniref90=uniref90)
+    except Exception as e:
+        LOGGER.warn(str(e))
+        return features
+
+    # Replace color* --> color+10
+    if df_consurf['COLOR'].dtype != int:
+        df_consurf['COLOR'] = df_consurf['COLOR'].apply(
+            lambda x: int(x.replace('*', '')) + 10 if '*' in x else int(x)
+        )
+
+    # Extract exact match indices 
+    consurf_seq = df_consurf.SEQ.to_string(index=False).replace('\n', '').replace(' ', '')
+    consurf_indices, target_indices, exact_match_indices = mapIndices(consurf_seq, tgt_seq)
+    consurf_match = consurf_indices[exact_match_indices]
+    target_match = target_indices[exact_match_indices]
+
+    # Extract scores
+    consurf_scores = df_consurf.iloc[consurf_match].SCORE.values
+    consurf_colors = df_consurf.iloc[consurf_match].COLOR.values
+    features['consurf'][target_match] = consurf_scores
+    features['consurf_color'][target_match] = consurf_colors
     
+    # Build Kirchhoff matrix
+    gnm = GNM()
+    gnm.buildKirchhoff(tgt_chain, cutoff=7.3)
+    kirchhoff = gnm.getKirchhoff()
+
+    # Average ConSurf scores over valid contacting neighbours only.
+    # Missing neighbour scores remain NaN, but they should not poison
+    # the whole row average.
+    # (kirchhoff == -1): contact && valid_consurf_mask: not nan ConSurf
+    valid_consurf_mask = ~np.isnan(features['consurf'])
+    contact_mask = (kirchhoff == -1) & valid_consurf_mask[None, :]
+    score_matrix = np.where(contact_mask, features['consurf'][None, :], np.nan)
+
+    valid_counts = np.sum(~np.isnan(score_matrix), axis=1) # contact number with a valid ConSurf score - (n, )
+    score_sums = np.nansum(score_matrix, axis=1) # Sum neighboring ConSurf scores - (n, )
+    valid_rows = valid_counts > 0
+    features['ACNR'][valid_rows] = score_sums[valid_rows] / valid_counts[valid_rows]
+
     LOGGER.report('ConSurf features calculated in %.2fs.', label='_calcConSurf')
     return features
