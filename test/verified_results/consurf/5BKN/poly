@@ -1,0 +1,46 @@
+_entity_poly.entity_id 
+_entity_poly.type 
+_entity_poly.nstd_linkage 
+_entity_poly.nstd_monomer 
+_entity_poly.pdbx_seq_one_letter_code 
+_entity_poly.pdbx_seq_one_letter_code_can 
+_entity_poly.pdbx_strand_id 
+_entity_poly.pdbx_target_identifier 
+
+>
+peptide(L)'   no no 
+MGRGKVKPNRKSTGDNSNVVTMIRAGSYPKVNPTPTWVRAIPFEVSVQSGIAFKVPVGSLFSANFRTDSFTSVTVMSVRAWTQLTPPVNEYSFVRLKPLFKTGDSTEEFEGRASNINTRASVGYRIPTNLRQNTVAADNVCEVRSNCRQVALVISCCFN
+MGRGKVKPNRKSTGDNSNVVTMIRAGSYPKVNPTPTWVRAIPFEVSVQSGIAFKVPVGSLFSANFRTDSFTSVTVMSVRAWTQLTPPVNEYSFVRLKPLFKTGDSTEEFEGRASNINTRASVGYRIPTNLRQNTVAADNVCEVRSNCRQVALVISCCFN
+A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,GG,HH,II,JJ,KK ? 
+
+>
+ribonucleotide no no AAAAAAAA AAAAAAAA P,S,a                                        ? 
+
+>
+ribonucleotide no no AAAAAA AAAAAA T                                            ? 
+
+>
+ribonucleotide no no AAAAAAAAA AAAAAAAAA V                                            ? 
+
+>
+ribonucleotide no no AAAAAAAAAA AAAAAAAAAA X,Y,TT,UU                                    ? 
+
+>
+ribonucleotide no no UUUUUUUUUUUU UUUUUUUUUUUU e,qq                                         ? 
+
+>
+ribonucleotide no no UUUUUUU UUUUUUU h                                            ? 
+
+>
+ribonucleotide no no UUUUUU UUUUUU i,ll                                         ? 
+
+>
+ribonucleotide no no UUUUUUUUU UUUUUUUUU m,WW,kk                                      ? 
+
+>
+ribonucleotide no no UUUUUUUU UUUUUUUU n                                            ? 
+
+>
+ribonucleotide no no AAAAAAAAAAAA AAAAAAAAAAAA bb                                           ? 
+
+>

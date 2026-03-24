@@ -389,7 +389,7 @@ def upload_protein_sequence(form, vars):
 
     # we write the sequence to a file for the homologues search
     try:
-        UPLOADED = open(vars['working_dir'] + vars['protein_seq'], 'w')
+        UPLOADED = open(vars['protein_seq'], 'w')
     except:			
         LOGGER.error("upload_protein_sequence : Cannot open the file " + vars['protein_seq'] + "for writing!")
 

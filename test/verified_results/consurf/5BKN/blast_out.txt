@@ -1,0 +1,68 @@
+# jackhmmer :: iteratively search a protein sequence against a protein database
+# HMMER 3.4 (Aug 2023); http://hmmer.org/
+# Copyright (C) 2023 Howard Hughes Medical Institute.
+# Freely distributed under the BSD open source license.
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# query sequence file:             /home/loci/main/tandem_website_dev/tandem/test/verified_results/consurf/5BKN/protein_seq.fas
+# target sequence database:        /home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta
+# maximum iterations set to:       1
+# max ASCII text line length:      unlimited
+# sequence reporting threshold:    E-value <= 0.0001
+# domain reporting threshold:      E-value <= 0.0001
+# sequence inclusion threshold:    E-value <= 0.0001
+# number of worker threads:        4
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Query:       Input_seq_SEQRES_A  [L=159]
+
+Scores for complete sequences (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Sequence               Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------               -----------
++  7.6e-102  350.6   3.4   8.4e-102  350.4   3.4    1.0  1  UniRef90_P17574         Coat protein n=3 Tax=Satellite tobacco mosaic virus TaxID=12881 RepID=COAT_STMV
++   8.3e-09   48.6  10.0    7.6e+05    3.3   0.0   13.9  0  UniRef90_UPI003B43563D  hypothetical protein n=1 Tax=Pigmentiphaga litoralis TaxID=516702 RepID=UPI003B43563D
++   8.7e-07   42.1   4.3      1e+05    6.1   0.0    8.6  0  UniRef90_UPI00366CCA65  T9SS type A sorting domain-containing protein n=1 Tax=Aquimarina sp. SS2-1 TaxID=3342247 RepID=UPI00366CCA65
++   1.1e-06   41.7   0.0    1.6e+06    2.3   0.0   14.3  0  UniRef90_A0A9D4MLJ4     Uncharacterized protein n=1 Tax=Dreissena polymorpha TaxID=45954 RepID=A0A9D4MLJ4_DREPO
+
+
+Domain annotation for each sequence (and alignments):
+>> UniRef90_P17574  Coat protein n=3 Tax=Satellite tobacco mosaic virus TaxID=12881 RepID=COAT_STMV
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  350.4   3.4  1.8e-109  8.4e-102       1     159 []       1     159 []       1     159 [] 1.00
+
+  Alignments for each domain:
+  == domain 1  score: 350.4 bits;  conditional E-value: 1.8e-109
+  Input_seq_SEQRES_A   1 mgrgkvkpnrkstgdnsnvvtmiragsypkvnptptwvraipfevsvqsgiafkvpvgslfsanfrtdsftsvtvmsvrawtqltppvneysfvrlkplfktgdsteefegrasnintrasvgyriptnlrqntvaadnvcevrsncrqvalvisccfn 159
+                         mgrgkvkpnrkstgdnsnvvtmiragsypkvnptptwvraipfevsvqsgiafkvpvgslfsanfrtdsftsvtvmsvrawtqltppvneysfvrlkplfktgdsteefegrasnintrasvgyriptnlrqntvaadnvcevrsncrqvalvisccfn
+     UniRef90_P17574   1 MGRGKVKPNRKSTGDNSNVVTMIRAGSYPKVNPTPTWVRAIPFEVSVQSGIAFKVPVGSLFSANFRTDSFTSVTVMSVRAWTQLTPPVNEYSFVRLKPLFKTGDSTEEFEGRASNINTRASVGYRIPTNLRQNTVAADNVCEVRSNCRQVALVISCCFN 159
+                         8*************************************************************************************************************************************************************8 PP
+
+>> UniRef90_UPI003B43563D  hypothetical protein n=1 Tax=Pigmentiphaga litoralis TaxID=516702 RepID=UPI003B43563D
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI00366CCA65  T9SS type A sorting domain-containing protein n=1 Tax=Aquimarina sp. SS2-1 TaxID=3342247 RepID=UPI00366CCA65
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_A0A9D4MLJ4  Uncharacterized protein n=1 Tax=Dreissena polymorpha TaxID=45954 RepID=A0A9D4MLJ4_DREPO
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query model(s):                            1  (159 nodes)
+Target sequences:                  184146434  (64621732275 residues searched)
+Passed MSV filter:                   3791214  (0.020588); expected 3682928.7 (0.02)
+Passed bias filter:                  3280020  (0.017812); expected 3682928.7 (0.02)
+Passed Vit filter:                    186330  (0.00101186); expected 184146.4 (0.001)
+Passed Fwd filter:                      1703  (9.24807e-06); expected 1841.5 (1e-05)
+Initial search space (Z):          184146434  [actual number of targets]
+Domain search space  (domZ):               4  [number of targets reported over threshold]
+# CPU time: 365.44u 40.72s 00:06:46.16 Elapsed: 00:02:41.37
+# Mc/sec: 63672.10
+
+@@ New targets included:   4
+@@ New alignment includes: 2 subseqs (was 1), including original query
+//
+[ok]

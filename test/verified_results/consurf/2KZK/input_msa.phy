@@ -1,0 +1,42 @@
+ 13 113
+Input_seq_SEQRES_A                                GPH----MND PLLHVEVSNE DNSLHFILYN KTNIIIPGNC TFEFSSQISE
+ur|A0A8B8UZ78|244_346|2.1e-58|Atg34               --------ND RSLHVEVSNE DNSLHFMLYN NTNSTVPGNC TFEFSSPISE
+ur|A0AA35ND22|248_351|5.5e-52|Autophagy           -P------ND QSLHVEVGNE DNSLHFILSN NTKSIVPGNC TLEFSSPTSE
+ur|H0H0S3|164_265|1.6e-49|YOL083W-like            ---------D RSLRVDVNHE DNSLHFILYN NADLIVPGNC TFEFSSSASK
+ur|A0AA35J6Z9|239_340|6e-46|Autophagy             -K------DD RTLHVKVGHE DNSLHFTIYN NTNSIVPGNC TFEFSNSASE
+ur|A0A6C1EFR0|234_335|2.5e-44|Autophagy           NP------ND RTLHVEVSHE DNSLHFTIYN NTTSTVPGNC TFEFSNSASE
+ur|J8PWV8|247_348|2.1e-43|YOL083W                 ---------D QSLRVEVGHQ DNSIHFTLCN NTNAIVPGDC TFEFFNSASE
+ur|A0ABN8WRK2|248_352|4.7e-25|Uncharacterized     -------LSD RSLQVTMNHR DSSLYFQLYN NTNSILAGNC KFNFTGGDHT
+ur|A0AA35NE52|258_361|9.9e-25|Autophagy           --------ND RSLQVIVNQR DNSLYFQLFN NTNSVLAGNC KLKFISAEDN
+ur|A0A6C1EGI9|257_360|8.2e-23|Receptor            --------SD RSLQVTMNHR DSSLYFQLYN NTTSILAGNC KFNFTGGDHT
+ur|A0AA35J6R9|263_367|1.4e-22|Autophagy           -------LDD RSLQVTVNFR DGSLYFHLYN NTNSVLAGNC KLKFTNDNDK
+ur|UPI0001DD215B|1_112|3.6e-22|Autophagy-related  GPHMVEPPNE RSLQITMNQR DNSLYFQLFN NTNSVLAGNC KLKFTDAGDK
+ur|A0A8B8UZ87|256_361|6.3e-20|Atg19               --H----PNG RSLQITMKHN DNSLYFQLFN NTNSVLAGNC KLKFTDADNK
+
+                                                  VFS--IKMGP HEIGIKGQKE LWFFPSLPTP LSNYTMKVVN QDGETILVGK
+                                                  VFS--IKMGP HEIGINGQKE LWYFPSLPTP LSNYTIKVIN QDGDIILIGK
+                                                  IFR--IRMGP HEIGIKGQKE LRYFPSLSTP LSDYTIKVIN QDGDTIFVGR
+                                                  VYS--IKMGP HEIGPKGQKE LWYFPSLSAP LVDYTIKIIN QNGDVIFIGK
+                                                  VFD--VQMGP HEISVEGQKE LWHFPALPTP LIGYSVKIIN IEGEIIFAGK
+                                                  VFS--VQMGP HEIGMDGRKE LWHFPALPTP LIGYSVNIIN IAGEIIFSGK
+                                                  VFS--IRMGP HELGIKGQKE LCYFPSLPIP LVDYTIKVRN KAGDIIFTGK
+                                                  SVTRTIDMGP HEIGIKERKE LRYFPYAPEL MSASTIEIEN EYGEVIFVGK
+                                                  PIAGIIEMGP HEIGIKERKE LRYFPYAPEL TTGSTVEIEN QYGEVIFLGK
+                                                  PVTRTIDMGP HEIGIKERKE FRYFPYTPEL MTASTIEIEN EYGEVIFVGK
+                                                  PTTRIIEMGP HEIGIKEHKE LRYFPYTPEL ITSSTIAIEN EYEEVIFVGK
+                                                  PTTQIIDMGP HEIGIKEYKE YRYFPYALDL EAGSTIEIEN QYGEVIFLGK
+                                                  PTTRIIEMGP HEIGIKEYKE FRYFPYAFDL TAGSTIEIEN EYGEVIFLGK
+
+                                                  CADSNEITLK SPL
+                                                  CAGSNKITLK SSL
+                                                  CADSSDISLK SPL
+                                                  CTESNEVTLK SAL
+                                                  CTDSGETILK P--
+                                                  CTDSSEAILE ---
+                                                  CDKSNEIALK TPL
+                                                  RDESPRVDLR PP-
+                                                  HDSSSRVSLK PP-
+                                                  RGPSPRVDLK PP-
+                                                  HGRSPRVSLK PP-
+                                                  YGSSPMINLR PP-
+                                                  HSFYSTINLR PP-

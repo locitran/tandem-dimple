@@ -70,16 +70,16 @@ def pdb_summary(pdbID: str):
         n_assemblies = 0
     return n_assemblies
 
-def uniprot_sequence(uniprotACC, outdir: str = None):
+def uniprot_sequence(uniprotACC, folder: str = None):
     "Download a sequence file from UniProt database."
     url = f"https://rest.uniprot.org/uniprotkb/{uniprotACC}.fasta"
     
-    if outdir is not None:
-        outpath = os.path.join(outdir, f'{uniprotACC}.fasta')
+    if folder is not None:
+        outpath = os.path.join(folder, f'{uniprotACC}.fasta')
     
         if os.path.exists(outpath):
             return outpath
-        LOGGER.info(f'> Download {uniprotACC}.fasta...')
+        LOGGER.info(f'Download {uniprotACC}.fasta...')
         try:
             urllib.request.urlretrieve(url, outpath)
             LOGGER.info(f'{uniprotACC}.fasta is downloaded.')

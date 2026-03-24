@@ -13,7 +13,7 @@ import traceback
 
 import prody
 from rcsbapi.data import DataQuery
-from prody import parsePDB, Atomic
+from prody import parsePDB
 from prody.utilities import openURL
 from Bio.pairwise2 import align as bioalign
 from Bio.pairwise2 import format_alignment

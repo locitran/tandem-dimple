@@ -1,24 +1,20 @@
 
-import json, traceback
+import json
 import os
 import pandas as pd
 import numpy as np
-import pickle
-from pathlib import Path
 import more_itertools as mit
 
-from prody import parsePDB
-from prody.measure.contacts import findNeighbors
+from prody import parsePDB, writePDB
 from Bio.Align import PairwiseAligner
 
 from ..dynamics.ENM import GNM
 from ..utils.logger import LOGGER
-from ..download import get_content, fetchPDB
+from ..download import fetchPDB
 from ..utils.settings import ROOT_DIR,RAW_PDB_DIR
 from ..utils.timer import getTimer
 from ..stand_alone_consurf.main import run
 from .. import download
-from .Uniprot import queryUniprot
 
 __all__ = ['calcConSurf', 'calcConSurf_v2', 'mapIndices', 'getConSurffile_v2']
 
@@ -134,37 +130,6 @@ def _align(target, query):
             break
     return aln.format()
 
-def _parse(unique_chain):
-    url = f'{CONSURFDB_URL}DB/{unique_chain}/{unique_chain}_consurf_summary.txt'
-    # url = f'{CONSURFDB_URL}DB_NEW/{pdbid}/{unique_chain}/{pdbid}_{unique_chain}_consurf_grades.txt'
-    content = get_content(url)
-    if content is None:
-        return None
-
-    try:
-        lines = content.split('\n')
-        lines = [line.strip() for line in lines[:-5]]
-        for i, line in enumerate(lines):
-            if line == '(normalized)':
-                cols = lines[i-1]
-                lines = lines[i+1:]
-                break
-        cols = [col.strip() for col in cols.split('\t') if col != '']
-
-        data = []
-        for line in lines:
-            line = line.split('\t')
-            line = [txt.strip() for txt in line if txt.strip() != '']
-            if len(line) == 9 and line[0].isdigit():
-                if line[2] != '-':
-                    line[2] = line[2].split(':')[0]
-            data.append(line)
-        df = pd.DataFrame(data, columns=cols)
-        return df
-    except Exception as e:
-        LOGGER.warning(f'Error parsing {unique_chain}, {e}')
-        return None
-
 def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     """Get the consurf file for a given PDB ID and chain ID.
     pdb: PDB ID or PDB file
@@ -218,41 +183,39 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
         algorithm="HMMER",
         cif=str(pdb).lower().endswith(".cif"),
     )
-    # Parse the consurf file
-    data = []
-    with open(out, 'r') as f:
-        lines = f.readlines()
-        lines = [line.strip() for line in lines if line.strip() != '']
-        for i, line in enumerate(lines):
-            if line.startswith('POS'):
-                cols = lines[i]
-                lines = lines[i+1:]
-                break
-        cols = [col.strip() for col in cols.split('\t') if col != '']
-        for line in lines:
-            line = line.split('\t')
-            if len(line) == 10 and line[0].isdigit():
-                data.append(line)
-    df = pd.DataFrame(data, columns=cols)
+    df = parseConSurf(out)
     df.to_csv(consurffile, sep='\t', index=False)
     return df
 
 def parseConSurf(out):
-    data = []
+    rows = []
+    cols = None
+
     with open(out, 'r') as f:
-        lines = f.readlines()
-        lines = [line.strip() for line in lines if line.strip() != '']
-        for i, line in enumerate(lines):
-            if line.startswith('POS'):
-                cols = lines[i]
-                lines = lines[i+1:]
-                break
-        cols = [col.strip() for col in cols.split('\t') if col != '']
-        for line in lines:
-            line = line.split('\t')
-            if len(line) == 10 and line[0].isdigit():
-                data.append(line)
-    return pd.DataFrame(data, columns=cols)
+        lines = [line.rstrip('\n') for line in f if line.strip()]
+
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith('POS'):
+            cols = [col.strip() for col in line.split('\t')]
+            lines = lines[i + 1:]
+            break
+
+    if cols is None:
+        LOGGER.warn(f'Could not find ConSurf header in {out}')
+        return pd.DataFrame()
+
+    ncols = len(cols)
+    for line in lines:
+        parts = [part.strip() for part in line.split('\t')]
+        if not parts or not parts[0].isdigit():
+            continue
+        if len(parts) < ncols:
+            continue
+        if len(parts) > ncols:
+            parts = parts[:ncols - 1] + [' '.join(parts[ncols - 1:]).strip()]
+        rows.append(parts)
+
+    return pd.DataFrame(rows, columns=cols)
 
 def getConSurffile_v2(id, chid, folder='.', uniref90=uniref90_2022_05):
     """Run stand-alone ConSurf for a PDB ID or UniProt accession and cache the
@@ -296,14 +259,13 @@ def getConSurffile_v2(id, chid, folder='.', uniref90=uniref90_2022_05):
         if os.path.isfile(consurffile):
             return pd.read_csv(consurffile, sep='\t')
 
-        seq = download.uniprot_sequence(id)
-        LOGGER.info(f'Running stand-alone ConSurf for UniProt accession {id}')
+        seq = download.uniprot_sequence(id, folder=folder)
+        LOGGER.info(f'Running stand-alone ConSurf for UniProt accession {id} {seq}')
         out = run(query=id, seq=seq, DB=uniref90, work_dir=folder, algorithm="HMMER")
 
     df = parseConSurf(out)
     df.to_csv(consurffile, sep='\t', index=False)
     return df
-
 def calcConSurf(
         pdbfile,
         pdbid, 
@@ -375,14 +337,7 @@ def calcConSurf(
     LOGGER.report('ConSurf features calculated in %.2fs.', label='_calcConSurf')
     return features
 
-
-def calcConSurf_v2(
-        pdbfile,
-        id,
-        chid,
-        folder='.',
-        uniref90=uniref90_2022_05
-    ):
+def calcConSurf_v2(pdbfile,id,chid,folder='.',uniref90=uniref90_2022_05,write_consurf=False):
     """Calculate ConSurf-based residue features using getConSurffile_v2.
 
     Args:
@@ -391,6 +346,7 @@ def calcConSurf_v2(
         chid: Target structure chain for pdbfile.
         folder: Working directory for stand-alone ConSurf.
         uniref90: Sequence database path used by stand-alone ConSurf.
+        write_consurf: If True, write a PDB file with ConSurf scores in B-factors.
     """
     _dtype = np.dtype([
         ('consurf', 'f4'),
@@ -420,6 +376,10 @@ def calcConSurf_v2(
         LOGGER.warn(str(e))
         return features
 
+    if df_consurf is None or df_consurf.empty:
+        LOGGER.warn(f'Empty ConSurf output for id={id} chain={chid}')
+        return features
+
     # Replace color* --> color+10
     if df_consurf['COLOR'].dtype != int:
         df_consurf['COLOR'] = df_consurf['COLOR'].apply(
@@ -427,10 +387,17 @@ def calcConSurf_v2(
         )
 
     # Extract exact match indices 
-    consurf_seq = df_consurf.SEQ.to_string(index=False).replace('\n', '').replace(' ', '')
+    consurf_seq = df_consurf.SEQ.to_string(index=False).replace('\n', '').replace(' ', '') # consurf_seq = ''.join(df_consurf['SEQ'].astype(str).tolist())
     consurf_indices, target_indices, exact_match_indices = mapIndices(consurf_seq, tgt_seq)
     consurf_match = consurf_indices[exact_match_indices]
     target_match = target_indices[exact_match_indices]
+
+    valid = (consurf_match >= 0) & (consurf_match < len(df_consurf)) & (target_match >= 0)
+    consurf_match = consurf_match[valid]
+    target_match = target_match[valid]
+    if len(consurf_match) == 0:
+        LOGGER.warn(f'No valid ConSurf residue mapping for id={id} chain={chid}')
+        return features
 
     # Extract scores
     consurf_scores = df_consurf.iloc[consurf_match].SCORE.values
@@ -455,6 +422,31 @@ def calcConSurf_v2(
     score_sums = np.nansum(score_matrix, axis=1) # Sum neighboring ConSurf scores - (n, )
     valid_rows = valid_counts > 0
     features['ACNR'][valid_rows] = score_sums[valid_rows] / valid_counts[valid_rows]
+
+    if write_consurf:
+        os.makedirs(folder, exist_ok=True)
+        model = pdb.protein.copy()
+        chain = model.select(f'chain {chid}')
+
+        betas = model.getBetas()
+        if betas is None or len(betas) != model.numAtoms():
+            betas = np.zeros(model.numAtoms(), dtype=float)
+        else:
+            betas = np.asarray(betas, dtype=float).copy()
+
+        chain_ca = chain.ca
+
+        ca_resindices = chain_ca.getResindices()
+        atom_resindices = model.getResindices()
+        for resindex, score in zip(ca_resindices, features['consurf']):
+            if np.isnan(score):
+                continue
+            betas[atom_resindices == resindex] = float(score)
+
+        model.setBetas(betas)
+        outfile = os.path.join(folder, f'{id}_{chid}_consurf.pdb')
+        writePDB(outfile, model)
+        LOGGER.info(f'ConSurf B-factor file written to {outfile}')
 
     LOGGER.report('ConSurf features calculated in %.2fs.', label='_calcConSurf')
     return features

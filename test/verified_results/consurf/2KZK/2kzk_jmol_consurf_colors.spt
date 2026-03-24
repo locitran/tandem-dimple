@@ -1,0 +1,68 @@
+ConSurfDB.tau.ac.il   24/03/2026   2kzk
+APD N.NN
+select all
+color [200,200,200]
+
+select ASP258, SER260, ASN267, MET293, HIS296, GLU297, LYS304, GLU305, ASN325
+select selected or ILE331
+select selected and :A
+color [160,37,96]
+spacefill
+define CON9 selected
+
+select HIS296, LEU250, VAL252, PHE263, LYS268, THR269, GLY275, ASN276, CYS277
+select selected or THR278, PHE281, ILE291, GLY294, PRO295, ILE298, PHE309
+select selected or PRO310, THR320, GLY334, SER339, LEU344
+select selected and :A
+color [240,125,171]
+spacefill
+define CON8 selected
+
+select LEU249, ASN259, LEU261, HIS262, LEU265, PRO274, GLY299, GLY302, PRO315
+select selected or TYR319, LYS335, LEU348
+select selected and :A
+color [250,201,222]
+spacefill
+define CON7 selected
+
+select ASP247, VAL254, ILE273, GLU280, SER282, SER311, VAL323, GLY328, LEU332
+select selected and :A
+color [252,237,244]
+spacefill
+define CON6 selected
+
+select GLY294, PRO295, ASN246, PRO248, HIS251, ASN270, ILE271, ILE272, SER286
+select selected or SER290, ILE300, LYS301, PHE308, MET321, LYS322, GLU329
+select selected or THR330, LYS345, SER346, PRO347
+select selected and :A
+color [255,255,255]
+spacefill
+define CON5 selected
+
+select LEU348, GLU253, ASN256, GLU257, TYR266, PHE279, SER283, GLN284, GLU287
+select selected or VAL288, GLN303, LEU306, TRP307, LEU312, PRO313, THR314
+select selected or SER317, VAL324, CYS336, ILE342
+select selected and :A
+color [234,255,255]
+spacefill
+define CON4 selected
+
+select SER255, ILE264, PHE289, LEU316, ASN318, GLN326, ASP327, ASN340, GLU341
+select selected or THR343
+select selected and :A
+color [215,255,255]
+spacefill
+define CON3 selected
+
+select ILE285, LYS292, VAL333, ALA337
+select selected and :A
+color [140,255,255]
+spacefill
+define CON2 selected
+
+select ASP338
+select selected and :A
+color [16,200,209]
+spacefill
+define CON1 selected
+

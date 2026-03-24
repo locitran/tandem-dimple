@@ -39,9 +39,9 @@ DV6b_query = [
 
 td_DV1 = run(
     query=DV1_query,
-    job_name='CasE/CasE_DV1_4DZD',
-    custom_PDB='4DZD',
-    refresh=True,
+    job_name='CasE-Mar24/CasE_DV1_4TVX',
+    custom_PDB='4TVX',
+    refresh=False,
     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )
 

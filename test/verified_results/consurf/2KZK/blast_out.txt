@@ -1,0 +1,312 @@
+# jackhmmer :: iteratively search a protein sequence against a protein database
+# HMMER 3.4 (Aug 2023); http://hmmer.org/
+# Copyright (C) 2023 Howard Hughes Medical Institute.
+# Freely distributed under the BSD open source license.
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# query sequence file:             /home/loci/main/tandem_website_dev/tandem/test/verified_results/consurf/2KZK/protein_seq.fas
+# target sequence database:        /home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta
+# maximum iterations set to:       1
+# max ASCII text line length:      unlimited
+# sequence reporting threshold:    E-value <= 0.0001
+# domain reporting threshold:      E-value <= 0.0001
+# sequence inclusion threshold:    E-value <= 0.0001
+# number of worker threads:        4
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Query:       Input_seq_SEQRES_A  [L=107]
+
+Scores for complete sequences (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Sequence               Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------               -----------
++   3.6e-68  239.5   0.7      4e-68  239.4   0.7    1.0  1  UniRef90_UPI0001DD215C  Uncharacterized protein YOL083W n=1 Tax=Saccharomyces cerevisiae TaxID=4932 RepID=UPI0001DD215C
++   3.4e-63  223.5   0.7    3.4e-63  223.5   0.7    2.1  1  UniRef90_Q12292         Autophagy-related protein 34 n=9 Tax=Saccharomyces TaxID=4930 RepID=ATG34_YEAST
++   6.7e-52  187.2   0.6    1.3e-51  186.2   0.6    1.5  1  UniRef90_A0A8B8UZ78     Atg34 n=1 Tax=Saccharomyces paradoxus TaxID=27291 RepID=A0A8B8UZ78_SACPA
++   1.7e-45  166.5   0.1    3.5e-45  165.6   0.1    1.4  1  UniRef90_A0AA35ND22     Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=1 Tax=Saccharomyces mikatae IFO 1815 TaxID=226126 RepID=A0AA35ND22_SACMI
++   3.1e-43  159.3   0.3      1e-42  157.7   0.1    1.9  1  UniRef90_H0H0S3         YOL083W-like protein n=1 Tax=Saccharomyces cerevisiae x Saccharomyces kudriavzevii (strain VIN7) TaxID=1095631 RepID=H0H0S3_SACCK
++   5.8e-43  158.4   0.3    1.6e-42  157.0   0.1    1.8  1  UniRef90_J5PDA7         ATG34-like protein n=1 Tax=Saccharomyces kudriavzevii (strain ATCC MYA-4449 / AS 2.2408 / CBS 8840 / NBRC 1802 / NCYC 2889) TaxID=226230 RepID=J5PDA7_SACK1
++   1.9e-39  147.1   0.1    3.8e-39  146.1   0.1    1.5  1  UniRef90_A0AA35J6Z9     Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=2 Tax=Saccharomyces uvarum TaxID=230603 RepID=A0AA35J6Z9_SACUV
++   7.4e-38  142.0   0.3    1.6e-37  140.9   0.3    1.5  1  UniRef90_A0A6C1EFR0     Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=3 Tax=Saccharomyces TaxID=4930 RepID=A0A6C1EFR0_SACPS
++   6.4e-37  139.0   0.0    1.3e-36  138.0   0.0    1.5  1  UniRef90_J8PWV8         YOL083W n=1 Tax=Saccharomyces arboricola (strain H-6 / AS 2.3317 / CBS 10644) TaxID=1160507 RepID=J8PWV8_SACAR
++   6.5e-19   81.0   0.0      3e-18   78.9   0.0    2.0  1  UniRef90_A0ABN8WRK2     Uncharacterized protein n=1 Tax=Saccharomyces uvarum TaxID=230603 RepID=A0ABN8WRK2_SACUV
++   9.3e-19   80.6   0.1    6.3e-18   77.9   0.1    2.0  1  UniRef90_A0AA35NE52     Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=1 Tax=Saccharomyces mikatae IFO 1815 TaxID=226126 RepID=A0AA35NE52_SACMI
++   7.8e-18   77.6   0.0    5.2e-17   74.9   0.0    2.2  1  UniRef90_A0AA35NMY8     Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=1 Tax=Saccharomyces uvarum TaxID=230603 RepID=A0AA35NMY8_SACUV
++   2.4e-17   76.0   0.1    5.2e-16   71.7   0.0    2.5  1  UniRef90_A0A6C1EGI9     Receptor for biosynthetic cytoplasm to vacuole targeting n=3 Tax=Saccharomyces TaxID=4930 RepID=A0A6C1EGI9_SACPS
++   2.2e-16   72.9   0.1    8.8e-16   71.0   0.1    2.0  1  UniRef90_A0AA35J6R9     Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=2 Tax=Saccharomyces TaxID=4930 RepID=A0AA35J6R9_SACK1
++     2e-15   69.8   0.1    2.3e-15   69.6   0.1    1.0  1  UniRef90_UPI0001DD215B  Autophagy-related protein 19 n=1 Tax=Saccharomyces cerevisiae TaxID=4932 RepID=UPI0001DD215B
++   1.2e-13   64.1   0.1    3.1e-13   62.8   0.0    1.7  1  UniRef90_P35193         Autophagy-related protein 19 n=10 Tax=Saccharomyces TaxID=4930 RepID=ATG19_YEAST
++   1.9e-13   63.4   1.1      4e-13   62.4   0.1    2.1  1  UniRef90_A0A8B8UZ87     Atg19 n=1 Tax=Saccharomyces paradoxus TaxID=27291 RepID=A0A8B8UZ87_SACPA
++   2.3e-10   53.5  62.4    8.3e+05    3.5   0.1   23.8  0  UniRef90_UPI0025502A9F  Ig-like domain-containing protein n=5 Tax=Gallibacterium anatis TaxID=750 RepID=UPI0025502A9F
++   3.9e-09   49.6  21.0      4e+05    4.5   0.0   15.0  0  UniRef90_UPI0023816B3D  retention module-containing protein n=1 Tax=Pseudomonas sp. PSKL.D1 TaxID=3029060 RepID=UPI0023816B3D
++   2.7e-08   46.9   0.2    2.9e+05    5.0   0.0   10.3  0  UniRef90_A0A9D4I443     Uncharacterized protein n=1 Tax=Dreissena polymorpha TaxID=45954 RepID=A0A9D4I443_DREPO
++   1.9e-07   44.1  24.1    6.1e+05    3.9   0.0   15.2  0  UniRef90_A0A239LT07     Surface adhesion protein (Fragment) n=4 Tax=Pseudomonas japonica TaxID=256466 RepID=A0A239LT07_9PSED
++   8.8e-07   42.0   0.3    1.9e+04    8.8   0.0    5.2  0  UniRef90_UPI0033D30E36  FG-GAP repeat domain-containing protein n=1 Tax=Hamadaea sp. NPDC050747 TaxID=3155789 RepID=UPI0033D30E36
++     1e-06   41.8   0.3    1.9e+04    8.8   0.0    5.2  0  UniRef90_UPI00340CA8F5  FG-GAP-like repeat-containing protein n=1 Tax=Hamadaea sp. NPDC050747 TaxID=3155789 RepID=UPI00340CA8F5
++     4e-06   39.9   1.6    6.1e+04    7.1   0.0    7.4  0  UniRef90_UPI0039E8F3DE  SpaA isopeptide-forming pilin-related protein n=1 Tax=Oenococcus sp. TaxID=1979414 RepID=UPI0039E8F3DE
++   1.6e-05   37.9   3.9    9.7e+05    3.3   0.0    9.9  0  UniRef90_UPI003D151095  retention module-containing protein n=1 Tax=Pseudomonas sp. TaxID=306 RepID=UPI003D151095
++   2.8e-05   37.2   0.7    1.6e+05    5.8   0.0    8.8  0  UniRef90_UPI00137A47FD  SpaA isopeptide-forming pilin-related protein n=1 Tax=Candidatus Enterococcus huntleyi TaxID=1857217 RepID=UPI00137A47FD
++   2.9e-05   37.2   0.2    1.8e+04    8.8   0.0    4.9  0  UniRef90_UPI002181FB04  SpaA isopeptide-forming pilin-related protein n=2 Tax=Lactococcus lactis subsp. cremoris TaxID=1359 RepID=UPI002181FB04
++   6.3e-05   36.1   0.2    1.8e+04    8.9   0.0    5.0  0  UniRef90_UPI002FCB47D7  SpaA isopeptide-forming pilin-related protein n=6 Tax=Lactococcus lactis subsp. cremoris TaxID=1359 RepID=UPI002FCB47D7
++   8.3e-05   35.7   0.2    1.9e+04    8.8   0.0    5.2  0  UniRef90_A0A7Z1AUH7     M23ase beta-sheet core domain-containing protein n=1 Tax=Actinophytocola xinjiangensis TaxID=485602 RepID=A0A7Z1AUH7_9PSEU
+
+
+Domain annotation for each sequence (and alignments):
+>> UniRef90_UPI0001DD215C  Uncharacterized protein YOL083W n=1 Tax=Saccharomyces cerevisiae TaxID=4932 RepID=UPI0001DD215C
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  239.4   0.7   6.3e-75     4e-68       1     107 []       1     107 []       1     107 [] 1.00
+
+  Alignments for each domain:
+  == domain 1  score: 239.4 bits;  conditional E-value: 6.3e-75
+      Input_seq_SEQRES_A   1 gphmndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl 107
+                             gphmndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl
+  UniRef90_UPI0001DD215C   1 GPHMNDPLLHVEVSNEDNSLHFILYNKTNIIIPGNCTFEFSSQISEVFSIKMGPHEIGIKGQKELWFFPSLPTPLSNYTMKVVNQDGETILVGKCADSNEITLKSPL 107
+                             9*********************************************************************************************************7 PP
+
+>> UniRef90_Q12292  Autophagy-related protein 34 n=9 Tax=Saccharomyces TaxID=4930 RepID=ATG34_YEAST
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  223.5   0.7   5.4e-70   3.4e-63       5     107 .]     246     348 ..     243     348 .. 0.99
+
+  Alignments for each domain:
+  == domain 1  score: 223.5 bits;  conditional E-value: 5.4e-70
+  Input_seq_SEQRES_A   5 ndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl 107
+                         ndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl
+     UniRef90_Q12292 246 NDPLLHVEVSNEDNSLHFILYNKTNIIIPGNCTFEFSSQISEVFSIKMGPHEIGIKGQKELWFFPSLPTPLSNYTMKVVNQDGETILVGKCADSNEITLKSPL 348
+                         9*****************************************************************************************************7 PP
+
+>> UniRef90_A0A8B8UZ78  Atg34 n=1 Tax=Saccharomyces paradoxus TaxID=27291 RepID=A0A8B8UZ78_SACPA
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  186.2   0.6   2.1e-58   1.3e-51       5     107 .]     244     346 ..     240     346 .. 0.98
+
+  Alignments for each domain:
+  == domain 1  score: 186.2 bits;  conditional E-value: 2.1e-58
+   Input_seq_SEQRES_A   5 ndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl 107
+                          nd  lhvevsnednslhf+lyn tn  +pgnctfefss isevfsikmgpheigi gqkelw+fpslptplsnyt+kv+nqdg+ il+gkca sn+itlks l
+  UniRef90_A0A8B8UZ78 244 NDRSLHVEVSNEDNSLHFMLYNNTNSTVPGNCTFEFSSPISEVFSIKMGPHEIGINGQKELWYFPSLPTPLSNYTIKVINQDGDIILIGKCAGSNKITLKSSL 346
+                          9999************************************************************************************************975 PP
+
+>> UniRef90_A0AA35ND22  Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=1 Tax=Saccharomyces mikatae IFO 1815 TaxID=226126 RepID=A0AA35ND22_SACMI
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  165.6   0.1   5.5e-52   3.5e-45       4     107 .]     248     351 ..     246     351 .. 0.99
+
+  Alignments for each domain:
+  == domain 1  score: 165.6 bits;  conditional E-value: 5.5e-52
+   Input_seq_SEQRES_A   4 mndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl 107
+                           nd  lhvev nednslhfil n t  i+pgnct+efss  se+f i+mgpheigikgqkel +fpsl tpls+yt+kv+nqdg+ti+vg+cads++i+lkspl
+  UniRef90_A0AA35ND22 248 PNDQSLHVEVGNEDNSLHFILSNNTKSIVPGNCTLEFSSPTSEIFRIRMGPHEIGIKGQKELRYFPSLSTPLSDYTIKVINQDGDTIFVGRCADSSDISLKSPL 351
+                          5999***************************************************************************************************7 PP
+
+>> UniRef90_H0H0S3  YOL083W-like protein n=1 Tax=Saccharomyces cerevisiae x Saccharomyces kudriavzevii (strain VIN7) TaxID=1095631 RepID=H0H0S3_SACCK
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  157.7   0.1   1.6e-49     1e-42       6     107 .]     164     265 ..     161     265 .. 0.97
+
+  Alignments for each domain:
+  == domain 1  score: 157.7 bits;  conditional E-value: 1.6e-49
+  Input_seq_SEQRES_A   6 dpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl 107
+                         d  l+v+v++ednslhfilyn  ++i+pgnctfefss  s+v+sikmgpheig kgqkelw+fpsl  pl +yt+k++nq+g+ i++gkc +sne+tlks l
+     UniRef90_H0H0S3 164 DRSLRVDVNHEDNSLHFILYNNADLIVPGNCTFEFSSSASKVYSIKMGPHEIGPKGQKELWYFPSLSAPLVDYTIKIINQNGDVIFIGKCTESNEVTLKSAL 265
+                         77899**********************************************************************************************975 PP
+
+>> UniRef90_J5PDA7  ATG34-like protein n=1 Tax=Saccharomyces kudriavzevii (strain ATCC MYA-4449 / AS 2.2408 / CBS 8840 / NBRC 1802 / NCYC 2889) TaxID=226230 RepID=J5PDA7_SACK1
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  157.0   0.1   2.5e-49   1.6e-42       6     107 .]     252     353 ..     249     353 .. 0.97
+
+  Alignments for each domain:
+  == domain 1  score: 157.0 bits;  conditional E-value: 2.5e-49
+  Input_seq_SEQRES_A   6 dpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl 107
+                         d  l+v+v++ednslhfilyn  ++i+pgnctfefss  s+v+sikmgpheig kgqkelw+fpsl  pl +yt+k++nq+g+ i++gkc +sne+tlks l
+     UniRef90_J5PDA7 252 DRSLRVDVNHEDNSLHFILYNNADLIVPGNCTFEFSSSASKVYSIKMGPHEIGPKGQKELWYFPSLSAPLVDYTVKIINQNGDVIFIGKCTESNEVTLKSAL 353
+                         77899**********************************************************************************************975 PP
+
+>> UniRef90_A0AA35J6Z9  Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=2 Tax=Saccharomyces uvarum TaxID=230603 RepID=A0AA35J6Z9_SACUV
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  146.1   0.1     6e-46   3.8e-39       4     105 ..     239     340 ..     236     342 .. 0.96
+
+  Alignments for each domain:
+  == domain 1  score: 146.1 bits;  conditional E-value: 6e-46
+   Input_seq_SEQRES_A   4 mndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlks 105
+                           +d  lhv+v +ednslhf +yn tn i+pgnctfefs+  sevf ++mgphei+++gqkelw fp+lptpl  y++k++n +ge i+ gkc ds e  lk 
+  UniRef90_A0AA35J6Z9 239 KDDRTLHVKVGHEDNSLHFTIYNNTNSIVPGNCTFEFSNSASEVFDVQMGPHEISVEGQKELWHFPALPTPLIGYSVKIINIEGEIIFAGKCTDSGETILKP 340
+                          67999********************************************************************************************99986 PP
+
+>> UniRef90_A0A6C1EFR0  Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=3 Tax=Saccharomyces TaxID=4930 RepID=A0A6C1EFR0_SACPS
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  140.9   0.3   2.5e-44   1.6e-37       3     104 ..     234     335 ..     231     338 .. 0.96
+
+  Alignments for each domain:
+  == domain 1  score: 140.9 bits;  conditional E-value: 2.5e-44
+   Input_seq_SEQRES_A   3 hmndpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlk 104
+                          + nd  lhvevs+ednslhf +yn t   +pgnctfefs+  sevfs++mgpheig+ g+kelw fp+lptpl  y++ ++n  ge i+ gkc ds+e  l+
+  UniRef90_A0A6C1EFR0 234 NPNDRTLHVEVSHEDNSLHFTIYNNTTSTVPGNCTFEFSNSASEVFSVQMGPHEIGMDGRKELWHFPALPTPLIGYSVNIINIAGEIIFSGKCTDSSEAILE 335
+                          469**********************************************************************************************98775 PP
+
+>> UniRef90_J8PWV8  YOL083W n=1 Tax=Saccharomyces arboricola (strain H-6 / AS 2.3317 / CBS 10644) TaxID=1160507 RepID=J8PWV8_SACAR
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  138.0   0.0   2.1e-43   1.3e-36       6     107 .]     247     348 ..     244     348 .. 0.98
+
+  Alignments for each domain:
+  == domain 1  score: 138.0 bits;  conditional E-value: 2.1e-43
+  Input_seq_SEQRES_A   6 dpllhvevsnednslhfilynktniiipgnctfefssqisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlkspl 107
+                         d  l+vev ++dns+hf l n tn i+pg+ctfef +  sevfsi+mgphe+gikgqkel +fpslp pl +yt+kv n+ g+ i+ gkc  snei lk+pl
+     UniRef90_J8PWV8 247 DQSLRVEVGHQDNSIHFTLCNNTNAIVPGDCTFEFFNSASEVFSIRMGPHELGIKGQKELCYFPSLPIPLVDYTIKVRNKAGDIIFTGKCDKSNEIALKTPL 348
+                         7789************************************************************************************************97 PP
+
+>> UniRef90_A0ABN8WRK2  Uncharacterized protein n=1 Tax=Saccharomyces uvarum TaxID=230603 RepID=A0ABN8WRK2_SACUV
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   78.9   0.0   4.7e-25     3e-18       4     106 ..     248     352 ..     245     353 .. 0.93
+
+  Alignments for each domain:
+  == domain 1  score: 78.9 bits;  conditional E-value: 4.7e-25
+   Input_seq_SEQRES_A   4 mndpllhvevsnednslhfilynktniiipgnctfefss..qisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                          ++d  l+v +++ d+sl+f lyn tn i+ gnc f f+     s   +i mgpheigik +kel +fp  p  +s  t+++ n+ ge i+vgk  +s  + l+ p
+  UniRef90_A0ABN8WRK2 248 LSDRSLQVTMNHRDSSLYFQLYNNTNSILAGNCKFNFTGgdHTSVTRTIDMGPHEIGIKERKELRYFPYAPELMSASTIEIENEYGEVIFVGKRDESPRVDLRPP 352
+                          6788899******************************85226788899*************************************************99999987 PP
+
+>> UniRef90_A0AA35NE52  Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=1 Tax=Saccharomyces mikatae IFO 1815 TaxID=226126 RepID=A0AA35NE52_SACMI
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   77.9   0.1   9.9e-25   6.3e-18       5     106 ..     258     361 ..     255     362 .. 0.91
+
+  Alignments for each domain:
+  == domain 1  score: 77.9 bits;  conditional E-value: 9.9e-25
+   Input_seq_SEQRES_A   5 ndpllhvevsnednslhfilynktniiipgnctfefssqi.sevfs.ikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                          nd  l+v v+  dnsl+f l+n tn ++ gnc ++f s   + +   i+mgpheigik +kel +fp  p   +  t+++ nq ge i++gk   s+ ++lk p
+  UniRef90_A0AA35NE52 258 NDRSLQVIVNQRDNSLYFQLFNNTNSVLAGNCKLKFISAEdNPIAGiIEMGPHEIGIKERKELRYFPYAPELTTGSTVEIENQYGEVIFLGKHDSSSRVSLKPP 361
+                          89999******************************97654055544389*****************************************************88 PP
+
+>> UniRef90_A0AA35NMY8  Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=1 Tax=Saccharomyces uvarum TaxID=230603 RepID=A0AA35NMY8_SACUV
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   74.9   0.0   8.2e-24   5.2e-17       5     106 ..     249     352 ..     246     353 .. 0.91
+
+  Alignments for each domain:
+  == domain 1  score: 74.9 bits;  conditional E-value: 8.2e-24
+   Input_seq_SEQRES_A   5 ndpllhvevsnednslhfilynktniiipgnctfefss..qisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                          +d  l+v +++ d+sl+f lyn tn i+ gnc f f+         +i mgpheigik +kel +fp  p  ++  t+++ n+ ge i+vgk   s  + lk p
+  UniRef90_A0AA35NMY8 249 SDRSLQVTMNHRDSSLYFQLYNNTNSILAGNCKFNFTGgdHTPVTRTIDMGPHEIGIKERKELRYFPYAPELMTASTIEIENEYGEIIFVGKRDGSPRVDLKPP 352
+                          57789999****************************86213445678**********************************************99*99*99988 PP
+
+>> UniRef90_A0A6C1EGI9  Receptor for biosynthetic cytoplasm to vacuole targeting n=3 Tax=Saccharomyces TaxID=4930 RepID=A0A6C1EGI9_SACPS
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   71.7   0.0   8.2e-23   5.2e-16       5     106 ..     257     360 ..     253     361 .. 0.91
+
+  Alignments for each domain:
+  == domain 1  score: 71.7 bits;  conditional E-value: 8.2e-23
+   Input_seq_SEQRES_A   5 ndpllhvevsnednslhfilynktniiipgnctfefss..qisevfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                          +d  l+v +++ d+sl+f lyn t  i+ gnc f f+         +i mgpheigik +ke+ +fp  p  ++  t+++ n+ ge i+vgk   s  + lk p
+  UniRef90_A0A6C1EGI9 257 SDRSLQVTMNHRDSSLYFQLYNNTTSILAGNCKFNFTGgdHTPVTRTIDMGPHEIGIKERKEFRYFPYTPELMTASTIEIENEYGEVIFVGKRGPSPRVDLKPP 360
+                          57789999****************************86213445678******************************************************988 PP
+
+>> UniRef90_A0AA35J6R9  Autophagy protein Atg19/Atg34 C-terminal domain-containing protein n=2 Tax=Saccharomyces TaxID=4930 RepID=A0AA35J6R9_SACK1
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   71.0   0.1   1.4e-22   8.8e-16       4     106 ..     263     367 ..     260     368 .. 0.93
+
+  Alignments for each domain:
+  == domain 1  score: 71.0 bits;  conditional E-value: 1.4e-22
+   Input_seq_SEQRES_A   4 mndpllhvevsnednslhfilynktniiipgnctfefssqise..vfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                          ++d  l+v v+  d sl+f lyn tn ++ gnc ++f++   +     i+mgpheigik  kel +fp  p  +++ t+ + n+  e i+vgk   s  ++lk p
+  UniRef90_A0AA35J6R9 263 LDDRSLQVTVNFRDGSLYFHLYNNTNSVLAGNCKLKFTNDNDKptTRIIEMGPHEIGIKEHKELRYFPYTPELITSSTIAIENEYEEVIFVGKHGRSPRVSLKPP 367
+                          788999*******************************988765114569*****************************************************988 PP
+
+>> UniRef90_UPI0001DD215B  Autophagy-related protein 19 n=1 Tax=Saccharomyces cerevisiae TaxID=4932 RepID=UPI0001DD215B
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   69.6   0.1   3.6e-22   2.3e-15       1     106 [.       1     112 [.       1     113 [. 0.87
+
+  Alignments for each domain:
+  == domain 1  score: 69.6 bits;  conditional E-value: 3.6e-22
+      Input_seq_SEQRES_A   1 gphmndp....llhvevsnednslhfilynktniiipgnctfefssqise..vfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                             gphm +p     l++ ++  dnsl+f l+n tn ++ gnc ++f+    +     i mgpheigik  ke  +fp      +  t+++ nq ge i++gk   s  i l+ p
+  UniRef90_UPI0001DD215B   1 GPHMVEPpnerSLQITMNQRDNSLYFQLFNNTNSVLAGNCKLKFTDAGDKptTQIIDMGPHEIGIKEYKEYRYFPYALDLEAGSTIEIENQYGEVIFLGKYGSSPMINLRPP 112
+                             788855523227999999**************************8765541155699******************988888999********************99999987 PP
+
+>> UniRef90_P35193  Autophagy-related protein 19 n=10 Tax=Saccharomyces TaxID=4930 RepID=ATG19_YEAST
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   62.8   0.0   4.9e-20   3.1e-13       5     106 ..     258     361 ..     255     362 .. 0.89
+
+  Alignments for each domain:
+  == domain 1  score: 62.8 bits;  conditional E-value: 4.9e-20
+  Input_seq_SEQRES_A   5 ndpllhvevsnednslhfilynktniiipgnctfefssqise..vfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                         n+  l++ ++  dnsl+f l+n tn ++ gnc ++f+    +     i mgpheigik  ke  +fp      +  t+++ nq ge i++gk   s  i l+ p
+     UniRef90_P35193 258 NERSLQITMNQRDNSLYFQLFNNTNSVLAGNCKLKFTDAGDKptTQIIDMGPHEIGIKEYKEYRYFPYALDLEAGSTIEIENQYGEVIFLGKYGSSPMINLRPP 361
+                         6777899999**************************8765541155699******************988888999********************99999987 PP
+
+>> UniRef90_A0A8B8UZ87  Atg19 n=1 Tax=Saccharomyces paradoxus TaxID=27291 RepID=A0A8B8UZ87_SACPA
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   62.4   0.1   6.3e-20     4e-13       3     106 ..     256     361 ..     254     362 .. 0.91
+
+  Alignments for each domain:
+  == domain 1  score: 62.4 bits;  conditional E-value: 6.3e-20
+   Input_seq_SEQRES_A   3 hmndpllhvevsnednslhfilynktniiipgnctfefssqise..vfsikmgpheigikgqkelwffpslptplsnytmkvvnqdgetilvgkcadsneitlksp 106
+                          h n   l++ + + dnsl+f l+n tn ++ gnc ++f+   ++     i+mgpheigik  ke+ +fp      +  t+++ n+ ge i++gk +  + i l+ p
+  UniRef90_A0A8B8UZ87 256 HPNGRSLQITMKHNDNSLYFQLFNNTNSVLAGNCKLKFTDADNKptTRIIEMGPHEIGIKEYKEFRYFPYAFDLTAGSTIEIENEYGEVIFLGKHSFYSTINLRPP 361
+                          88889999******************************987765114569*******************9999999******************999999988877 PP
+
+>> UniRef90_UPI0025502A9F  Ig-like domain-containing protein n=5 Tax=Gallibacterium anatis TaxID=750 RepID=UPI0025502A9F
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI0023816B3D  retention module-containing protein n=1 Tax=Pseudomonas sp. PSKL.D1 TaxID=3029060 RepID=UPI0023816B3D
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_A0A9D4I443  Uncharacterized protein n=1 Tax=Dreissena polymorpha TaxID=45954 RepID=A0A9D4I443_DREPO
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_A0A239LT07  Surface adhesion protein (Fragment) n=4 Tax=Pseudomonas japonica TaxID=256466 RepID=A0A239LT07_9PSED
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI0033D30E36  FG-GAP repeat domain-containing protein n=1 Tax=Hamadaea sp. NPDC050747 TaxID=3155789 RepID=UPI0033D30E36
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI00340CA8F5  FG-GAP-like repeat-containing protein n=1 Tax=Hamadaea sp. NPDC050747 TaxID=3155789 RepID=UPI00340CA8F5
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI0039E8F3DE  SpaA isopeptide-forming pilin-related protein n=1 Tax=Oenococcus sp. TaxID=1979414 RepID=UPI0039E8F3DE
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI003D151095  retention module-containing protein n=1 Tax=Pseudomonas sp. TaxID=306 RepID=UPI003D151095
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI00137A47FD  SpaA isopeptide-forming pilin-related protein n=1 Tax=Candidatus Enterococcus huntleyi TaxID=1857217 RepID=UPI00137A47FD
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI002181FB04  SpaA isopeptide-forming pilin-related protein n=2 Tax=Lactococcus lactis subsp. cremoris TaxID=1359 RepID=UPI002181FB04
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_UPI002FCB47D7  SpaA isopeptide-forming pilin-related protein n=6 Tax=Lactococcus lactis subsp. cremoris TaxID=1359 RepID=UPI002FCB47D7
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+>> UniRef90_A0A7Z1AUH7  M23ase beta-sheet core domain-containing protein n=1 Tax=Actinophytocola xinjiangensis TaxID=485602 RepID=A0A7Z1AUH7_9PSEU
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query model(s):                            1  (107 nodes)
+Target sequences:                  184146434  (64621732275 residues searched)
+Passed MSV filter:                   3486144  (0.0189314); expected 3682928.7 (0.02)
+Passed bias filter:                  3138003  (0.0170408); expected 3682928.7 (0.02)
+Passed Vit filter:                    178323  (0.000968376); expected 184146.4 (0.001)
+Passed Fwd filter:                      1853  (1.00626e-05); expected 1841.5 (1e-05)
+Initial search space (Z):          184146434  [actual number of targets]
+Domain search space  (domZ):              29  [number of targets reported over threshold]
+# CPU time: 300.87u 40.94s 00:05:41.81 Elapsed: 00:02:39.18
+# Mc/sec: 43438.13
+
+@@ New targets included:   29
+@@ New alignment includes: 18 subseqs (was 1), including original query
+//
+[ok]

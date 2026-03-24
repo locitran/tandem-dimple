@@ -1,0 +1,13 @@
+	Sequences rejected for being too short, too similar, or not similar enough to the query sequence.
+
+1 Fragment ur|UPI0001DD215C|1_107|6.3e-75|Uncharacterized protein YOL083W n=1 Tax=Saccharomyces cerevisiae TaxID=4932 RepID=UPI0001DD215C rejected: identity percent 100.00 is too big
+2 Fragment ur|Q12292|246_348|5.4e-70|Autophagy-related protein 34 n=9 Tax=Saccharomyces TaxID=4930 RepID=ATG34_YEAST rejected: identity percent 100.00 is too big
+
+	 Sequences rejected in the clustering stage by CD-HIT
+
+3 Fragment ur|P35193|258_361|4.9e-20|Autophagy-related rejected: the sequence shares 100.00% identity with ur|UPI0001DD215B|1_112|3.6e-22|Autophagy-related (which was preserved)
+4 Fragment ur|A0AA35NMY8|249_352|8.2e-24|Autophagy rejected: the sequence shares 95.19% identity with ur|A0ABN8WRK2|248_352|4.7e-25|Uncharacterized (which was preserved)
+5 Fragment ur|J5PDA7|252_353|2.5e-49|ATG34-like rejected: the sequence shares 99.02% identity with ur|H0H0S3|164_265|1.6e-49|YOL083W-like (which was preserved)
+
+	Sequences rejected because of the requirement to select only 150 representative homologs
+
