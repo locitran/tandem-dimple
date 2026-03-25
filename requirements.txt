@@ -20,5 +20,7 @@ tensorflow==2.17.0
 shap==0.41.0
 flask==3.1.2
 more_itertools==10.8.0
+ipynbname==2025.8.0.0
+openpyxl==3.1.5
 # Editable Git install with no remote (PyRONN==4.0rc0)
 -e ./pyRONN

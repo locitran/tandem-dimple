@@ -246,7 +246,7 @@ class SEQfeatures(UniprotMapping):
         except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(msg)
-        LOGGER.report('PolyPhen-2 features computed in %.2fs.', '_pph2')
+        LOGGER.report('PolyPhen-2 features computed in %.2fs.', '_calcPSICfeatures')
         return f
 
         # if all([f in self.feats for f in features]):

@@ -686,8 +686,6 @@ class PDBfeatures:
             for c in self.chids:
                 sel = f'chain `{c}`'
                 which, sel = sliceAtoms(pdb.ca, sel)
-                # chain_length = len(which)
-                # self.feats[c]['Rg'] = np.ones(chain_length) * rg
                 self.feats[c]['Rg'] = rg
                 self.feats[c]['Dcom'] = dcom[which]
         except Exception as e:

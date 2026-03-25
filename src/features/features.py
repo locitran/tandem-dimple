@@ -115,10 +115,21 @@ class Features:
                 SAV = np.array(query.upper().split(), dtype=SAV_dtype)
                 SAV_list = ['{} {} {} {}'.format(*SAV)]
         else:
-            # 'query' is a list or tuple of SAV coordinates
-            SAVs = np.array([tuple(s.upper().split()) for s in query],
-                            dtype=SAV_dtype)
-            SAV_list = ['{} {} {} {}'.format(*s) for s in SAVs]
+            query = list(query)
+            assert len(query) > 0, 'Empty SAV query.'
+
+            if all(len(str(s).split()) < 3 for s in query):
+                # 'query' is a list or tuple of single Uniprot acc (+ pos),
+                # e.g. ['P17516', 'P17516 135']
+                SAV_list = []
+                for s in query:
+                    SAV_list.extend(seqScanning(str(s)))
+                self.saturation_mutagenesis = True
+            else:
+                # 'query' is a list or tuple of SAV coordinates
+                SAVs = np.array([tuple(str(s).upper().split()) for s in query], dtype=SAV_dtype)
+                SAV_list = ['{} {} {} {}'.format(*s) for s in SAVs]
+
         # store SAV coordinates
         nSAVs = len(SAV_list)
         data = np.ma.masked_all(nSAVs, dtype=self.data_dtype)

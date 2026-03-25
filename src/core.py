@@ -54,6 +54,8 @@ class Tandem(Features):
         self.preprocess = Preprocessing(fm)
     
     def getPredictions(self, models, folder='.', filename=None):
+            
+
         self.calcPredictions(models)
         SAV = self.data["SAVs"]
         tdm_data = self.data["tandem"]
@@ -81,12 +83,13 @@ class Tandem(Features):
             filepath = os.path.join(folder, f"{filename}.csv")
             df.to_csv(filepath, index=False)
             LOGGER.info(f"Predictions saved to {filepath}")
+        
         return df
     
     def calcPredictions(self, models):
         assert os.path.isdir(models), f"Folder {models} does not exist."
         assert self.featMatrix is not None, 'Feature matrix not set.'
-        
+        LOGGER.timeit('_calcPredictions')
         # Convert the feature matrix to a NumPy array
         feat_names = self.featMatrix.dtype.names
         fm = np.column_stack([self.featMatrix[name] for name in feat_names])
@@ -104,9 +107,8 @@ class Tandem(Features):
         if models != TANDEM_v1dot1:
             tf_models = self.setModels(models)
             shap_background = np.load(f"{models}/shap_background.npy")
-            self.data['tandem_dimple'] = self._calcPredictions(
-                fm, shap_background, tf_models
-            )
+            self.data['tandem_dimple'] = self._calcPredictions(fm, shap_background, tf_models)
+        LOGGER.report('Predictions computed in %.2fs.', label='_calcPredictions')
 
     def _calcPredictions(self, featMatrix, shap_background, models):
         "Voting average & SHAP"
@@ -193,7 +195,7 @@ class Tandem(Features):
     ### --------- Visualization     ------- #####
     def plotSHAP(self, folder='.'):
         assert not np.ma.is_masked(self.data['tandem']['shap']), 'SHAP has not been calculated' 
-
+        LOGGER.timeit('_plotSHAP')
         SAVs = self.data['SAVs']
         individualSHAP_title = 'Feature contribution to model prediction on {} ({})'
 
@@ -220,7 +222,7 @@ class Tandem(Features):
                 _classif = self.data['tandem_dimple']['classification'][i]
                 plotSHAP_bar(_featImp, individualSHAP_title.format(sav, _classif), 
                             tandem_dimple_shap, sav, globalshap=False)
-
+        LOGGER.report('plotSHAP computed in %.2fs.', label='_plotSHAP')
             
     #### -------- Transfer learning ------- #####
 
