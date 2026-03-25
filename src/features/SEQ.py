@@ -214,6 +214,7 @@ class SEQfeatures(UniprotMapping):
             return entropy/n, rankdMI/n
 
     def calcPfamfeatures(self):
+        LOGGER.timeit('_calcPfamfeatures')
         features = ['entropy', 'ranked_MI']
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
@@ -222,6 +223,7 @@ class SEQfeatures(UniprotMapping):
         else:
             pfam = self.Pfam
         if isinstance(pfam, str):
+            LOGGER.report('Pfam features computed in %.2fs.', '_calcPfamfeatures')
             return f
         for i, resid in enumerate(self.resids):
             try:
@@ -231,9 +233,11 @@ class SEQfeatures(UniprotMapping):
             except Exception as e:
                 # msg = traceback.format_exc()
                 LOGGER.warn(str(e))
+        LOGGER.report('Pfam features computed in %.2fs.', '_calcPfamfeatures')
         return f
     
     def calcPolyPhen2features(self):
+        LOGGER.timeit('_calcPSICfeatures')
         features = ['wtPSIC', 'deltaPSIC']
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
@@ -242,6 +246,7 @@ class SEQfeatures(UniprotMapping):
         except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(msg)
+        LOGGER.report('PolyPhen-2 features computed in %.2fs.', '_pph2')
         return f
 
         # if all([f in self.feats for f in features]):
@@ -270,14 +275,16 @@ class SEQfeatures(UniprotMapping):
         #         self.feats[f] = str(e)
 
     def calcBLOSUMfeature(self):
-        
+        LOGGER.timeit('_calcBLOSUMfeature')
         blosum62 = substitution_matrices.load("BLOSUM62")
         f = np.zeros(len(self.wt_aas), dtype='f')
         for i, (wt_aa, mut_aa) in enumerate(zip(self.wt_aas, self.mut_aas)):
             f[i] = blosum62[(mut_aa, wt_aa)]
+        LOGGER.report('BLOSUM feature computed in %.2fs.', '_calcBLOSUMfeature')
         return f
     
     def calcCHEMfeatures(self):
+        LOGGER.timeit('_calcCHEMfeatures')
         features = ['phobic_percent', 'delta_phobic_percent', 
                     'philic_percent', 'delta_philic_percent',
                     'charge', 'deltaCharge', 
@@ -317,9 +324,11 @@ class SEQfeatures(UniprotMapping):
             f[i]['deltaCharge'] = charge_dict[mut_aa] - charge_dict[wt_aa]
             f[i]['polarity'] = polarity_dict[wt_aa]
             f[i]['deltaPolarity'] = polarity_dict[mut_aa] - polarity_dict[wt_aa]
+        LOGGER.report('Chemical features computed in %.2fs.', '_calcCHEMfeatures')
         return f
 
     def calcFeatures(self, sel_feats: list):
+        LOGGER.timeit('_calcSEQgroup')
         if not set(sel_feats).issubset(set(SEQ_FEATS)):
             invalid_feats = set(sel_feats) - set(SEQ_FEATS)
             raise ValueError(f'Invalid features: {invalid_feats}')
@@ -353,6 +362,7 @@ class SEQfeatures(UniprotMapping):
             for feat in list(chem_feats):
                 if feat in sel_feats:
                     f[feat] = chem[feat]
+        LOGGER.report('Sequence feature group computed in %.2fs.', '_calcSEQgroup')
         return f
 
 def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS, 

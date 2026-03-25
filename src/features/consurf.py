@@ -65,6 +65,9 @@ def mapIndices(targetSeq, querySeq):
                       0 -|||- 5
     query             0 -CGTA 4
     query indices       -0123
+
+    target = 'MYLSKVIIARAWSRDLYQLHQGLWHLFPNRPDAARDFLFHVEKRNTPEGCHVLLQSAQMPVSTAVATVIKTKQVEFQLQVGVPLYFRLRANPIKTILDNQKRLDSKGNIKRCRVPLIKEAEQIAWLQRKLGNAARVEDVHPISERPQYFSGDGKSGKIQTVCFEGVLTINDAPALIDLVQQGIGPAKSMGCGLLSLAPL'
+    query = 'EIDAMALYRAWQQLDNGSCAQIRRVSEPDELRDIPAFYRLVQPFGWENPRHQQALLRMVFCLSAGKNVIRHQDKKSEQTTGISLGRALANSGRINERRIFQLIRADRTADMVQLRRLLTHAEPVLDWPLMARMLTWWGKRERQQLLEDFVLTTNKNA'
     """
     aln = _align(targetSeq, querySeq)
     try:
@@ -79,6 +82,67 @@ def mapIndices(targetSeq, querySeq):
             target_seq += p_split[2] if i % 4 == 0 else ''
             query_seq += p_split[2] if i % 4 == 2 else ''
             align_dash += p_split[2]  if i % 4 == 1 else ''
+    # Get the indices of the target and query sequences correspondingly
+    target_indices = [] ; idx = 0
+    for i in range(len(target_seq)):
+        if target_seq[i] not in ['-', '.']: # != '-':
+            target_indices.append(idx)
+            idx += 1
+        else:
+            target_indices.append(-1)
+
+    query_indices = [] ; idx = 0
+    for i in range(len(query_seq)):
+        if query_seq[i] not in ['-', '.']: # != '-':
+            query_indices.append(idx)
+            idx += 1
+        else:
+            query_indices.append(-1)
+
+    search = lambda x: x == "|"
+    exact_match_indices = np.array(list(mit.locate(align_dash, search)))
+
+    return np.array(target_indices), np.array(query_indices), exact_match_indices
+
+def mapIndices_v2(targetSeq, querySeq):
+    """biopython==1.81"""
+    aln = _align(targetSeq, querySeq)
+    lines = [line.rstrip() for line in aln.splitlines() if line.strip()]
+
+    if len(lines) % 3 != 0:
+        raise ValueError(f'Unexpected alignment block structure: {lines}')
+
+    target_seq = ''
+    query_seq = ''
+    align_dash = ''
+
+    for i in range(0, len(lines), 3):
+        target_line = lines[i]
+        match_line = lines[i + 1]
+        query_line = lines[i + 2]
+
+        target_parts = target_line.split()
+        match_parts = match_line.split()
+        query_parts = query_line.split()
+
+        if (target_parts[0].lower() != 'target') and (len(target_parts) not in [3, 4]):
+            print('\n'.join(lines))
+            raise ValueError(f'Expected target line (len={len(target_parts)}), got: {target_line}')
+        
+        if (query_parts[0].lower() != 'target') and (len(query_parts) not in [3, 4]):
+            print('\n'.join(lines))
+            raise ValueError(f'Expected target line (len={len(query_parts)}), got: {query_line}')
+        
+        if len(match_parts) not in [2, 3]:
+            print('\n'.join(lines))
+            raise ValueError(f'Unexpected match alignment line (len={len(match_parts)}): {match_line}')
+
+        target_seq += target_parts[2]
+        align_dash += match_parts[1]
+        query_seq += query_parts[2]
+
+    if not target_seq or not query_seq or not align_dash:
+        raise ValueError('Unable to parse alignment text from PairwiseAligner output.')
 
     # Get the indices of the target and query sequences correspondingly
     target_indices = [] ; idx = 0
@@ -117,6 +181,9 @@ def _align(target, query):
     target            0 ACGT 4
                       0 |||| 4
     query             0 ACGT 4
+    target = 'ACGT'
+    query = 'ACGT'
+
     """
     aligner = PairwiseAligner()
     aligner.mode = 'global'

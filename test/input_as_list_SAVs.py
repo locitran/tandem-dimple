@@ -1,9 +1,10 @@
 import os
 import sys
-addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.insert(0, addpath) # /home/newloci
+addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, addpath) # /tandem/
+os.chdir(addpath)
+from src.main import run
 
-from tandem.src.main import run
 
 query = ['O14508 52 S N', 'P29033 217 Y D']
 query = ['P29033 100 H Q']

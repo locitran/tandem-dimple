@@ -37,39 +37,39 @@ def _get_df(case, out_dir):
     return df
 
 
-def _check(got, ref, pdb_id, chid):
+def _check(new_features, ref_features, pdb_id, chid):
     """Check that the new result matches the verified saved result."""
-    assert list(got.columns) == list(ref.columns), (
+    assert list(new_features.columns) == list(ref_features.columns), (
         f"Column mismatch for {pdb_id} chain {chid}: "
-        f"{list(got.columns)} != {list(ref.columns)}"
+        f"{list(new_features.columns)} != {list(ref_features.columns)}"
     )
-    assert len(got) == len(ref), (
+    assert len(new_features) == len(ref_features), (
         f"Row-count mismatch for {pdb_id} chain {chid}: "
-        f"{len(got)} != {len(ref)}"
+        f"{len(new_features)} != {len(ref_features)}"
     )
-    assert got["residue_index"].tolist() == ref["residue_index"].tolist(), (
+    assert new_features["residue_index"].tolist() == ref_features["residue_index"].tolist(), (
         f"Residue index mismatch for {pdb_id} chain {chid}"
     )
 
     np.testing.assert_allclose(
-        got["consurf"].to_numpy(dtype=float),
-        ref["consurf"].to_numpy(dtype=float),
+        new_features["consurf"].to_numpy(dtype=float),
+        ref_features["consurf"].to_numpy(dtype=float),
         rtol=1e-6,
         atol=1e-6,
         equal_nan=True,
         err_msg=f"ConSurf score mismatch for {pdb_id} chain {chid}",
     )
     np.testing.assert_allclose(
-        got["ACNR"].to_numpy(dtype=float),
-        ref["ACNR"].to_numpy(dtype=float),
+        new_features["ACNR"].to_numpy(dtype=float),
+        ref_features["ACNR"].to_numpy(dtype=float),
         rtol=1e-6,
         atol=1e-6,
         equal_nan=True,
         err_msg=f"ACNR mismatch for {pdb_id} chain {chid}",
     )
     np.testing.assert_array_equal(
-        got["consurf_color"].to_numpy(),
-        ref["consurf_color"].to_numpy(),
+        new_features["consurf_color"].to_numpy(),
+        ref_features["consurf_color"].to_numpy(),
         err_msg=f"ConSurf color mismatch for {pdb_id} chain {chid}",
     )
 
@@ -78,9 +78,9 @@ def test_calcConSurf_v2_matches_verified_results():
     """Compare calcConSurf_v2 outputs against verified CSV files."""
     for case in CASES:
         assert os.path.isfile(case["csv"]), f"Missing verified file: {case['csv']}"
-        got = _get_df(case, REF_DIR)
-        ref = pd.read_csv(case["csv"])
-        _check(got, ref, case["id"], case["chid"])
+        new_features = _get_df(case, REF_DIR)
+        ref_features = pd.read_csv(case["csv"])
+        _check(new_features, ref_features, case["id"], case["chid"])
         LOGGER.info(f"ConSurf features for {case['id']} chain {case['chid']} verified successfully.")
 
 if __name__ == "__main__":

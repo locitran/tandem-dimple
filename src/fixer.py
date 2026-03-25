@@ -521,6 +521,7 @@ def removeEND(pdbpath):
 
 def fixPDB(pdb, format='asu', 
            fix_loop=True, replaceNonstandard=True, refresh=False, folder='.'):
+    LOGGER.timeit('_fixPDB')
 
     os.makedirs(folder, exist_ok=True)
     if os.path.isfile(pdb):
@@ -538,14 +539,18 @@ def fixPDB(pdb, format='asu',
         else:
             f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
             f.saveTopology(savePath=out)
+        LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
         return out
     else:
         if format == 'af':
-            return fetchAF2(afid=pdb, refresh=refresh, folder=RAW_PDB_DIR)
+            out = fetchAF2(afid=pdb, refresh=refresh, folder=RAW_PDB_DIR)
+            LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
+            return out
         elif format == 'opm':
             out = os.path.join(folder, f'{pdb}-ne1.pdb')
             if os.path.isfile(out) and not refresh:
                 LOGGER.info(f"File {out} already exists")
+                LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
                 return out
             pdbpath = fetchPDB(pdb, format=format, refresh=refresh, folder=RAW_PDB_DIR)
             f = LociFixer(pdbpath)
@@ -553,22 +558,26 @@ def fixPDB(pdb, format='asu',
             opm_path = os.path.join(folder, f'{pdb}-opm.pdb')
             f.saveTopology(savePath=opm_path)
             out = buildCGmembrane(opm_path, folder=folder, filename=pdb, refresh=refresh)
+            LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
             return out
         elif format == 'asu':
             out = os.path.join(folder, f'{pdb}.pdb')
             if os.path.isfile(out) and not refresh:
                 LOGGER.info(f"File {out} already exists")
+                LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
                 return out
             pdbpath = fetchPDB(pdb, format='pdb', refresh=refresh, folder=RAW_PDB_DIR)
             f = LociFixer(pdbpath)
             f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
             f.saveTopology(savePath=out)
+            LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
             return out
         elif format.startswith('bas'):
             assemblyID = int(format[3:])
             out = os.path.join(folder, f'{pdb}-{assemblyID}.pdb')
             if os.path.isfile(out) and not refresh:
                 LOGGER.info(f"File {out} already exists")
+                LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
                 return out
             pdbpath = fetchPDB_BiologicalAssembly(pdb, assemblyID, format='cif', 
                                             refresh=refresh, folder=RAW_PDB_DIR)
@@ -576,6 +585,7 @@ def fixPDB(pdb, format='asu',
             f = LociFixer(pdbpath)
             f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)
             f.saveTopology(savePath=out)
+            LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
             return out
         else:
             raise ValueError(f"Unsupported format: {format}")

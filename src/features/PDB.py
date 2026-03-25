@@ -581,6 +581,7 @@ class PDBfeatures:
     # STR features
 
     def calcRONNfeature(self, chain="all"):
+        LOGGER.timeit("_calcRONNfeature")
         if chain == "all":
             chain_list = self.chids
         else:
@@ -599,8 +600,10 @@ class PDBfeatures:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
                 d['IDRs'] = str(e)
+        LOGGER.report('RONN feature computed in %.2fs.', "_calcRONNfeature")
 
     def calcSFfeatures(self):
+        LOGGER.timeit("_calcSFfeatures")
         pdb = self.getPDB()
         for chID in self.chids:
             d = self.feats[chID]
@@ -621,9 +624,11 @@ class PDBfeatures:
                 self.feats[chID]['SF1'] = str(e)
                 self.feats[chID]['SF2'] = str(e)
                 self.feats[chID]['SF3'] = str(e)
+        LOGGER.report('Shape factor features computed in %.2fs.', "_calcSFfeatures")
     
     def calcCLfeature(self, chain="all"):
         """Calculate chain length feature."""
+        LOGGER.timeit("_calcCLfeature")
         pdb = self.getPDB()
         protein_length = pdb.ca.numAtoms()
         if chain == 'all':
@@ -635,8 +640,10 @@ class PDBfeatures:
             chain_length = pdb[chID].ca.numAtoms()
             d['chain_length'] = chain_length
             d['protein_length'] = protein_length
+        LOGGER.report('Chain length feature computed in %.2fs.', "_calcCLfeature")
     
     def calcAGfeatures(self, chain="all", refresh=False):
+        LOGGER.timeit("_calcAGfeatures")
         features = ['AG1', 'AG3', 'AG5', 'ACR']
         pdb = self.getPDB()
         if chain == 'all':
@@ -663,13 +670,16 @@ class PDBfeatures:
                 LOGGER.warn(msg)
                 for f in features:
                     d[f] = str(e)
+        LOGGER.report('AG features computed in %.2fs.', "_calcAGfeatures")
     
     def calcRGandDcomfeatures(self):
+        LOGGER.timeit("_calcRGandDcomfeatures")
         features = ['Rg', 'Dcom']
         pdb = self.getPDB()
 
         if all([f in self.feats[chID] for chID in self.chids for f in features]):
             if all([not isinstance(self.feats[chID][f], str) for chID in self.chids for f in features]):
+                LOGGER.report('RG and Dcom features computed in %.2fs.', "_calcRGandDcomfeatures")
                 return
         try:
             rg, dcom = calcRGandDcom(pdb)
@@ -687,14 +697,17 @@ class PDBfeatures:
                 d = self.feats[chID]
                 for f in features:
                     d[f] = str(e)
+        LOGGER.report('RG and Dcom features computed in %.2fs.', "_calcRGandDcomfeatures")
                     
     def calcDSSfeatures(self):
+        LOGGER.timeit("_calcDSSfeatures")
         pdb = self.getPDB()
         ca = pdb.ca.copy()
         for chID in self.chids:
             d = self.feats[chID]
             if 'SSbond' in d:
                 if isinstance(d['SSbond'], np.ndarray):
+                    LOGGER.report('Disulfide bond features computed in %.2fs.', "_calcDSSfeatures")
                     return
         try:
             dss = calcDisulfideBonds(pdb.protein, distA=2.4)
@@ -715,8 +728,10 @@ class PDBfeatures:
             LOGGER.warn(msg)
             for chID in self.chids:
                 self.feats[chID]['SSbond'] = str(e)
+        LOGGER.report('Disulfide bond features computed in %.2fs.', "_calcDSSfeatures")
 
     def calcDSSPfeatures(self, chain='all'):
+        LOGGER.timeit("_calcDSSPfeatures")
         features = ['loop_percent', 'helix_percent', 'sheet_percent', 'dssp']
         if chain == 'all':
             chain_list = self.chids
@@ -739,8 +754,10 @@ class PDBfeatures:
                 LOGGER.warn(msg)
                 for f in features:
                     d[f] = str(e)
+        LOGGER.report('DSSP features computed in %.2fs.', "_calcDSSPfeatures")
 
     def calcSASAfeatures(self, chain='all', complex=False):
+        LOGGER.timeit("_calcSASAfeatures")
         features = ['SASA', 'SASA_in_complex', 'deltaSASA']
         if chain == 'all':
             chain_list = self.chids
@@ -787,8 +804,10 @@ class PDBfeatures:
                     d = self.feats[chID]
                     d['SASA_in_complex'] = str(e)
                     d['deltaSASA'] = str(e)
+        LOGGER.report('SASA features computed in %.2fs.', "_calcSASAfeatures")
 
     def calcHbondfeature(self, chain_list='all'):
+        LOGGER.timeit("_calcHBplusfeatures")
         if chain_list == 'all':
             chain_list = self.chids
         chid_to_run = []
@@ -814,8 +833,10 @@ class PDBfeatures:
             for chID in chid_to_run:
                 d = self.feats[chID]
                 d['Hbond'] = str(e)
+        LOGGER.report('HBplus features computed in %.2fs.', "_calcHBplusfeatures")
 
     def calcPropKafeature(self, chain='all'):
+        LOGGER.timeit("_calcPropKafeature")
         if chain == 'all':
             chain_list = self.chids
         else:
@@ -833,6 +854,7 @@ class PDBfeatures:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
                 d['charge_pH7'] = str(e)
+        LOGGER.report('PropKa feature computed in %.2fs.', "_calcPropKafeature")
 
     def calcConSurffeatures(self, chain='all'):
         """
@@ -840,6 +862,7 @@ class PDBfeatures:
         Reason is that ConSurf provides calculations for the asymmetric unit, not the biological unit.
         Especially when you do searching the chainID in https://consurfdb.tau.ac.il/
         """
+        LOGGER.timeit("_calcConSurf")
         features = ['consurf', 'ACNR', 'consurf_color']
         if chain == 'all':
             chain_list = self.chids
@@ -867,10 +890,12 @@ class PDBfeatures:
                 LOGGER.warn(msg)
                 for f in features:
                     d[f] = str(e)
+        LOGGER.report('ConSurf features computed in %.2fs.', "_calcConSurf")
 
     def calcDELTA_Rg_SASA_ACR_Hbond_DSS_features(self, chids, resids, wt_aas, mut_aas, 
         sel_feats=['DELTA_Rg', 'DELTA_Dcom', 'DELTA_SASA', 'DELTA_ACR', 
                     'DELTA_Hbond', 'DELTA_DSS', 'DELTA_charge_pH7']):
+        LOGGER.timeit("_calcDELTAfeatures")
         # Merge if either DELTA_Rg or DELTA_Dcom is selected
         if {'DELTA_Rg', 'DELTA_Dcom'}.intersection(set(sel_feats)):
             sel_feats = list(set(sel_feats) | {'DELTA_Rg', 'DELTA_Dcom'})
@@ -883,6 +908,7 @@ class PDBfeatures:
             LOGGER.warn("PDB contains only CA atoms. DELTA features are set to 0.")
             for name in sel_feats:
                 f[name] = 0
+            LOGGER.report('DELTA features computed in %.2fs.', "_calcDELTAfeatures")
             return f
 
         folder4mut = os.path.join(self.folder, 'mut')
@@ -1015,6 +1041,7 @@ class PDBfeatures:
                 except Exception as e:
                     msg = traceback.format_exc()
                     LOGGER.warn(msg)
+        LOGGER.report('DELTA features computed in %.2fs.', "_calcDELTAfeatures")
         return f
 
     def _cov_matrix(self, GVecs, GVals):
