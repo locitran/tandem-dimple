@@ -65,6 +65,8 @@ def run(
     LOGGER.info(f"Job directory: {job_directory}")
     LOGGER.timeit("_runtime")
     userlog.emit("info", "JOB_STARTED", "job", f"Job '{job_name}' started.")
+    mode_name = "training" if labels is not None else "inferencing"
+    userlog.emit("info", "JOB_MODE", "job", f"Submitted mode: {mode_name}.")
 
     try:
         ## Save feature pickles

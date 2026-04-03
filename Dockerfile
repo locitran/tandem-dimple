@@ -22,7 +22,7 @@ RUN apt update --quiet \
 # --- Step 3: Create Conda environment + install Python deps ---
 RUN conda create -n tandem python=3.11.11 \
     && echo "source activate tandem" > ~/.bashrc \
-    && /bin/bash -c "source activate tandem && pip install flask && pip install -r requirements.txt" \
+    && /bin/bash -c "source activate tandem && pip install flask gunicorn && pip install -r requirements.txt" \
     && conda install -n tandem -c conda-forge -c bioconda mmseqs2
 
 # --- Step 4: Runtime environment variables ---
@@ -35,4 +35,5 @@ ENV PATH=/opt/conda/envs/tandem/bin:$PATH
 
 # --- Step 5: Run server ---
 EXPOSE 5000
-CMD ["conda", "run", "--no-capture-output", "-n", "tandem", "python", "main.py"]
+ENV GUNICORN_WORKERS=4
+CMD ["/bin/bash", "-c", "conda run --no-capture-output -n tandem gunicorn -w ${GUNICORN_WORKERS} -b 0.0.0.0:5000 --threads 1 --timeout 0 main:app"]

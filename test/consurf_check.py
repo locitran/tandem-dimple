@@ -6,7 +6,6 @@ import pandas as pd
 addpath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, addpath)
 os.chdir(addpath)
-
 from src.download import fetchPDB
 from src.features.consurf import calcConSurf_v2
 from src.utils.logger import LOGGER
@@ -76,12 +75,38 @@ def _check(new_features, ref_features, pdb_id, chid):
 
 def test_calcConSurf_v2_matches_verified_results():
     """Compare calcConSurf_v2 outputs against verified CSV files."""
+    results = []
+
     for case in CASES:
-        assert os.path.isfile(case["csv"]), f"Missing verified file: {case['csv']}"
-        new_features = _get_df(case, REF_DIR)
-        ref_features = pd.read_csv(case["csv"])
-        _check(new_features, ref_features, case["id"], case["chid"])
-        LOGGER.info(f"ConSurf features for {case['id']} chain {case['chid']} verified successfully.")
+        case_label = f"{case['id']} chain {case['chid']}"
+        try:
+            assert os.path.isfile(case["csv"]), f"Missing verified file: {case['csv']}"
+            new_features = _get_df(case, REF_DIR)
+            ref_features = pd.read_csv(case["csv"])
+            _check(new_features, ref_features, case["id"], case["chid"])
+        except Exception as exc:
+            LOGGER.warn(f"FAILED: {case_label} ({case['info']}) - {exc}")
+            results.append({"case": case_label, "info": case["info"], "passed": False, "error": str(exc)})
+            continue
+
+        LOGGER.info(f"PASSED: {case_label} ({case['info']})")
+        results.append({"case": case_label, "info": case["info"], "passed": True, "error": ""})
+
+    n_total = len(results)
+    n_passed = sum(result["passed"] for result in results)
+    n_failed = n_total - n_passed
+
+    LOGGER.info(f"ConSurf unit test summary: {n_total} total, {n_passed} passed, {n_failed} failed")
+    for result in results:
+        status = "PASSED" if result["passed"] else "FAILED"
+        suffix = "" if result["passed"] else f" - {result['error']}"
+        LOGGER.info(f"  {status}: {result['case']} ({result['info']}){suffix}")
+
+    if n_failed:
+        raise AssertionError(
+            f"ConSurf verification failed for {n_failed}/{n_total} case(s). "
+            "See log for the full summary."
+        )
 
 if __name__ == "__main__":
     test_calcConSurf_v2_matches_verified_results()

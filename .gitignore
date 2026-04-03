@@ -167,46 +167,12 @@ jobs/
 logs/
 pdbfile/
 notebooks/
-pending_task.txt
-train_test.py
-slurm_jupyter.sh
-src/olds/
-
 ._.
 ._.DS_Store
 .DS_Store
-hbdebug.dat
-
-# data
-data/SAVs.tsv
-data/c30_clstr_May13_full_rhd.csv
-data/mapped_SAVs_with_chain_length_labels.csv
-data/mapped_SAVs_with_chain_length.npy
-data/precomputed_features-ID_opt.csv
-data/precomputed_features-ID_opt.npy
-data/rhapsody_SAVs_mapped.npy
-data/PKD1/
 data/pickles/
 data/pfamdb/
 data/consurf/db/
 data/consurf/uniref90.fasta
-data/consurf/uniref50.fasta
-data/R20000/stats/.nfs000000000f4c067100000cec
-
-# models
-models/tf.ipynb
-models/feature_importance.ipynb
-models/comparison.ipynb
-models/tandem.ipynb
-models/DNN_visualization.ipynb
-models/different_number_of_layers/20250423-1234-tandem/n_hidden-5/shap_values_GJB2.npy
-models/different_number_of_layers/20250423-1234-tandem/n_hidden-5/shap_values_GJB2_by_TANDEM_GJB2.npy
-models/different_number_of_layers/20250423-1234-tandem/n_hidden-5/shap_values_fold_1_Jun19.npy
 
 rhapsody/
-rhapsody_modify/
-
-.gradio
-.vscode
-pickles
-train.py

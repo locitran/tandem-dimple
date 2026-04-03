@@ -16,11 +16,11 @@ __all__ = ['execDSSP', 'parseDSSP', 'calcDSSP', 'calcSecondary']
 DSSPEXE = ROOT_DIR + '/src/features/bin/mkdssp'
 
 def execDSSP(pdb, filename=None, folder='.'):
-    dssp = which('mkdssp')
-    if dssp is None:
-        dssp = which('dssp')
-    if dssp is None:
-        dssp = DSSPEXE
+    # dssp = which('mkdssp')
+    # if dssp is None:
+    #     dssp = which('dssp')
+    # if dssp is None:
+    dssp = DSSPEXE
     if not os.path.isfile(pdb):
         pdb = fetchPDB(pdb, compressed=False)
     if pdb is None:
