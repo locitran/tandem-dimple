@@ -12,7 +12,6 @@ from ..dynamics.ENM import GNM
 from ..utils.logger import LOGGER
 from ..download import fetchPDB
 from ..utils.settings import ROOT_DIR,RAW_PDB_DIR
-from ..utils.timer import getTimer
 from ..stand_alone_consurf.main import run
 from .. import download
 
@@ -26,15 +25,14 @@ consurfLookup = consurfDir + '/2024-10-08.json'
 customDir = consurfDir + '/db/custom'
 uniref90_2022_05 = os.path.join(consurfDir, 'uniref90.fasta')
 os.makedirs(customDir, exist_ok=True)
+consurfLookupData = None
 
-timer = getTimer('tandem', verbose=True)
-with open(consurfLookup) as f:
-    consurfLookup = json.load(f)
-
-MATCH_SCORE = 1.0
-MISMATCH_SCORE = 0.0
-GAP_PENALTY = -1.
-GAP_EXT_PENALTY = -0.1
+def getConSurfLookup():
+    global consurfLookupData
+    if consurfLookupData is None:
+        with open(consurfLookup) as f:
+            consurfLookupData = json.load(f)
+    return consurfLookupData
 
 def mapIndices(targetSeq, querySeq):
     """
@@ -187,10 +185,10 @@ def _align(target, query):
     """
     aligner = PairwiseAligner()
     aligner.mode = 'global'
-    aligner.match_score = MATCH_SCORE
-    aligner.mismatch_score = MISMATCH_SCORE
-    aligner.internal_open_gap_score = GAP_PENALTY
-    aligner.internal_extend_gap_score = GAP_EXT_PENALTY
+    aligner.match_score = 1.0
+    aligner.mismatch_score = 0.0
+    aligner.internal_open_gap_score = -1.
+    aligner.internal_extend_gap_score = -0.1
     alns = aligner.align(target, query)
     for i, aln in enumerate(alns):
         if i == 1:
@@ -221,8 +219,9 @@ def getConSurffile(pdb, chid, folder='.', uniref90=uniref90_2022_05):
     """
     if not os.path.isfile(pdb):
         pdbID = pdb.upper()
-        if (pdbID in consurfLookup) and (chid in consurfLookup[pdbID]):
-            uniqueChain = consurfLookup[pdbID][chid]
+        consurf_lookup = getConSurfLookup()
+        if (pdbID in consurf_lookup) and (chid in consurf_lookup[pdbID]):
+            uniqueChain = consurf_lookup[pdbID][chid]
             consurffile = os.path.join(dataDir, f'{uniqueChain}.tsv')
             if os.path.isfile(consurffile):
                 return pd.read_csv(consurffile, sep='\t')
@@ -303,8 +302,9 @@ def getConSurffile_v2(id, chid, folder='.', uniref90=uniref90_2022_05):
     id = id.strip().upper()
     chid = chid.strip()
     if len(id) == 4:
-        if (id in consurfLookup) and (chid in consurfLookup[id]):
-            uniqueChain = consurfLookup[id][chid]
+        consurf_lookup = getConSurfLookup()
+        if (id in consurf_lookup) and (chid in consurf_lookup[id]):
+            uniqueChain = consurf_lookup[id][chid]
             consurffile = os.path.join(dataDir, f'{uniqueChain}.tsv')
             if os.path.isfile(consurffile):
                 return pd.read_csv(consurffile, sep='\t')

@@ -6,6 +6,7 @@ WORKDIR /tandem
 
 # --- Step 1: Copy only dependency declarations first ---
 COPY ./requirements.txt ./requirements.txt
+COPY ./install_check.py ./install_check.py
 
 # Optional: copy only environment-relevant parts early
 COPY ./pyRONN ./pyRONN
@@ -22,18 +23,20 @@ RUN apt update --quiet \
 # --- Step 3: Create Conda environment + install Python deps ---
 RUN conda create -n tandem python=3.11.11 \
     && echo "source activate tandem" > ~/.bashrc \
-    && /bin/bash -c "source activate tandem && pip install flask gunicorn && pip install -r requirements.txt" \
+    && /bin/bash -c "source activate tandem && pip install --upgrade pip && pip install -r requirements.txt" \
     && conda install -n tandem -c conda-forge -c bioconda mmseqs2
 
-# --- Step 4: Runtime environment variables ---
+# --- Step 4: Copy application source and verify installation ---
+COPY . .
+
+# --- Step 5: Runtime environment variables ---
 SHELL ["/bin/bash", "-c"]
 ENV CONDA_DEFAULT_ENV=tandem
 ENV CONDA_PREFIX=/opt/conda/envs/tandem
 ENV PATH=/opt/conda/envs/tandem/bin:$PATH
-# ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib:$LD_LIBRARY_PATH
-# ENV LD_LIBRARY_PATH=/opt/conda/envs/tandem/lib
 
-# --- Step 5: Run server ---
+RUN conda run --no-capture-output -n tandem python install_check.py
+
+# --- Step 6: Run server ---
 EXPOSE 5000
-ENV GUNICORN_WORKERS=4
-CMD ["/bin/bash", "-c", "conda run --no-capture-output -n tandem gunicorn -w ${GUNICORN_WORKERS} -b 0.0.0.0:5000 --threads 1 --timeout 0 main:app"]
+CMD ["conda", "run", "--no-capture-output", "-n", "tandem", "python", "main.py"]
