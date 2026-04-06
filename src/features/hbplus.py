@@ -68,8 +68,7 @@ def parseHBplus(hb2, ag, removefile=True, skip=1):
     ag.setData('hbond', HBOND)
     return ag
 
-def calcHbond(pdbpath, chain_list="all", cutoff=3.9, 
-              removefile=True, skip=1):
+def calcHbond(pdbpath, chain_list="all", cutoff=3.9, removefile=True, skip=1):
     folder = os.path.dirname(pdbpath)
     filename = os.path.basename(pdbpath).split('.')[0]
     if chain_list != "all":

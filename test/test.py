@@ -7,14 +7,16 @@ from tandem.src.main import run
 # # from src.main import run
 
 sav_list = [
+
     "O00189 271 R H",
-    # "O00194 138 P L",
-    # "O00194 92 A T",
-    # "O00204 240 V I",
-    # "O00204 51 L S",
-    # "O00206 175 T A",
-    # "O00206 188 Q R",
-    # "O00206 246 C S",
+    "O00194 138 P L",
+    "O00194 92 A T",
+    "O00204 240 V I",
+    "O00204 51 L S",
+    "O00206 175 T A",
+    "O00206 188 Q R",
+    "O00206 246 C S",
+
     # "O00206 287 E D",
     # "O00206 287 E G",
     # "O00206 306 C W",

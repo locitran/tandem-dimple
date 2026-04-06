@@ -1,0 +1,536 @@
+Logging started at 2026-04-06 16:01:24.881524
+Logging into file: /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/log.txt
+Logging started at 2026-04-06 16:01:24.881926
+Job name: test_inference_multi_protein_default_structures started at 2026-04-06 16:01:24.881986
+Job directory: /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures
+Found 5 models in /home/loci/main/tandem_website_dev/tandem/models/TANDEM.
+Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+SAVs saved to SAVs.txt
+Selected feature set: ('GNM_co_rank_full', 'ANM_stiffness_chain', 'GNM_V2_full', 'GNM_V1_full', 'GNM_Eigval1_full', 'GNM_rankV2_full', 'GNM_Eigval2_full', 'GNM_rankV1_full', 'ANM_effectiveness_chain', 'SASA', 'loop_percent', 'AG1', 'Dcom', 'AG5', 'AG3', 'SSbond', 'Hbond', 'DELTA_Hbond', 'sheet_percent', 'helix_percent', 'Rg', 'IDRs', 'Lside', 'deltaLside', 'entropy', 'wtPSIC', 'deltaPSIC', 'consurf', 'ACNR', 'BLOSUM', 'ranked_MI', 'deltaPolarity', 'deltaCharge')
+Mapping SAVs to PDB structures...
+257 atoms and 1 coordinate set(s) were parsed in 0.00s.
+252 atoms and 1 coordinate set(s) were parsed in 0.00s.
+3524 atoms and 1 coordinate set(s) were parsed in 0.01s.
+185 NEVFLDVVERLSVLIASNGSLLKVDVQGEIRLKSFLPSGSEMRIGLTEEFCVGKSELRGYGPGIRVDEVSFHSSVNLDEFESHRILRLQPPQGELTVMRYQLSDDLPSPLPFRLFPSVQWDRGSGRLQVYLKLRCDLLSKSQALNVRLHLPLPRGVVSLSQELSSPEQKAELAEGALRWDLPRVQGGSQLSGLFQMDVPGPPGPPSHGLSTSASPLGLGPASLSFELPRHTCSGLQVRFLRLAFRPCGNANPHKWVRHLSHSDAYVIRI
+    ||||||||||||||||||||||||||||||||||||||||||||||||||.||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||            |||||||||||||||||||||||||||||       ||||||||||||||||||
+  1 NEVFLDVVERLSVLIASNGSLLKVDVQGEIRLKSFLPSGSEMRIGLTEEFSVGKSELRGYGPGIRVDEVSFHSSVNLDEFESHRILRLQPPQGELTVMRYQLSDDLPSPLPFRLFPSVQWDRGSGRLQVYLKLRCDLLSKSQALNVRLHLPLPRGVVSLSQELSSPEQKAELAEGALRWDLPRVQGGSQLSGLFQMDVPGPPG------------LGLGPASLSFELPRHTCSGLQVRFLRLAF-------PHKWVRHLSHSDAYVIRI
+  Score=246.3
+249 out of 250 (99.6%) residues in the chain are identical to Uniprot amino acids.
+Chain A in 3L81 was aligned in 0.0s.
+Find 3L81 OPM and Assembly...
+HTTP Request: POST https://data.rcsb.org/graphql "HTTP/1.1 200 OK"
+WARNING Trying to parse as mmCIF file instead
+WARNING Could not find _atom_site_anisotrop in lines.
+WARNING No anisotropic B factors found
+2209 atoms and 1 coordinate set(s) were parsed in 0.02s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00189.pkl' saved.
+355 atoms and 1 coordinate set(s) were parsed in 0.00s.
+1729 atoms and 1 coordinate set(s) were parsed in 0.01s.
+100% of residues in the chain are identical to Uniprot amino acids.
+Chain A in 2F7S was quick-aligned in 0.0s.
+Find 2F7S OPM and Assembly...
+HTTP Request: POST https://data.rcsb.org/graphql "HTTP/1.1 200 OK"
+WARNING Trying to parse as mmCIF file instead
+WARNING Could not find _atom_site_anisotrop in lines.
+WARNING No anisotropic B factors found
+2958 atoms and 1 coordinate set(s) were parsed in 0.02s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00194.pkl' saved.
+278 atoms and 1 coordinate set(s) were parsed in 0.00s.
+284 atoms and 1 coordinate set(s) were parsed in 0.00s.
+294 atoms and 1 coordinate set(s) were parsed in 0.00s.
+291 atoms and 1 coordinate set(s) were parsed in 0.00s.
+2916 atoms and 1 coordinate set(s) were parsed in 0.01s.
+27 LPGEYFRYKGVPFPVGLYSLESISLAENTQDVRDDDIFIITYPKSGTTWMIEIICLILKEGDPSWIRSVPIWERAPWCETIVGAFSLPDQYSPRLMSSHLPIQIFTKAFFSSKAKVIYMGRNPRDVVVSLYHYSKIAGQLKDPGTPDQFLRDFLKGEVQFGSWFDHIKGWLRMKGKDNFLFITYEELQQDLQGSVERICGFLGRPLGKEALGSVVAHSTFSAMKANTMSNYTLLPPSLLDHRRGAFLRKGVCGDWKNHFTVAQSEAFDRAYRKQMRGMPTFPWDE
+   ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||       ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+ 1 LPGEYFRYKGVPFPVGLYSLESISLAENTQDVRDDDIFIITYPKSGTTWMIEIICLILKEGDPSWIRSVPIWERAPWCETIVGA-------SPRLMSSHLPIQIFTKAFFSSKAKVIYMGRNPRDVVVSLYHYSKIAGQLKDPGTPDQFLRDFLKGEVQFGSWFDHIKGWLRMKGKDNFLFITYEELQQDLQGSVERICGFLGRPLGKEALGSVVAHSTFSAMKANTMSNYTLLPPSLLDHRRGAFLRKGVCGDWKNHFTVAQSEAFDRAYRKQMRGMPTFPWDE
+  Score=276.9
+278 out of 278 (100.0%) residues in the chain are identical to Uniprot amino acids.
+Chain A in 1Q1Q was aligned in 0.0s.
+Find 1Q1Q OPM and Assembly...
+HTTP Request: POST https://data.rcsb.org/graphql "HTTP/1.1 200 OK"
+WARNING Trying to parse as mmCIF file instead
+WARNING Could not find _atom_site_anisotrop in lines.
+WARNING No anisotropic B factors found
+2250 atoms and 1 coordinate set(s) were parsed in 0.02s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00204.pkl' saved.
+276 atoms and 1 coordinate set(s) were parsed in 0.00s.
+570 atoms and 1 coordinate set(s) were parsed in 0.00s.
+832 atoms and 1 coordinate set(s) were parsed in 0.01s.
+1224 atoms and 1 coordinate set(s) were parsed in 0.01s.
+1482 atoms and 1 coordinate set(s) were parsed in 0.01s.
+276 atoms and 1 coordinate set(s) were parsed in 0.00s.
+277 atoms and 1 coordinate set(s) were parsed in 0.00s.
+276 atoms and 1 coordinate set(s) were parsed in 0.00s.
+832 atoms and 1 coordinate set(s) were parsed in 0.01s.
+1486 atoms and 1 coordinate set(s) were parsed in 0.02s.
+48 atoms and 10 coordinate set(s) were parsed in 0.00s.
+35 atoms and 10 coordinate set(s) were parsed in 0.00s.
+Failed to fetch 8wo1 from RCSB PDB database HTTP Error 404: Not Found.
+Fetch cif file instead.
+WARNING Trying to parse as mmCIF file instead
+WARNING Could not find _atom_site_anisotrop in lines.
+WARNING No anisotropic B factors found
+1482 atoms and 1 coordinate set(s) were parsed in 0.03s.
+1482 atoms and 1 coordinate set(s) were parsed in 0.01s.
+1482 atoms and 1 coordinate set(s) were parsed in 0.01s.
+6739 atoms and 1 coordinate set(s) were parsed in 0.02s.
+Low coverage in PDBID 2Z62 chainID A: 0.3289630512514899
+Low coverage in PDBID 2Z65 chainID A: 0.3289630512514899
+Low coverage in PDBID 2Z65 chainID B: 0.3289630512514899
+Low coverage in PDBID 3UL7 chainID A: 0.3289630512514899
+Low coverage in PDBID 3UL8 chainID A: 0.3301549463647199
+Low coverage in PDBID 3UL9 chainID A: 0.3289630512514899
+Low coverage in PDBID 3ULA chainID A: 0.3289630512514899
+Low coverage in PDBID 3ULA chainID C: 0.3289630512514899
+23 PESWEPCVEVVPNITYQCMELNFYKIPDNLPFSTKNLDLSFNPLRHLGSYSFFSFPELQVLDLSRCEIQTIEDGAYQSLSHLSTLILTGNPIQSLALGAFSGLSSLQKLVAVETNLASLENFPIGHLKTLKELNVAHNLIQSFKLPEYFSNLTNLEHLDLSSNKIQSIYCTDLRVLHQMPLLNLSLDLSLNPMNFIQPGAFKEIRLHKLTLRNNFDSLNVMKTCIQGLAGLEVHRLVLGEFRNEGNLEKFDKSALEGLCNLTIEEFRLAYLDYYLDDIIDLFNCLTNVSSFSLVSVTIERVKDFSYNFGWQHLELVNCKFGQFPTLKLKSLKRLTFTSNKGGNAFSEVDLPSLEFLDLSRNGLSFKGCCSQSDFGTTSLKYLDLSFNGVITMSSNFLGLEQLEHLDFQHSNLKQMSEFSVFLSLRNLIYLDISHTHTRVAFNGIFNGLSSLEVLKMAGNSFQENFLPDIFTELRNLTFLDLSQCQLEQLSPTAFNSLSSLQVLNMSHNNFFSLDTFPYKCLNSLQVLDYSLNHIMTSKKQELQHFPSSLAFLNLTQNDFACTCEHQSFLQWIKDQRQLLVEVERMECATPSDKQGMPVLSLNITC
+   ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||.|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||.||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+ 1 PESWEPCVEVVPNITYQCMELNFYKIPDNLPFSTKNLDLSFNPLRHLGSYSFFSFPELQVLDLSRCEIQTIEDGAYQSLSHLSTLILTGNPIQSLALGAFSGLSSLQKLVAVETNLASLENFPIGHLKTLKELNVAHNLIQSFKLPEYFSNLTNLEHLDLSSNKIQSIYCTDLRVLHQMPLLNLSLDLSLNPMNFIQPGAFKEIRLHKLTLRNNFDSLNVMKTCIQGLAGLEVHRLVLGEFRNEGNLEKFDKSALEGLCNLTIEEFRLAYLDYYLDGIIDLFNCLTNVSSFSLVSVTIERVKDFSYNFGWQHLELVNCKFGQFPTLKLKSLKRLTFTSNKGGNAFSEVDLPSLEFLDLSRNGLSFKGCCSQSDFGTISLKYLDLSFNGVITMSSNFLGLEQLEHLDFQHSNLKQMSEFSVFLSLRNLIYLDISHTHTRVAFNGIFNGLSSLEVLKMAGNSFQENFLPDIFTELRNLTFLDLSQCQLEQLSPTAFNSLSSLQVLNMSHNNFFSLDTFPYKCLNSLQVLDYSLNHIMTSKKQELQHFPSSLAFLNLTQNDFACTCEHQSFLQWIKDQRQLLVEVERMECATPSDKQGMPVLSLNITC
+  Score=603
+603 out of 605 (99.7%) residues in the chain are identical to Uniprot amino acids.
+Chain B in 4G8A was aligned in 0.1s.
+Find 4G8A OPM and Assembly...
+HTTP Request: POST https://data.rcsb.org/graphql "HTTP/1.1 200 OK"
+2405 atoms and 1 coordinate set(s) were parsed in 0.07s.
+WARNING Trying to parse as mmCIF file instead
+12381 atoms and 1 coordinate set(s) were parsed in 0.77s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00206.pkl' saved.
+8 out of 8 SAVs have been mapped to PDB in 30.8s.
+Uniprot2PDB map saved to /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/Uniprot2PDB.txt
+Computing strutural and dynamics features from PDB structures...
+Processing 3l81...
+/home/loci/main/tandem_website_dev/tandem/pdbfile/raw/3l81-assembly1.cif.gz
+PDB fixed in 0.45s.
+Loading PDB /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/3l81-1.pdb...
+2166 atoms and 1 coordinate set(s) were parsed in 0.01s.
+Hessian was built in 0.03s.
+801 ANM modes were calculated in 0.20s.
+Calculating stiffness matrix.
+Stiffness matrix calculated in 0.09s.
+The range of effective force constant is: 4.133054512769757 to 22.419013023417573.
+ANM features computed in 0.41s.
+Building GNM model on the whole structure
+No environment, using GNM
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.00s.
+275 GNM modes were calculated in 0.07s.
+GNM features computed in 0.12s.
+RONN feature computed in 2.72s.
+Calculating disulfide bonds.
+Number of detected disulfide bonds: 0.
+Disulfide bond features computed in 0.01s.
+Atomic group contact (chain A) calculation completed in 1.14s.
+AG features computed in 1.14s.
+Radius of gyration and distance from center of mass calculated in in 0.01s.
+RG and Dcom features computed in 0.01s.
+2166 atoms and 1 coordinate set(s) were parsed in 0.01s.
+DSSP features calculated in 0.32s.
+DSSP features computed in 0.32s.
+2166 atoms and 1 coordinate set(s) were parsed in 0.01s.
+NACCESS features (chain A) calculated in 0.28s.
+SASA features computed in 0.30s.
+2166 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.60s.
+HBplus features computed in 0.60s.
+2166 atoms and 1 coordinate set(s) were parsed in 0.01s.
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.00s.
+ConSurf features calculated in 0.13s.
+ConSurf features computed in 0.13s.
+Creating mutation file for R271H in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/3l81_A.pdb
+Create Mutation file in 0.39s.
+2096 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.59s.
+DELTA features computed in 1.02s.
+Pickle 'PDBfeatures-3l81-bas1.pkl' saved.
+PDB features: 1/8 SAVs processed [12%]
+Processing 2f7s...
+/home/loci/main/tandem_website_dev/tandem/pdbfile/raw/2f7s-assembly1.cif.gz
+PDB fixed in 0.61s.
+Loading PDB /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/2f7s-1.pdb...
+2979 atoms and 1 coordinate set(s) were parsed in 0.01s.
+Hessian was built in 0.02s.
+552 ANM modes were calculated in 0.08s.
+Calculating stiffness matrix.
+Stiffness matrix calculated in 0.05s.
+The range of effective force constant is: 1.258709733783216 to 22.762447311093176.
+ANM features computed in 0.23s.
+Building GNM model on the whole structure
+No environment, using GNM
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.01s.
+369 GNM modes were calculated in 0.04s.
+GNM features computed in 0.10s.
+RONN feature computed in 1.84s.
+Calculating disulfide bonds.
+CYS123    A   SG966     <---> CYS188    A   SG1481       2.1   -91.8
+CYS123    B   SG2456    <---> CYS188    B   SG2971       2.0   -88.8
+Number of detected disulfide bonds: 2.
+Disulfide bond features computed in 0.02s.
+Atomic group contact (chain A) calculation completed in 1.10s.
+AG features computed in 1.11s.
+Radius of gyration and distance from center of mass calculated in in 0.01s.
+RG and Dcom features computed in 0.01s.
+2979 atoms and 1 coordinate set(s) were parsed in 0.01s.
+DSSP features calculated in 0.19s.
+DSSP features computed in 0.19s.
+2979 atoms and 1 coordinate set(s) were parsed in 0.01s.
+NACCESS features (chain A) calculated in 0.15s.
+SASA features computed in 0.18s.
+2979 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.43s.
+HBplus features computed in 0.43s.
+2979 atoms and 1 coordinate set(s) were parsed in 0.01s.
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.00s.
+ConSurf features calculated in 0.02s.
+ConSurf features computed in 0.02s.
+Creating mutation file for P138L in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/2f7s_A.pdb
+Create Mutation file in 0.23s.
+1499 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.43s.
+Creating mutation file for A92T in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/2f7s_A.pdb
+Create Mutation file in 0.22s.
+1500 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.43s.
+DELTA features computed in 1.36s.
+Pickle 'PDBfeatures-2f7s-bas1.pkl' saved.
+PDB features: 3/8 SAVs processed [38%]
+Processing 1q1q...
+/home/loci/main/tandem_website_dev/tandem/pdbfile/raw/1q1q-assembly1.cif.gz
+PDB fixed in 0.57s.
+Loading PDB /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/1q1q-1.pdb...
+2306 atoms and 1 coordinate set(s) were parsed in 0.01s.
+Hessian was built in 0.04s.
+849 ANM modes were calculated in 0.12s.
+Calculating stiffness matrix.
+Stiffness matrix calculated in 0.11s.
+The range of effective force constant is: 8.292765125010117 to 26.533998216746706.
+ANM features computed in 0.36s.
+Building GNM model on the whole structure
+No environment, using GNM
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.00s.
+284 GNM modes were calculated in 0.17s.
+GNM features computed in 0.23s.
+RONN feature computed in 2.88s.
+Calculating disulfide bonds.
+Number of detected disulfide bonds: 0.
+Disulfide bond features computed in 0.02s.
+Atomic group contact (chain A) calculation completed in 1.33s.
+AG features computed in 1.33s.
+Radius of gyration and distance from center of mass calculated in in 0.01s.
+RG and Dcom features computed in 0.01s.
+2306 atoms and 1 coordinate set(s) were parsed in 0.01s.
+DSSP features calculated in 0.36s.
+DSSP features computed in 0.36s.
+2306 atoms and 1 coordinate set(s) were parsed in 0.01s.
+NACCESS features (chain A) calculated in 0.32s.
+SASA features computed in 0.34s.
+2306 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.69s.
+HBplus features computed in 0.70s.
+2306 atoms and 1 coordinate set(s) were parsed in 0.01s.
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.00s.
+ConSurf features calculated in 0.01s.
+ConSurf features computed in 0.01s.
+Creating mutation file for V225I in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/1q1q_A.pdb
+Create Mutation file in 0.41s.
+2307 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.71s.
+Creating mutation file for L36S in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/1q1q_A.pdb
+Create Mutation file in 0.25s.
+2304 atoms and 1 coordinate set(s) were parsed in 0.01s.
+HBplus features calculated in 0.71s.
+DELTA features computed in 2.17s.
+Pickle 'PDBfeatures-1q1q-bas1.pkl' saved.
+PDB features: 5/8 SAVs processed [62%]
+Processing 4g8a...
+/home/loci/main/tandem_website_dev/tandem/pdbfile/raw/4g8a-assembly1.cif.gz
+PDB fixed in 0.94s.
+Loading PDB /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/4g8a-1.pdb...
+11902 atoms and 1 coordinate set(s) were parsed in 0.03s.
+Hessian was built in 0.09s.
+1809 ANM modes were calculated in 1.03s.
+Calculating stiffness matrix.
+Stiffness matrix calculated in 0.98s.
+The range of effective force constant is: 5.955619058915109 to 25.03018664816002.
+ANM features computed in 2.31s.
+Building GNM model on the whole structure
+No environment, using GNM
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.07s.
+1485 GNM modes were calculated in 0.34s.
+GNM features computed in 0.49s.
+RONN feature computed in 6.30s.
+Calculating disulfide bonds.
+CYS25     D   SG10834   <---> CYS51     D   SG11035      2.1    70.7
+CYS95     C   SG10273   <---> CYS105    C   SG10353      2.0   -81.1
+CYS390    A   SG2898    <---> CYS391    A   SG2904       2.0    92.5
+CYS29     A   SG21      <---> CYS40     A   SG108        2.1   106.8
+CYS95     D   SG11406   <---> CYS105    D   SG11486      2.0   -79.7
+CYS281    A   SG2018    <---> CYS306    A   SG2231       2.0   -98.7
+CYS390    B   SG7734    <---> CYS391    B   SG7740       2.0    92.0
+CYS583    A   SG4446    <---> CYS609    A   SG4671       2.0   -90.6
+CYS29     B   SG4857    <---> CYS40     B   SG4944       2.1   107.5
+CYS281    B   SG6854    <---> CYS306    B   SG7067       2.1   -93.3
+CYS37     C   SG9791    <---> CYS148    C   SG10683      2.1   -89.9
+CYS585    A   SG4459    <---> CYS627    A   SG4799       2.0   114.0
+CYS37     D   SG10924   <---> CYS148    D   SG11816      2.1   -90.4
+CYS583    B   SG9282    <---> CYS609    B   SG9507       2.0   -97.2
+CYS585    B   SG9295    <---> CYS627    B   SG9635       2.0   -89.5
+CYS25     C   SG9701    <---> CYS51     C   SG9902       2.0    71.6
+Number of detected disulfide bonds: 16.
+Disulfide bond features computed in 0.27s.
+Atomic group contact (chain B) calculation completed in 14.99s.
+AG features computed in 15.02s.
+Radius of gyration and distance from center of mass calculated in in 0.03s.
+RG and Dcom features computed in 0.03s.
+11902 atoms and 1 coordinate set(s) were parsed in 0.03s.
+DSSP features calculated in 1.30s.
+DSSP features computed in 1.30s.
+11902 atoms and 1 coordinate set(s) were parsed in 0.03s.
+NACCESS features (chain B) calculated in 1.25s.
+SASA features computed in 1.36s.
+11902 atoms and 1 coordinate set(s) were parsed in 0.04s.
+HBplus features calculated in 2.06s.
+HBplus features computed in 2.07s.
+11902 atoms and 1 coordinate set(s) were parsed in 0.03s.
+Using slower method for building the Hessian.
+Kirchhoff matrix was built in 0.01s.
+ConSurf features calculated in 0.06s.
+ConSurf features computed in 0.06s.
+Creating mutation file for T175A in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/4g8a_B.pdb
+Create Mutation file in 0.54s.
+4835 atoms and 1 coordinate set(s) were parsed in 0.02s.
+HBplus features calculated in 2.15s.
+Creating mutation file for Q188R in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/4g8a_B.pdb
+Create Mutation file in 0.55s.
+4838 atoms and 1 coordinate set(s) were parsed in 0.02s.
+HBplus features calculated in 2.14s.
+Creating mutation file for C246S in /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/mut/4g8a_B.pdb
+Create Mutation file in 0.56s.
+4836 atoms and 1 coordinate set(s) were parsed in 0.02s.
+HBplus features calculated in 2.18s.
+DELTA features computed in 8.42s.
+Pickle 'PDBfeatures-4g8a-bas1.pkl' saved.
+PDB features: 8/8 SAVs processed [100%]
+PDB features computed in 61.28s.
+Computing sequence features ...
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00189.pkl' recovered.
+SAVs saved to /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/_temp_PolyPhen2.txt
+Submitting query to PolyPhen-2...
+PolyPhen-2 is running...
+Retrying (Retry(total=194, connect=200, read=199, redirect=None, status=None)) after connection broken by 'RemoteDisconnected('Remote end closed connection without response')': /ggi/pph2/aaf81cc8722d639af123f53a0a84c79ba2be6e14/1/completed.txt
+PolyPhen-2's output parsed.
+PolyPhen-2 features have been calculated in 43.96s.
+PolyPhen-2 features computed in 43.96s.
+Searching Pfam...
+Processing PF00928.26...
+Pfam MSA for PF00928 is written as jobs/test_inference_multi_protein_default_structures/PF00928_full.sth.
+21091 sequence(s) with 1942 residues were parsed in 0.06s.
+Number of columns in MSA reduced to 281.
+Row occupancy refinement reduced number of rows from 21091 to 19073 in 0.01s.
+Sequence identity refinement reduced number of rows from 19073 to 6689 in 19.12s.
+Mutual information matrix was calculated in 0.23s.
+Pfam features computed in 25.12s.
+BLOSUM feature computed in 0.00s.
+Chemical features computed in 0.00s.
+Sequence feature group computed in 69.07s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00189.pkl' saved.
+SEQ features: 1/8 SAVs processed, O00189 [12%]
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00194.pkl' recovered.
+SAVs saved to /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/_temp_PolyPhen2.txt
+Submitting query to PolyPhen-2...
+Retrying (Retry(total=10, connect=16, read=15, redirect=None, status=None)) after connection broken by 'RemoteDisconnected('Remote end closed connection without response')': /ggi/pph2/11487c233e16124670a8d5e3dfee11074a001e67/1/started.txt
+PolyPhen-2 is running...
+PolyPhen-2's output parsed.
+PolyPhen-2 features have been calculated in 43.90s.
+PolyPhen-2 features computed in 43.90s.
+Searching Pfam...
+WARNING Residue 138 is found in multiple Pfam domains ['PF00071.28', 'PF00025.27'].
+Processing PF00071.28...
+Pfam MSA for PF00071 is written as jobs/test_inference_multi_protein_default_structures/PF00071_full.sth.
+221821 sequence(s) with 2148 residues were parsed in 0.86s.
+Number of columns in MSA reduced to 173.
+Row occupancy refinement reduced number of rows from 221821 to 188607 in 0.07s.
+Row occupancy refinement reduced number of rows from 188607 to 186628 in 0.06s.
+Row occupancy refinement reduced number of rows from 186628 to 184957 in 0.06s.
+Row occupancy refinement reduced number of rows from 184957 to 182561 in 0.06s.
+Row occupancy refinement reduced number of rows from 182561 to 180710 in 0.06s.
+Row occupancy refinement reduced number of rows from 180710 to 178006 in 0.06s.
+Row occupancy refinement reduced number of rows from 178006 to 176284 in 0.05s.
+Row occupancy refinement reduced number of rows from 176284 to 172045 in 0.05s.
+Row occupancy refinement reduced number of rows from 172045 to 168853 in 0.05s.
+Row occupancy refinement reduced number of rows from 168853 to 166593 in 0.05s.
+Row occupancy refinement reduced number of rows from 166593 to 164540 in 0.05s.
+Row occupancy refinement reduced number of rows from 164540 to 163189 in 0.05s.
+Row occupancy refinement reduced number of rows from 163189 to 160614 in 0.05s.
+Row occupancy refinement reduced number of rows from 160614 to 157650 in 0.05s.
+Row occupancy refinement reduced number of rows from 157650 to 150269 in 0.05s.
+Row occupancy refinement reduced number of rows from 150269 to 140674 in 0.05s.
+Row occupancy refinement reduced number of rows from 140674 to 99870 in 0.04s.
+Row occupancy refinement reduced number of rows from 99870 to 12656 in 0.03s.
+Sequence identity refinement reduced number of rows from 12656 to 3555 in 4.63s.
+Mutual information matrix was calculated in 0.06s.
+Processing PF00025.27...
+Pfam MSA for PF00025 is written as jobs/test_inference_multi_protein_default_structures/PF00025_full.sth.
+52767 sequence(s) with 2040 residues were parsed in 0.14s.
+WARNING PF00025.27: No sequence found in MSA for RB27B_HUMAN
+WARNING Residue 92 is found in multiple Pfam domains ['PF00071.28', 'PF08477.19', 'PF00025.27'].
+Processing PF08477.19...
+Pfam MSA for PF08477 is written as jobs/test_inference_multi_protein_default_structures/PF08477_full.sth.
+10096 sequence(s) with 1554 residues were parsed in 0.02s.
+WARNING PF08477.19: No sequence found in MSA for RB27B_HUMAN
+Pfam features computed in 32.48s.
+BLOSUM feature computed in 0.00s.
+Chemical features computed in 0.00s.
+Sequence feature group computed in 76.38s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00194.pkl' saved.
+SEQ features: 3/8 SAVs processed, O00194 [38%]
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00204.pkl' recovered.
+SAVs saved to /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/_temp_PolyPhen2.txt
+Submitting query to PolyPhen-2...
+PolyPhen-2 is running...
+Retrying (Retry(total=194, connect=200, read=199, redirect=None, status=None)) after connection broken by 'RemoteDisconnected('Remote end closed connection without response')': /ggi/pph2/938f02d0710a408257577be9789a9583433f8585/1/completed.txt
+PolyPhen-2's output parsed.
+PolyPhen-2 features have been calculated in 43.89s.
+PolyPhen-2 features computed in 43.89s.
+Searching Pfam...
+Processing PF00685.33...
+Pfam MSA for PF00685 is written as jobs/test_inference_multi_protein_default_structures/PF00685_full.sth.
+44951 sequence(s) with 2295 residues were parsed in 0.16s.
+Number of columns in MSA reduced to 246.
+Row occupancy refinement reduced number of rows from 44951 to 34797 in 0.02s.
+Row occupancy refinement reduced number of rows from 34797 to 33605 in 0.02s.
+Row occupancy refinement reduced number of rows from 33605 to 32479 in 0.02s.
+Row occupancy refinement reduced number of rows from 32479 to 31491 in 0.01s.
+Row occupancy refinement reduced number of rows from 31491 to 30359 in 0.01s.
+Row occupancy refinement reduced number of rows from 30359 to 29574 in 0.01s.
+Row occupancy refinement reduced number of rows from 29574 to 28742 in 0.01s.
+Row occupancy refinement reduced number of rows from 28742 to 28220 in 0.01s.
+Row occupancy refinement reduced number of rows from 28220 to 27734 in 0.01s.
+Row occupancy refinement reduced number of rows from 27734 to 27090 in 0.01s.
+Row occupancy refinement reduced number of rows from 27090 to 26171 in 0.01s.
+Row occupancy refinement reduced number of rows from 26171 to 24617 in 0.01s.
+Sequence identity refinement reduced number of rows from 24617 to 12395 in 50.86s.
+Mutual information matrix was calculated in 0.28s.
+WARNING No Pfam domain for resid 51.
+Pfam features computed in 58.89s.
+BLOSUM feature computed in 0.00s.
+Chemical features computed in 0.00s.
+Sequence feature group computed in 102.78s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00204.pkl' saved.
+SEQ features: 5/8 SAVs processed, O00204 [62%]
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00206.pkl' recovered.
+SAVs saved to /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/_temp_PolyPhen2.txt
+Submitting query to PolyPhen-2...
+Retrying (Retry(total=10, connect=16, read=15, redirect=None, status=None)) after connection broken by 'RemoteDisconnected('Remote end closed connection without response')': /ggi/pph2/7126ea56f38c081ea2b2b8a232030ad2095da4e1/1/started.txt
+PolyPhen-2 is running...
+PolyPhen-2's output parsed.
+PolyPhen-2 features have been calculated in 43.96s.
+PolyPhen-2 features computed in 43.96s.
+Searching Pfam...
+WARNING Residue 175 is found in multiple Pfam domains ['PF13855.12', 'PF12799.13', 'PF13516.12'].
+Processing PF13855.12...
+Pfam MSA for PF13855 is written as jobs/test_inference_multi_protein_default_structures/PF13855_full.sth.
+690518 sequence(s) with 478 residues were parsed in 1.58s.
+Number of columns in MSA reduced to 69.
+Row occupancy refinement reduced number of rows from 690518 to 683679 in 0.07s.
+Row occupancy refinement reduced number of rows from 683679 to 680904 in 0.07s.
+Row occupancy refinement reduced number of rows from 680904 to 671761 in 0.07s.
+Row occupancy refinement reduced number of rows from 671761 to 666084 in 0.07s.
+Row occupancy refinement reduced number of rows from 666084 to 661927 in 0.07s.
+Row occupancy refinement reduced number of rows from 661927 to 649658 in 0.07s.
+Row occupancy refinement reduced number of rows from 649658 to 643550 in 0.07s.
+Row occupancy refinement reduced number of rows from 643550 to 629517 in 0.07s.
+Row occupancy refinement reduced number of rows from 629517 to 621585 in 0.06s.
+Row occupancy refinement reduced number of rows from 621585 to 612620 in 0.07s.
+Row occupancy refinement reduced number of rows from 612620 to 592562 in 0.07s.
+Row occupancy refinement reduced number of rows from 592562 to 575517 in 0.06s.
+Row occupancy refinement reduced number of rows from 575517 to 555132 in 0.06s.
+Row occupancy refinement reduced number of rows from 555132 to 423703 in 0.06s.
+Row occupancy refinement reduced number of rows from 423703 to 305607 in 0.04s.
+Row occupancy refinement reduced number of rows from 305607 to 7919 in 0.03s.
+Sequence identity refinement reduced number of rows from 7919 to 4542 in 1.80s.
+Mutual information matrix was calculated in 0.01s.
+Processing PF12799.13...
+Pfam MSA for PF12799 is written as jobs/test_inference_multi_protein_default_structures/PF12799_full.sth.
+36493 sequence(s) with 188 residues were parsed in 0.06s.
+Number of columns in MSA reduced to 48.
+Row occupancy refinement reduced number of rows from 36493 to 36480 in 0.00s.
+Row occupancy refinement reduced number of rows from 36480 to 36472 in 0.00s.
+Row occupancy refinement reduced number of rows from 36472 to 36461 in 0.00s.
+Row occupancy refinement reduced number of rows from 36461 to 36445 in 0.00s.
+Row occupancy refinement reduced number of rows from 36445 to 36415 in 0.00s.
+Row occupancy refinement reduced number of rows from 36415 to 36302 in 0.00s.
+Row occupancy refinement reduced number of rows from 36302 to 36009 in 0.00s.
+Row occupancy refinement reduced number of rows from 36009 to 35416 in 0.00s.
+Row occupancy refinement reduced number of rows from 35416 to 33321 in 0.00s.
+Row occupancy refinement reduced number of rows from 33321 to 27633 in 0.00s.
+Row occupancy refinement reduced number of rows from 27633 to 19599 in 0.00s.
+Sequence identity refinement reduced number of rows from 19599 to 11214 in 7.15s.
+Mutual information matrix was calculated in 0.01s.
+Processing PF13516.12...
+Pfam MSA for PF13516 is written as jobs/test_inference_multi_protein_default_structures/PF13516_full.sth.
+192597 sequence(s) with 101 residues were parsed in 0.44s.
+WARNING PF13516.12: No sequence found in MSA for TLR4_HUMAN
+WARNING Residue 188 is found in multiple Pfam domains ['PF13855.12', 'PF12799.13', 'PF00560.39', 'PF13516.12'].
+Processing PF00560.39...
+Pfam MSA for PF00560 is written as jobs/test_inference_multi_protein_default_structures/PF00560_full.sth.
+305259 sequence(s) with 89 residues were parsed in 0.62s.
+WARNING PF00560.39: No sequence found in MSA for TLR4_HUMAN
+WARNING No Pfam domain for resid 246.
+Pfam features computed in 55.48s.
+BLOSUM feature computed in 0.00s.
+Chemical features computed in 0.00s.
+Sequence feature group computed in 99.44s.
+Pickle '/home/loci/main/tandem_website_dev/tandem/data/pickles/uniprot/UniprotMap-O00206.pkl' saved.
+SEQ features: 8/8 SAVs processed, O00206 [100%]
+SEQ features computed in 347.97s.
+WARNING 2 missing values for feature entropy
+WARNING 2 missing values for feature ranked_MI
+SAV_coords column removed from feature matrix.
+Feature matrix saved to /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/features.csv
+5 out of the last 5 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x7b25ec16e7a0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+6 out of the last 6 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x7b260c104680> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+Predictions computed in 11.09s.
+Predictions saved to /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/Main_Predictions.csv
+plotSHAP computed in 2.47s.
+  _align: 0.11s (4 time(s))
+  _mapSAVs2PDB: 30.84s (1 time(s))
+  _fixPDB: 2.57s (4 time(s))
+  _calcANMfeatures: 3.31s (4 time(s))
+  _calcGNMfeatures: 0.94s (4 time(s))
+  _calcRONNfeature: 13.74s (4 time(s))
+  _calcDSSfeatures: 0.31s (4 time(s))
+  _ag: 18.56s (4 time(s))
+  _calcAGfeatures: 18.61s (4 time(s))
+  _calcRGandDcom: 0.05s (4 time(s))
+  _calcRGandDcomfeatures: 0.05s (4 time(s))
+  _calcDSSPfeatures: 4.34s (8 time(s))
+  _calcNACCESSfeatures: 2.00s (4 time(s))
+  _calcSASAfeatures: 2.19s (4 time(s))
+  _calcHBplusfeatures: 16.93s (16 time(s))
+  _calcConSurf: 0.44s (8 time(s))
+  _createMutationfile: 3.15s (8 time(s))
+  _calcDELTAfeatures: 12.98s (4 time(s))
+  _calcPDBfeatures: 61.28s (1 time(s))
+  _pph2: 175.72s (4 time(s))
+  _calcPSICfeatures: 175.72s (4 time(s))
+  _calcPfamfeatures: 171.96s (4 time(s))
+  _calcBLOSUMfeature: 0.00s (4 time(s))
+  _calcCHEMfeatures: 0.00s (4 time(s))
+  _calcSEQgroup: 347.68s (4 time(s))
+  _calcSEQfeatures: 347.97s (1 time(s))
+  _calcPredictions: 11.09s (1 time(s))
+  _plotSHAP: 2.47s (1 time(s))
+Run time elapsed in 453.91s.
+Logging stopped at 2026-04-06 16:08:58.793645
+Closing logfile: /home/loci/main/tandem_website_dev/tandem/jobs/test_inference_multi_protein_default_structures/log.txt
+Logging stopped at 2026-04-06 16:08:58.800370
+Logging into file: /home/loci/main/tandem_website_dev/tandem/test/verified_results/inference/inference.log

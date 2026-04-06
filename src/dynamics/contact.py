@@ -1,14 +1,12 @@
 import numpy as np
 import os
-import traceback
 
-from prody import Atomic, parsePDB, LOGGER
 from prody.utilities import checkCoords
 from prody.measure.contacts import findNeighbors
-from prody import parsePDB, calcCenter
-from prody import LOGGER, findNeighbors, parsePDB, writePDB, AtomGroup
+from prody import findNeighbors, parsePDB, Atomic, calcCenter
 
 from ..utils.settings import one2three
+from ..utils.logger import LOGGER
 
 file_dir = os.path.dirname(os.path.abspath(__file__))
 

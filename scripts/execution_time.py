@@ -26,7 +26,7 @@ SAVs = [
 
 for s in SAVs:
     acc = s.split()[0]
-    job_name = f'execution_time/Mar28/singleSAVs/{acc}'
+    job_name = f'execution_time/April6/singleSAVs/{acc}'
     run(query=[s], job_name=job_name, refresh=True, log_time=True,
         uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta'
     )
@@ -43,7 +43,7 @@ n_test = [10, 50, 100, 200, 300, len(SAVs)]
 acc = 'Q9H227'
 for n in n_test:
     query = SAVs[:n]
-    job_name = f'execution_time/Mar28/multipleSAVs/{acc}/{n}'
+    job_name = f'execution_time/April6/multipleSAVs/{acc}/{n}'
     run(query=query, job_name=job_name, refresh=True, log_time=True,
         uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta'
     )

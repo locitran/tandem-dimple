@@ -12,6 +12,7 @@ from prody import calcPerturbResponse, calcMechStiff, sliceModel
 from prody.atomic import sliceAtoms
 
 from ..utils.logger import LOGGER
+from ..utils.settings import one2three
 from ..dynamics.ENM import GNM, envGNM, ANM, envANM
 from ..dynamics.entropy import calcSpectralEntropy
 from ..dynamics.paa import calcShapeFactors
@@ -976,6 +977,10 @@ class PDBfeatures:
                 DELTA_Hbond is in TANDEM_FEATS['v1.1'] feature set.
                 Cache format:
                 self.feats[chid]['DELTA_Hbond'][f'{wt_aa}{resid}'][mut_aa] = float
+
+                Now we are going to change this code snippet. 
+                We will create mutated structure that contain neibouring residues 5 A away target residue.
+                We check Hbond and see whether the deltaHbond is the same as the do for the whole mutated structure.
                 """
                 key1 = f'{wt_aa}{resid}'  # e.g., 'D2'
                 key2 = mut_aa             # e.g., 'A'
@@ -993,9 +998,15 @@ class PDBfeatures:
                         if not isinstance(d['Hbond'], np.ndarray):
                             self.calcHbondfeature(chain_list=[chid])
                     try:
-                        ag = calcHbond(mutfile, chain_list=[chid])
-                        DELTA_Hbond = ag.ca[chid].getData('hbond')[indices[0]] - \
-                            self.feats[chid]['Hbond'][indices[0]]
+                        mutpdb = parsePDB(mutfile)
+                        cutoff = 5
+                        sav_sel = f'resnum {resid} and resname {one2three[mut_aa]} and chain {chid}'
+                        subregion_sel = f'protein and (same residue as (within {cutoff} of ({sav_sel})))'
+                        submutfile = os.path.join(folder4mut, f'{self.pdbID}_{chid}_{wt_aa}{resid}{mut_aa}_substructure.pdb')
+                        submutfile = writePDB(submutfile, mutpdb.select(subregion_sel))
+                        sub_ag = calcHbond(submutfile, chain_list=[chid])
+                        mut_Hbond = sub_ag.ca.select(sav_sel).getData('hbond')[0]
+                        DELTA_Hbond = mut_Hbond - self.feats[chid]['Hbond'][indices[0]]
                         f[i]['DELTA_Hbond'] = DELTA_Hbond
                         residue_cache[key2] = DELTA_Hbond
                     except Exception:
