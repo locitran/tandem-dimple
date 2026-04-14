@@ -6,7 +6,6 @@ import os
 import re
 import dill as pickle
 import datetime
-import time
 import numpy as np
 import re
 import traceback
@@ -14,14 +13,13 @@ import traceback
 import prody
 from rcsbapi.data import DataQuery
 from prody import parsePDB
-from prody.utilities import openURL
 from Bio.pairwise2 import align as bioalign
 from Bio.pairwise2 import format_alignment
-
 
 from ..utils.logger import LOGGER
 from ..download import fetchPDB, fetchPDB_BiologicalAssembly, fetchAF2, customPDB2AFID, verifyAF
 from ..utils.settings import RAW_PDB_DIR, one2three
+from .UniProt_API import searchUniprot
 
 __author__ = "Luca Ponzoni"
 __date__ = "December 2019"
@@ -32,25 +30,7 @@ __status__ = "Production"
 # Modified by Loci Tran
 __secondary_author__ = "Loci Tran"
 
-__all__ = ['queryUniprot', 'UniprotMapping', 'mapSAVs2PDB']
-
-def queryUniprot(*args, n_attempts=3, dt=1, **kwargs):
-    """
-    Redefine prody function to check for no internet connection
-    """
-    attempt = 0
-    while attempt < n_attempts:
-        try:
-            _ = openURL('http://www.uniprot.org/')
-            break
-        except:
-            LOGGER.info(
-                f'Attempt {attempt} to contact www.uniprot.org failed')
-            attempt += 1
-            time.sleep((attempt+1)*dt)
-    else:
-        _ = openURL('http://www.uniprot.org/')
-    return prody.queryUniprot(*args, **kwargs)
+__all__ = ['UniprotMapping', 'mapSAVs2PDB']
 
 class UniprotMapping:
 
@@ -86,14 +66,20 @@ class UniprotMapping:
         delete precomputed alignments.
         """
         # import Uniprot record and official accession number
-        self.fullRecord = queryUniprot(self.acc)
-        self.uniq_acc = self.fullRecord['accession   0']
-        # import main sequence and PDB records
-        rec = self.fullRecord
-        self.sequence = rec['sequence   0'].replace("\n", "")
+        self.fullRecord = searchUniprot(self.acc)
+        self.uniq_acc = self.fullRecord.getAccession()
+        self.sequence = self.fullRecord.getSequence()
         self.sequence_length = len(self.sequence)
-        self.PDBrecords = [rec[key] for key in rec.keys()
-                           if key.startswith('dbRef') and 'PDB' in rec[key]]
+        self.PDBrecords = self.fullRecord.getPDBs()
+
+        # comments = self.fullRecord.getComments()
+        # alter_prod = [c for c in comments if c['commentType']=='ALTERNATIVE PRODUCTS']
+        # self.canonical_isoform = [
+        #     isofm['isoformIds'][0] for isofm in alter_prod[0]['isoforms'] \
+        #     if isofm['isoformSequenceStatus']=='Displayed'
+        # ][0] # test case P04150-1, P42166-1, P42167-1, P21836-1, P14618-1, Q9NZU7-4, Q13510-1, P04150-1
+        # https://www.uniprot.org/help/canonical_and_isoforms
+        
         # parse PDB records into PDB mappings, easier to access
         self._initiatePDBmappings()
         # set remaining attributes
@@ -102,10 +88,10 @@ class UniprotMapping:
         self._align_algo_kwargs = {'one_alignment_only': True}
         self.timestamp = str(datetime.datetime.utcnow())
         try:
-            self.AF2 = customPDB2AFID(self.uniq_acc, strict_version=False)
+            self.AF2 = customPDB2AFID(self.uniq_acc, self.sequence)
             self._initiateAF2mapping()
         except Exception as e:
-            LOGGER.info(f"Unable to parse {self.uniq_acc} as an AlphaFold2 custom PDB identifier: {e}")
+            LOGGER.warn(str(e))
             self.AF2 = None
         return
 
@@ -168,22 +154,22 @@ class UniprotMapping:
         sel_maps = {c: rec['maps'][c] for c in chains_to_align}
         return sel_alignms, sel_maps
 
-    def alignCustomPDB(self, PDB, folder=RAW_PDB_DIR):
+    def alignCustomPDB(self, PDB: str, folder=RAW_PDB_DIR):
         """Aligns the Uniprot sequence with the sequence from the given PDB.
         """
         assert isinstance(PDB, str), "PDB must be a string."
-        is_alphafold = False
+        isaf = False
         customPDB = PDB
         try:
-            if os.path.isfile(PDB):
-                pdb = parsePDB(PDB, model=1, subset='calpha')
-                is_alphafold = verifyAF(PDB)
-                title = os.path.basename(PDB)
+            if os.path.isfile(customPDB):
+                pdb = parsePDB(customPDB, model=1, subset='calpha')
+                isaf = verifyAF(customPDB)
+                title = os.path.basename(customPDB)
             else:
                 try:
-                    af_acc = customPDB2AFID(PDB, strict_version=False)
+                    af_acc = customPDB2AFID(customPDB)
                 except Exception as e:
-                    LOGGER.info(f"This {PDB} is not an AlphaFold identifier: {e}")
+                    LOGGER.info(f"This {customPDB} is not an AlphaFold identifier: {e}")
                     af_acc = None
 
                 if af_acc is not None:
@@ -192,12 +178,12 @@ class UniprotMapping:
                     if pdbpath is None:
                         raise ValueError(f'AlphaFold entry not found for {af_acc}.')
                     pdb = parsePDB(pdbpath, model=1, subset='calpha')
-                    is_alphafold = True
+                    isaf = True
                     title = af_acc
                     customPDB = af_acc
                 else:
                     # PDB is a PDBID
-                    LOGGER.info(f'Fetching PDB {PDB}...')
+                    LOGGER.info(f'Fetching PDB {customPDB}...')
                     pdbpath = fetchPDB(PDB, format='pdb', folder=folder, refresh=self._refresh)
                     pdb = parsePDB(pdbpath, model=1, subset='calpha')
                     title = PDB.strip()
@@ -209,7 +195,7 @@ class UniprotMapping:
             LOGGER.warning(msg)
             raise ValueError(msg) from e
             
-        if is_alphafold:
+        if isaf:
             LOGGER.info(f'AlphaFold2 structure detected: {title}')
 
         LOGGER.info(f'Aligning {title}...')
@@ -219,7 +205,7 @@ class UniprotMapping:
             'chain_seq': {},
             'chain_len': {},
             'warnings': [],
-            'alphafold': is_alphafold,
+            'is_alphafold': isaf,
             'confidence': {}
         }
         all_chains = set(pdb.getChids())
@@ -235,7 +221,7 @@ class UniprotMapping:
                 customPDBmapping['chain_len'][c] = chain.getResnums().__len__() # chain.numResidues()
             else:
                 customPDBmapping['warnings'].append(f'Chain {c} not found in PDB.')
-            if is_alphafold:
+            if isaf:
                 confidence = chain.getBetas()
                 customPDBmapping['confidence'][c] = confidence
 
@@ -308,10 +294,12 @@ class UniprotMapping:
             ('>opm:PDB_coords', 'U100'),
             ('>opm:c_seq_len', 'i4'),
             ('resolution', 'f4'),
+            ('is_alphafold', '?'), # Whether this SAV is using AF structure
         ])
 
         # Loop over all residues
         for idx, (resid, wt_aa) in enumerate(zip(resids, wt_aas)):
+            isaf = False
             # Skip if a given resid is not within uniprot sequence.
             if not (1 <= resid <= len(self.sequence)):
                 hits[idx]['>asu:PDB_coords'] = f'Cannot map, resid {resid} out of range {self.sequence_length}'
@@ -345,19 +333,24 @@ class UniprotMapping:
                             c = '?'
                         # pdbID / chainID / resID / resName
                         res_map = f'{PDBID} {c} {hit[0]} {hit[1]}'
-                        hits[idx] = (res_map, c_seq_len, c_resolved_len, '', 0, '', 0, resolution)
+                        hits[idx] = (res_map, c_seq_len, c_resolved_len, '', 0, '', 0, resolution, isaf)
                         break
                 if len(hits[idx]['>asu:PDB_coords']) > 0:
                     break
             
             if len(hits[idx]['>asu:PDB_coords']) == 0:
                 hits[idx]['>asu:PDB_coords'] = 'Cannot map, no hits found'
+
+                if self.AF2 is None or self.AF2mapping is None:
+                    continue
+
+                LOGGER.info(f"Cannot find experimental structure, use AF2 {self.AF2}")
+                isaf = True
                 # Coverage percentage, 𝑟=𝑠/𝑙 
                 # If searching all PDB with coverage_perc >= 50 results no hit
                 # Take AlphaFold2 structure
-                if self.AF2mapping is None:
-                    continue
                 chid = self.AF2mapping['chain']
+                chain_len = self.AF2mapping['chain_len']
                 title = self.AF2mapping['AF2']
                 # If residue is in very low confidence region, skip
                 confidence = self.AF2mapping['confidence'][resid-1]
@@ -365,16 +358,7 @@ class UniprotMapping:
                     hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence}'
                     continue
                 res_map = f'{title} {chid} {resid} {u_aa}'
-                hits[idx] = (
-                    res_map,
-                    self.AF2mapping['chain_len'],
-                    self.AF2mapping['chain_len'],
-                    'Cannot map',
-                    0,
-                    'Cannot map',
-                    0,
-                    -999,
-                )
+                hits[idx] = (res_map, chain_len, chain_len, 'Cannot map', 0, 'Cannot map', 0, -999, isaf)
 
         # Find corresponding OPM and Assembly PDBs
         asu_coords = hits['>asu:PDB_coords']
@@ -548,6 +532,7 @@ class UniprotMapping:
             ('>opm:PDB_coords', 'U100'),
             ('>opm:c_seq_len', 'i4'),
             ('resolution', 'f4'),
+            ('is_alphafold', '?'), # Whether this SAV is using AF structure
         ])
 
         # Sort chains by length: longest first
@@ -558,7 +543,7 @@ class UniprotMapping:
         )
         title = customPDBmapping['PDB']
         maps = customPDBmapping['maps'] 
-        alphafold = customPDBmapping['alphafold']
+        isaf = customPDBmapping['is_alphafold']
         identities = customPDBmapping['identities']
 
         # keys: pdb chids
@@ -568,7 +553,7 @@ class UniprotMapping:
             for c in sorted_chains:
                 identity = identities[c]
                 if identity < 0.30:
-                    LOGGER.info(f'Chain {c} has a low identity, {identity:.2f}, to UniProt sequence')
+                    LOGGER.info(f'Chain {c} has a low identity ({identity:.2f}) to UniProt sequence')
                     continue
                 chain_len = customPDBmapping['chain_len'][c]
                 if resid not in maps[c]:
@@ -584,9 +569,9 @@ class UniprotMapping:
                     )
                     LOGGER.info(msg)
                     continue
-                if not alphafold:
+                if not isaf:
                     res_map = f'{title} {c} {pdb_resid} {pdb_aa}'
-                    hits[idx] = (res_map, chain_len, chain_len, '', 0, '', 0, -999)
+                    hits[idx] = (res_map, chain_len, chain_len, '', 0, '', 0, -999, isaf)
                     break
                 else:
                     # This line needs to be reviewed
@@ -595,7 +580,7 @@ class UniprotMapping:
                         hits[idx]['>asu:PDB_coords'] = f'Cannot map, very low confidence region {confidence} (chain {c})'
                         continue
                     res_map = f'{title} {c} {pdb_resid} {pdb_aa}'
-                    hits[idx] = (res_map, chain_len, chain_len, '', 0, '', 0, -999)
+                    hits[idx] = (res_map, chain_len, chain_len, '', 0, '', 0, -999, isaf)
                     break
 
             if len(hits[idx]['>asu:PDB_coords']) == 0:
@@ -619,6 +604,7 @@ class UniprotMapping:
         filename = 'UniprotMap-' + filename + '.pkl'
         pickle_path = os.path.join(folder, filename)
         cache = self.customPDBmapping
+        self.fullRecord = None
         # save pickle
         pickle.dump(self, open(pickle_path, "wb"))
         self.customPDBmapping = cache
@@ -648,8 +634,8 @@ class UniprotMapping:
         if t_old + Delta_t < t_now:
             raise RuntimeError(
                 'Pickle {} was too old and was ignored.'.format(filename))
-        self.fullRecord = recovered_self.fullRecord
         self.uniq_acc = recovered_self.uniq_acc
+        self.fullRecord = searchUniprot(self.uniq_acc)
         self.sequence = recovered_self.sequence
         self.sequence_length = recovered_self.sequence_length
         self.PDBrecords = recovered_self.PDBrecords
@@ -732,8 +718,7 @@ class UniprotMapping:
     def _initiatePDBmappings(self, folder=RAW_PDB_DIR):
         illegal_chars = r"[^A-Za-z0-9-@=/,\s]"
         PDBmappings = []
-        for singlePDBrecord in self.PDBrecords:
-            PDBID = singlePDBrecord.get('PDB').upper()
+        for PDBID, singleRecord in self.PDBrecords.items():
             mapping = {'PDB': PDBID,
                        'chain_sel': {},
                        'chain_res': {},
@@ -743,28 +728,20 @@ class UniprotMapping:
                        'chain_len': {},
                        }
             # import selection string
-            sel_str = singlePDBrecord.get('chains')
-            if sel_str is None:
+            chains = list(set(singleRecord.get('chains'))) # Supposedly, it is a list (e.g., 'chains': ['A'])
+            if len(chains) is None:
                 mapping['warnings'].append('Empty selection string.')
             else:
-                # check for illegal characters in selection string
-                match = re.search(illegal_chars, sel_str)
-                if match:
-                    chars = re.findall(illegal_chars, sel_str)
-                    message = "Illegal characters found in 'chains' " \
-                              + 'selection string: ' + ' '.join(chars)
-                    mapping['warnings'].append(message)
-                else:
-                    parsed_sel_str = self._parseSelString(sel_str)
-                    mapping['chain_sel'] = parsed_sel_str
+                d = {}
+                resrange = singleRecord['resrange'].split('-')
+                resrange = [(int(resrange[0]), int(resrange[1]))]
+                for c in singleRecord['chains']:
+                    d[c] = resrange
+                mapping['chain_sel'] = d
 
             # store resolution of PDB
-            resolution = singlePDBrecord.get('resolution')
-            if resolution is None:
-                resolution = "NMR"
-            else:
-                resolution = float(resolution.split()[0])
-            mapping['resolution'] = resolution
+            resolution = singleRecord.get('resolution')
+            mapping['resolution'] = "NMR" if resolution is None else resolution
             # store resids and sequence of PDB chains
             try:
                 pdbpath = fetchPDB(PDBID, format='pdb', folder=folder, refresh=self._refresh)
@@ -956,8 +933,8 @@ def seqScanning(Uniprot_coord, sequence=None):
     assert len(coord) < 3, "Invalid format. Examples: 'Q9BW27' or 'Q9BW27 10'."
     aa_list = 'ACDEFGHIKLMNPQRSTVWY'
     if sequence is None:
-        Uniprot_record = queryUniprot(coord[0])
-        sequence = Uniprot_record['sequence   0'].replace("\n", "")
+        Uniprot_record = searchUniprot(coord[0])
+        sequence = Uniprot_record.getSequence()
     else:
         assert isinstance(sequence, str), "Must be a string."
         sequence = sequence.upper()
@@ -1021,7 +998,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
             U2P_map = UniprotMapping(acc, recover_pickle=not(refresh), **kwargs)
             if custom_PDB is not None:
                 custom_PDB = U2P_map.alignCustomPDB(custom_PDB)
-        except Exception as e:
+        except Exception:
             msg = traceback.format_exc()
             LOGGER.warn(f'Error while mapping {acc}: {msg}')
             U2P_map = "Cannot map, unable to run " + acc
@@ -1030,7 +1007,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
             uniq_coords = U2P_map
             for i in groups[acc]['indices']:
                 mapped_SAVs[i] = (
-                    SAV_coords[i], acc, uniq_coords, 0, f'Cannot map, unable to run {acc}', 0, 0, 0, None, 0, None, 0, False)
+                    acc, SAV_coords[i], uniq_coords, 0, f'Cannot map, unable to run {acc}', 0, 0, None, 0, None, 0, False)
             continue
 
         resids, wt_aas, mut_aas = zip(*[ele.split()[1:4] for ele in groups[acc]['SAV_coords']])
@@ -1042,18 +1019,8 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
             r = U2P_map.mapMultipleRes2CustomPDBs(resids, wt_aas)
 
         for i, (SAV_idx, ele) in enumerate(zip(indices, r)):
-            asu_coord, c_seq_len, c_resolved_len, bas_coord, bas_len, opm_coord, opm_len, _ = ele
+            asu_coord, c_seq_len, c_resolved_len, bas_coord, bas_len, opm_coord, opm_len, _, isaf = ele
             uniq_coords = f'{U2P_map.uniq_acc} {resids[i]} {wt_aas[i]} {mut_aas[i]}'
-            is_alphafold = False
-            if custom_PDB is not None:
-                is_alphafold = bool(
-                    U2P_map.customPDBmapping is not None
-                    and U2P_map.customPDBmapping.get('alphafold', False)
-                )
-            elif isinstance(asu_coord, str) and not asu_coord.startswith('Cannot map'):
-                pdb_title = asu_coord.split()[0]
-                is_alphafold = pdb_title.upper().startswith('AF-')
-
             mapped_SAVs[SAV_idx] = (
                 acc,
                 SAV_coords[SAV_idx], 
@@ -1066,7 +1033,7 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
                 bas_len,
                 opm_coord,
                 opm_len,
-                is_alphafold,
+                isaf,
             )
 
         if isinstance(U2P_map, UniprotMapping):

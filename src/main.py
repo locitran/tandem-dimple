@@ -64,16 +64,13 @@ def run(
     LOGGER.info(f"Job name: {job_name} started at {datetime.datetime.now()}")
     LOGGER.info(f"Job directory: {job_directory}")
     LOGGER.timeit("_runtime")
-    userlog.emit("info", "JOB_STARTED", "job", f"Job '{job_name}' started.")
+    userlog.emit(level="info", stage="job", message=f"Job '{job_name}' started.")
     mode_name = "training" if labels is not None else "inferencing"
-    userlog.emit("info", "JOB_MODE", "job", f"Submitted mode: {mode_name}.")
+    userlog.emit(level="info", stage="job", message=f"Submitted mode: {mode_name}.")
 
     try:
-        ## Save feature pickles
-        os.makedirs(pkl_folder, exist_ok=True)
-
-        # Set up the Tandem object
-        t = Tandem(
+        os.makedirs(pkl_folder, exist_ok=True) ## Save feature pickles
+        t = Tandem( # Set up the Tandem object
             query, 
             refresh=refresh,
             job_directory=job_directory, 
@@ -92,16 +89,16 @@ def run(
             t.getFeatMatrix(withSAVs=True, filename='features.csv', folder=job_directory)    
 
         if labels:
-            userlog.emit("info", "TRAINING_STARTED", "training", "Transfer learning started.")
+            userlog.emit(level="info", stage="training", message="Transfer learning started.")
             t.setLabels(labels)
             t.setConfig(config)
             t.train()
-            userlog.emit("info", "TRAINING_COMPLETED", "training", "Transfer learning completed.")
+            userlog.emit(level="info", stage="training", message="Transfer learning completed.")
         else:
-            userlog.emit("info", "PREDICTION_STARTED", "prediction", "Inference started.")
+            userlog.emit(level="info", stage="prediction", message="Inference started.")
             t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='Main_Predictions')
             t.plotSHAP(folder=job_directory)
-            userlog.emit("info", "PREDICTION_COMPLETED", "prediction", "Inference completed.")
+            userlog.emit(level="info", stage="prediction", message="Inference completed.")
 
         for label in LOGGER._reports:
             LOGGER.info(f"  {label}: {LOGGER._reports[label]:.2f}s ({LOGGER._report_times[label]} time(s))")
@@ -123,13 +120,13 @@ def run(
             with open(log_time_file, "w", encoding="utf-8") as f:
                 json.dump(log_time_data, f, indent=2)
 
-        userlog.emit("info", "JOB_COMPLETED", "job", f"Job '{job_name}' completed successfully.")
+        userlog.emit(level="info", stage="job", message=f"Job '{job_name}' completed successfully.")
         return t
     except Exception as e:
         msg = traceback.format_exc()
         LOGGER.warn(msg)
         action="Please check log.txt for detailed traceback."
-        userlog.emit("error", "JOB_FAILED", "job", f"Job '{job_name}' failed: {e}", action=action, context={"error": str(e)},)
+        userlog.emit(level="error", stage="job", message=f"Job '{job_name}' failed: {e}", action=action, context={"error": str(e)},)
         raise
     finally:
         LOGGER.close(logfile)

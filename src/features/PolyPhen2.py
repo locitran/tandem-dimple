@@ -11,7 +11,7 @@ import numpy as np
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from math import log
-from .Uniprot import queryUniprot
+from .UniProt_API import searchUniprot
 from ..utils.logger import LOGGER
 
 
@@ -84,8 +84,8 @@ def _print_fasta_file(Uniprot_accs, filename='custom_sequences.fasta'):
         for acc in Uniprot_accs:
             new_acc = f"{acc}-{date}"
             f.write(f">{new_acc}")
-            record = queryUniprot(acc)
-            sequence = record['sequence   0']
+            urecord = searchUniprot(acc)
+            sequence = urecord.getSequence()
             f.write(sequence)
             # store new temporary accession numbers
             new_accs[acc] = new_acc
@@ -290,8 +290,15 @@ def printSAVlist(input_SAVs, filename):
 def calcPolyPhen2(SAV_coords, filename='SAVs.txt', dump=False,
                   prefix='pph2', folder='.', **kwargs):
     _dtype = np.dtype([('wtPSIC', 'f'), ('deltaPSIC', 'f')])
+    def _normalize_sav(sav):
+        return " ".join(str(sav).upper().split())
+    if isinstance(SAV_coords, str):
+        input_savs = [SAV_coords]
+    else:
+        input_savs = list(SAV_coords)
+    input_keys = [_normalize_sav(s) for s in input_savs]
     # print SAVs to file
-    SAV_file = printSAVlist(SAV_coords, f'{folder}/{filename}')
+    SAV_file = printSAVlist(input_savs, f'{folder}/{filename}')
     # query PolyPhen-2
     LOGGER.timeit('_pph2')
     PolyPhen2output = queryPolyPhen2(SAV_file, dump=dump, prefix=prefix,
@@ -299,10 +306,20 @@ def calcPolyPhen2(SAV_coords, filename='SAVs.txt', dump=False,
     os.remove(SAV_file)
     # parse PolyPhen-2 output
     parsed_lines = parsePolyPhen2output(PolyPhen2output)
-    # Extract features from PolyPhen-2 output   
+    # Extract features from PolyPhen-2 output and align to input order
+    features = np.full(len(input_keys), np.nan, dtype=_dtype)
+    index_map = {}
+    for i, key in enumerate(input_keys):
+        index_map.setdefault(key, []).append(i)
+    parsed_savs = getSAVcoords(parsed_lines)
     f_l = parsed_lines[['Score1', 'dScore']]
-    f_t = [tuple(np.nan if x == '?' else x for x in l) for l in f_l]
-    features = np.array(f_t, dtype=_dtype)
+    for row, sav in zip(f_l, parsed_savs):
+        key = _normalize_sav(sav['text'])
+        if key in index_map and index_map[key]:
+            idx = index_map[key].pop(0)
+            features[idx] = tuple(np.nan if x == '?' else x for x in row)
+    missing = int(np.isnan(features['wtPSIC']).sum())
+    if missing:
+        LOGGER.warn(f"PolyPhen-2 returned {len(parsed_lines)}/{len(input_keys)} results; {missing} SAV(s) missing.")
     LOGGER.report("PolyPhen-2 features have been calculated in %.2fs.", '_pph2')
     return features
-

@@ -13,15 +13,17 @@ __all__ = ['pdb_summary', 'fetchPDB', 'fetchPDB_BiologicalAssembly']
 
 pdbe_prefix = 'https://www.ebi.ac.uk/pdbe'
 
-def _url_exists(url: str, timeout=10) -> bool:
-    try:
-        r = requests.head(url, allow_redirects=True, timeout=timeout)
-        if r.status_code == 405:  # some servers disallow HEAD
-            r = requests.get(url, stream=True, timeout=timeout)
-        return r.status_code == 200
-    except requests.RequestException:
-        return False
-    
+# AlphaFold DB: Meta-information and URLs to individual UniProt accessions
+# Nucleic Acids Res. 2021 Nov 17;50(D1):D439–D444. doi: 10.1093/nar/gkab1061
+AFDB_API_METADATA = "https://alphafold.ebi.ac.uk/api/prediction/{}"
+
+# AF + accession + optional isoform + F number + model version.
+rAFID_PATTERN = r'^AF-([A-Za-z0-9]{6,10})(?:-(\d+))?-F\d+(?:-model_v\d+)?$'
+# AF + accession + optional isoform + F number + model version + file extension.
+rAFID_FILE_PATTERN = r'(AF-[A-Za-z0-9]{6,10}(?:-\d+)?-F\d+-model_v\d+)\.(?:pdb|cif)$'
+# UniProt pattern
+rUNIPROT_ACC = r'^(?:[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})$'
+
 def get_url(url):
     """
     Makes a request to a URL. Returns a JSON of the results
@@ -146,13 +148,14 @@ def fetchAF2(afid, **kwargs):
     refresh = kwargs.get("refresh", False)
     prefer_format = str(kwargs.get("prefer_format", "pdb")).lower()
     timeout = kwargs.get("timeout", 20)
+    assert prefer_format in ['pdb', 'cif'], "Only allow .pdb or .cif"
 
     afid = (afid or "").strip()
     os.makedirs(folder, exist_ok=True)
 
     if not afid:
         raise ValueError("Empty AlphaFold ID.")
-    if not re.fullmatch(r"AF-[A-Z0-9]{6,10}-F\d+-MODEL_V\d+", afid, re.I):
+    if not re.fullmatch(rAFID_PATTERN, afid, re.I):
         raise ValueError(f"Invalid normalized AlphaFold ID: {afid}")
 
     if prefer_format not in ("pdb", "cif"):
@@ -183,69 +186,43 @@ def fetchAF2(afid, **kwargs):
         raise ValueError(f"AlphaFold file not found for {afid} (.pdb/.cif).")
     return out
 
-def customPDB2AFID(customPDB: str, version=None, strict_version=True) -> str:
-    """
-    Returns canonical AF filename stem: AF-<ACC>-F1-model_vN
-
-    strict_version=True:
-      - if version specified but unavailable -> raise ValueError
-    strict_version=False:
-      - if version specified but unavailable -> fallback to latest API record
-    Example:
-    print(customPDB2AFID("O00189"))
-    print(customPDB2AFID("AF-O00189-F1"))
-    print(customPDB2AFID("AF-O00189-F1-model_v6"))
-    print(customPDB2AFID("AF-O00189-F1-model_v4"))
-    """
-    r_AF_w_model = re.compile(r'^AF-([A-Za-z0-9]{6,10})-F\d+-model_v(\d+)$', re.I) # AF-O00189-F1-model_v6
-    r_AF_wo_model = re.compile(r'^AF-([A-Za-z0-9]{6,10})-F\d+$', re.I) # AF-O00189-F1
-    r_UNIPROT_ACC = re.compile(r'^(?:[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})$', re.I) # O00189
-
-    # acc, version_in_input = _extract_acc_and_version(customPDB)
-    # Extracted version from input
-    version_in_input = None
-    if m := r_AF_w_model.fullmatch(customPDB):
+def customPDB2AFID(customPDB: str, sequence: str | None = None):
+    # Extract acc from customPDB
+    if m := re.fullmatch(rAFID_PATTERN, customPDB, re.I):
         acc = m.group(1).upper()
-        version_in_input = int(m.group(2))
-    elif m := r_AF_wo_model.fullmatch(customPDB):
-        acc = m.group(1).upper()
-    elif m := r_UNIPROT_ACC.fullmatch(customPDB):
+        if m.group(2):
+            acc = f"{acc}-{m.group(2)}"
+    elif m := re.fullmatch(rUNIPROT_ACC, customPDB, re.I):
         acc = m.group(0).upper()
-    else: 
-        raise ValueError(f"Unsupported customPDB format: {customPDB}")
-    
-    # If version specified, verify availability
-    target_version = version if version is not None else version_in_input
-    if target_version is not None:
-        afid = f"AF-{acc}-F1-model_v{int(target_version)}"
-        pdb_url = f"https://alphafold.ebi.ac.uk/files/{afid}.pdb"
-        cif_url = f"https://alphafold.ebi.ac.uk/files/{afid}.cif"
-        if _url_exists(pdb_url) or _url_exists(cif_url):
-            return afid
-        if strict_version:
-            raise ValueError(f"Requested AlphaFold version v{target_version} not available for {acc}")
+    else:
+        raise ValueError(f"Your customPDB {customPDB} is not in alphafold format")
 
-    # Resolve latest via API
-    api_url = f"https://alphafold.ebi.ac.uk/api/prediction/{acc}"
+    api_url = AFDB_API_METADATA.format(acc)
     r = requests.get(api_url, timeout=20)
     r.raise_for_status()
     data = r.json()
     if not isinstance(data, list) or not data:
         raise ValueError(f"No AlphaFold prediction found for {acc}")
 
-    rec = data[0]
-    entry = rec.get("entryId") or rec.get("modelEntityId")
-    if entry:
-        # entry may be AF-...-F1; normalize to model_vN if possible from URLs
-        # Prefer extracting exact model from pdbUrl/cifUrl when present
-        for key in ("pdbUrl", "cifUrl"):
-            u = rec.get(key) or ""
-            m = re.search(r'(AF-[A-Za-z0-9]{6,10}-F\d+-model_v\d+)\.(?:pdb|cif)$', u)
-            if m:
-                return m.group(1)
-        # fallback
-        return f"{entry}-model_v4" if "-model_v" not in entry else entry
-
+    # Loop through each record in metadata
+    for rec in data:
+        entry = rec.get("entryId") or rec.get("modelEntityId")
+        if entry:
+            entry_seq = rec.get("sequence", "")
+            for key in ("pdbUrl", "cifUrl"):
+                u = rec.get(key) or ""
+                m = re.search(rAFID_FILE_PATTERN, u)
+                if m:
+                    # Find exact match if providing sequence
+                    if sequence is not None:
+                        if entry_seq != sequence:
+                            continue
+                        else:
+                            return m.group(1)
+                    else:
+                        return m.group(1)
+                else:
+                    print(f"Cannot find rAFID_FILE_PATTERN in entry {entry}")
     raise ValueError(f"Unable to resolve AlphaFold ID for {acc}")
 
 def verifyAF(pdbpath, return_message=False):

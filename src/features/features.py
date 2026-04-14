@@ -1,11 +1,13 @@
-import numpy as np
 import os
+import re
+import numpy as np
 
 from . import TANDEM_FEATS
-from .Uniprot import seqScanning, mapSAVs2PDB
+from .Uniprot import seqScanning, mapSAVs2PDB, SAV_coord2SAV
 from .PDB import calcPDBfeatures
 from .SEQ import calcSEQfeatures
 from ..utils.logger import LOGGER
+from ..utils.user_log import UserLog, USERLOG_MESSAGES
 
 class Features:
 
@@ -62,36 +64,14 @@ class Features:
         self.custom_PDB = None
         # options
         self.options = kwargs
-        self.userlog = kwargs.get("userlog")
+        self.job_directory = kwargs["job_directory"] if "job_directory" in kwargs else '.'
+        self.userlog: UserLog = kwargs.get("userlog") or UserLog(path=f"{self.job_directory}/log.jsonl")
         self.refresh = refresh
         self.saturation_mutagenesis = None
         self.setSAVs(query)
         # map SAVs to PDB structures
         self.Uniprot2PDBmap = None
         self.config = None
-
-    def _emit_userlog(self, level, code, stage, message, action=None, context=None):
-        if self.userlog is None:
-            return
-        self.userlog.emit(level, code, stage, message, action=action, context=context)
-
-    def _map_reason_code(self, reason):
-        text = str(reason).lower()
-        if "out of range" in text:
-            return "MAP_RESID_OUT_OF_RANGE"
-        if "wt residue is" in text:
-            return "MAP_WT_MISMATCH"
-        if "very low confidence region" in text:
-            return "MAP_AF_LOW_CONFIDENCE"
-        if "no hits found" in text:
-            return "MAP_NO_HIT"
-        if "unable to run" in text:
-            return "MAP_ENGINE_FAILED"
-        return "MAP_FAILED"
-
-    def _isColSet(self, column):
-        assert self.data is not None, 'Data array not initialized.'
-        return self.data[column].count() != 0
 
     def setSAVs(self, query):
         assert self.data is None, 'SAV list already set.'
@@ -135,13 +115,9 @@ class Features:
         data = np.ma.masked_all(nSAVs, dtype=self.data_dtype)
         # Assign nan to all columns
         data['SAV_coords'] = SAV_list
+        data['SAVs'] = SAV_coord2SAV(SAV_list)
         self.data = data
         self.nSAVs = nSAVs
-
-        # SAVs field: <UniProt ID> <mutation site>
-        SAVs = [s.split() for s in SAV_list]
-        SAVs = [f"{s[0]} {s[2]}{s[1]}{s[3]}" for s in SAVs]
-        data['SAVs'] = SAVs
     
     def setLabels(self, labels):
         if labels is None:
@@ -189,52 +165,73 @@ class Features:
         """Maps each SAV to the corresponding resid in a PDB chain.
         """
         assert self.data is not None, "SAVs not set."
-        cols = ['SAV_coords', 'Unique_SAV_coords', 'Asymmetric_PDB_coords', 'Uniprot_sequence_length',
-                'BioUnit_PDB_coords', 'OPM_PDB_coords', 'Asymmetric_PDB_resolved_length']
-        Uniprot2PDBmap = self.Uniprot2PDBmap
-        custom_PDB = self.custom_PDB
-        if not self._isColSet('Asymmetric_PDB_coords'):
-            Uniprot2PDBmap, custom_PDB = mapSAVs2PDB(
-                self.data['SAV_coords'], custom_PDB=self.custom_PDB, 
-                refresh=self.refresh, **self.options
-            )
-            for col in cols:
-                self.data[col] = Uniprot2PDBmap[col]
+        cols = ['SAV_coords', 'Unique_SAV_coords', 
+                'Asymmetric_PDB_coords', 'Uniprot_sequence_length',
+                'BioUnit_PDB_coords', 'OPM_PDB_coords', 
+                'Asymmetric_PDB_resolved_length']
 
-            fail_total = 0
-            max_emit = 200
-            truncated = 0
-            for i, row in enumerate(Uniprot2PDBmap):
-                asu = row['Asymmetric_PDB_coords']
-                if not isinstance(asu, str) or "Cannot map" not in asu:
-                    continue
-                fail_total += 1
-                if fail_total > max_emit:
-                    truncated += 1
-                    continue
-                sav = row['SAV_coords']
-                code = self._map_reason_code(asu)
-                self._emit_userlog(
-                    "warning",
-                    code,
-                    "mapping",
-                    f"Failed to map SAV '{sav}' to a usable structure: {asu}",
-                    action="Try a custom PDB/AlphaFold structure or verify SAV format.",
-                    context={"sav": sav, "reason": asu},
-                )
+        Uniprot2PDBmap, custom_PDB = mapSAVs2PDB(
+            self.data['SAV_coords'], custom_PDB=self.custom_PDB, 
+            refresh=self.refresh, **self.options
+        )
+        for col in cols:
+            self.data[col] = Uniprot2PDBmap[col]
 
-            mapped_total = int(np.sum(Uniprot2PDBmap['Asymmetric_PDB_resolved_length'] != 0))
-            self._emit_userlog(
-                "info",
-                "MAPPING_SUMMARY",
-                "mapping",
-                f"Mapped {mapped_total}/{len(Uniprot2PDBmap)} SAVs to structures.",
-                context={
-                    "mapped": mapped_total,
-                    "unmapped": int(len(Uniprot2PDBmap) - mapped_total),
-                    "truncated_events": int(truncated),
-                },
+        # Mapping SAVs to structure: summarize by failure pattern.
+        pattern_no_hits = "Cannot map, no hits found"
+        pattern_wt_mismatch = re.compile(r"^Cannot map, wt residue is ([A-Z]) not ([A-Z])$")
+        pattern_low_confidence = re.compile(r"^Cannot map, very low confidence region (\d+(?:\.\d+)?)$")
+
+        no_hits_savs = []
+        wt_mismatch_savs = []
+        low_confidence_savs = []
+
+        for i, row in enumerate(Uniprot2PDBmap):
+            asu = row["Asymmetric_PDB_coords"]
+            if not isinstance(asu, str) or "Cannot map" not in asu:
+                continue
+
+            sav = self.data["SAVs"][i]
+
+            if asu == pattern_no_hits:
+                no_hits_savs.append(sav)
+                continue
+
+            if pattern_wt_mismatch.fullmatch(asu):
+                wt_mismatch_savs.append(sav)
+                continue
+
+            if pattern_low_confidence.fullmatch(asu):
+                low_confidence_savs.append(sav)
+                continue
+
+        # Emit one message per pattern (if any).
+        if no_hits_savs:
+            self.userlog.emit(level="warning", stage="Uniprot2PDB",
+                message=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['message'],
+                action=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['action'],
+                context={"savs": no_hits_savs, "reason": pattern_no_hits},
             )
+
+        if wt_mismatch_savs:
+            self.userlog.emit(level="warning", stage="Uniprot2PDB",
+                message=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['message'],
+                action=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['action'],
+                context={"savs": wt_mismatch_savs, "reason": "Cannot map, wt residue is X not Y"},
+            )
+        
+        if low_confidence_savs:
+            self.userlog.emit(level="warning", stage="Uniprot2PDB",
+                message=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['message'],
+                action=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['action'],
+                context={"savs": low_confidence_savs, "reason": "Cannot map, low confidence region pLDDT<50"},
+            )
+
+        mapped_total = int(np.sum(Uniprot2PDBmap["Asymmetric_PDB_resolved_length"] != 0))
+        self.userlog.emit(level="info", stage="Uniprot2PDB",
+            message=f"Mapped {mapped_total}/{len(Uniprot2PDBmap)} SAVs to structures.",
+            context={"mapped": mapped_total, "unmapped": int(len(Uniprot2PDBmap) - mapped_total),},
+        )
         self.custom_PDB = custom_PDB
         self.Uniprot2PDBmap = Uniprot2PDBmap
 
@@ -246,24 +243,28 @@ class Features:
         folder = kwargs.get('folder', '.')
         filename = kwargs.get('filename', None)
         os.makedirs(folder, exist_ok=True)
-        cols = ['SAV_coords', 'Unique_SAV_coords', 'Asymmetric_PDB_coords', 
-                'BioUnit_PDB_coords', 'OPM_PDB_coords', 'Asymmetric_PDB_resolved_length', 'Uniprot_sequence_length']
         # print to file, if requested
         if filename is not None:
             # filename = filename + '-Uniprot2PDB.txt'
             filepath = os.path.join(folder, filename)
             SAVs = self.data['SAVs']
+            coord_values = [str(s['Asymmetric_PDB_coords']) for s in self.data] # type: ignore
+            sav_width = max(len("SAV"), max(len(str(sav)) for sav in SAVs))
+            coord_width = max(len("pdbid/chid/resid/aa"), max(len(value) for value in coord_values))
+            resolved_header = "resolved_len/total_len"
             with open(filepath, 'w') as f:
                 f.write(' '.join([
-                    f"{'SAV':<15}",
-                    f"{'pdbid/chid/resid/aa':<20}",
-                    "resolved_len/total_len",
+                    f"{'SAV':<{sav_width}}",
+                    f"{'pdbid/chid/resid/aa':<{coord_width}}",
+                    resolved_header,
                 ]) + '\n')
                 for i, s in enumerate(self.data): # type: ignore
+                    coord_text = str(s['Asymmetric_PDB_coords'])
+                    resolved_text = f"{s['Asymmetric_PDB_resolved_length']}/{s['Uniprot_sequence_length']}"
                     f.write(' '.join([
-                        f"{SAVs[i]:<15}",
-                        f"{s['Asymmetric_PDB_coords']:<20}",
-                        f"{s['Asymmetric_PDB_resolved_length']}/{s['Uniprot_sequence_length']}",
+                        f"{SAVs[i]:<{sav_width}}",
+                        f"{coord_text:<{coord_width}}",
+                        resolved_text,
                     ]) + '\n')
             LOGGER.info(f'Uniprot2PDB map saved to {filepath}')
         return self.Uniprot2PDBmap

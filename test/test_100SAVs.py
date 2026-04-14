@@ -27,7 +27,7 @@ sav_list = ["A4D126 53 A T", "A4D2B0 114 H N", "A4D2B0 79 P H", "A8MYU2 768 W R"
 
 td = run(
     query=sav_list, # List of SAVs to be analyzed
-    job_name='test/test_100SAVs_Mar6', # Define where the job will be saved
-    refresh=False, # Set to True to refresh the calculation
+    job_name='test/test_100SAVs_Apr14', # Define where the job will be saved
+    refresh=True, # Set to True to refresh the calculation
     uniref90='/home/loci/main/tandem_website/tandem/data/consurf/uniref90.fasta' # 
 )   

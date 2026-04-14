@@ -80,7 +80,7 @@ class SEQfeatures(UniprotMapping):
         return self.Pfam
 
     def _sliceMSA(self, msa: MSA):
-        acc_name = self.fullRecord['name   0']
+        acc_name = self.uniq_acc
         # find sequences in MSA related to the given Uniprot name
         indexes = msa.getIndex(acc_name)
         if indexes is None:
@@ -401,7 +401,7 @@ def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS,
             msg = traceback.format_exc()
             LOGGER.warn(msg)
             for f in sel_feats:
-                features[indices][f] = str(e)
+                features[indices][f] = np.nan
         if not isinstance(seq, str):
             seq.savePickle(**kwargs)
         done = ndone / nSAVs

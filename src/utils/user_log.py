@@ -9,6 +9,35 @@ from threading import Lock
 
 __all__ = ["UserLog"]
 
+USERLOG_MESSAGES = {
+    # Mapping SAVs -> structures
+    "SAV2PDB_NO_HITS": {
+        "message": "Cannot find an experimental structure or AlphaFold2 structure for these SAVs:",
+        "action": "If you want to predict the pathogenicity of these SAVs, please upload your own structure.",
+    },
+    "SAV2PDB_WT_MISMATCH": {
+        "message": "Cannot map these SAVs due to residue mismatch:",
+        "action": "Please ensure that the mutation is defined on the UniProt canonical sequence.",
+    },
+    "SAV2PDB_LOW_CONFIDENCE": {
+        "message": "These SAVs fall in low-confidence regions (pLDDT < 50):",
+        "action": "",
+    },
+
+    # PDB / structure preparation
+    "PDB_PREP_FAILED": {
+        "message": "Failed to prepare structure '{pdbID}' ({format}).",
+        "action": "Verify structure source or provide a valid custom structure.",
+    },
+    "PDB_NOT_FOUND": {
+        "message": "Prepared structure file not found for '{pdbID}' ({format}).",
+        "action": "Try rerunning with refresh or verify external structure availability.",
+    },
+    "PDB_READ_FAILED": {
+        "message": "Failed to read structure '{pdbID}' ({format}) for feature calculation.",
+        "action": "Check if the structure file is complete and readable.",
+    },
+}
 
 class UserLog:
     """Append-only JSONL logger for UI-friendly job events."""
@@ -22,7 +51,6 @@ class UserLog:
     def emit(
         self,
         level: str,
-        code: str,
         stage: str,
         message: str,
         action: str | None = None,
@@ -31,7 +59,6 @@ class UserLog:
         row = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": str(level),
-            "code": str(code),
             "stage": str(stage),
             "message": str(message),
             "action": action,

@@ -12,6 +12,7 @@ from prody import calcPerturbResponse, calcMechStiff, sliceModel
 from prody.atomic import sliceAtoms
 
 from ..utils.logger import LOGGER
+from ..utils.user_log import UserLog, USERLOG_MESSAGES
 from ..utils.settings import one2three
 from ..dynamics.ENM import GNM, envGNM, ANM, envANM
 from ..dynamics.entropy import calcSpectralEntropy
@@ -1228,7 +1229,7 @@ class PDBfeatures:
 
 def calcPDBfeatures(
         mapped_SAVs, custom_PDB=None, refresh=False, 
-        sel_feats=PDB_FEATS, withSAV=False, **kwargs):
+        sel_feats=PDB_FEATS, **kwargs):
     """Computes structural and dynamics features from PDB structures.
     mapped_SAVs: numpy array or pandas DataFrame
         columns: 
@@ -1258,14 +1259,12 @@ def calcPDBfeatures(
             - bas: BioUnit PDB coordinates are available
             - asu: Asymmetric PDB coordinates are available
     """
+    
+    job_directory = kwargs["job_directory"] if "job_directory" in kwargs else '.'
+    userlog: UserLog = kwargs.get("userlog") or UserLog(path=f"{job_directory}/log.jsonl")
+    
     LOGGER.info('Computing strutural and dynamics features from PDB structures...')
     LOGGER.timeit('_calcPDBfeatures')
-    userlog = kwargs.get("userlog")
-
-    def _emit_userlog(level, code, message, action=None, context=None):
-        if userlog is None:
-            return
-        userlog.emit(level, code, "structure", message, action=action, context=context)
 
     # Convert to numpy array
     if isinstance(mapped_SAVs, pd.DataFrame):
@@ -1308,8 +1307,6 @@ def calcPDBfeatures(
             else:
                 groups[pdbID]['asu'].append(i)
     
-    job_directory = kwargs["job_directory"] if "job_directory" in kwargs else '.'
-    
     # Compute features for each group
     ndone = 0
     for pdbID, formats in groups.items():
@@ -1341,22 +1338,18 @@ def calcPDBfeatures(
             except Exception:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
-                _emit_userlog(
-                    "error",
-                    "STRUCTURE_PREP_FAILED",
-                    f"Failed to prepare structure '{pdbID}' ({format}).",
-                    action="Verify structure source or provide a valid custom structure.",
+                userlog.emit(level="error", stage="structure", 
+                    message=USERLOG_MESSAGES['PDB_PREP_FAILED']['message'].format(pdbID=pdbID, format=format),
+                    action=USERLOG_MESSAGES['PDB_PREP_FAILED']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format)},
                 )
                 continue
             # Check if PDB file exists 
             if not os.path.isfile(pdbPath):
                 LOGGER.warning(f"File {pdbPath} not found.")
-                _emit_userlog(
-                    "error",
-                    "STRUCTURE_NOT_FOUND",
-                    f"Prepared structure file not found for '{pdbID}' ({format}).",
-                    action="Try rerunning with refresh or verify external structure availability.",
+                userlog.emit(level="error", stage="structure",
+                    message=USERLOG_MESSAGES['PDB_NOT_FOUND']['message'].format(pdbID=pdbID, format=format),
+                    action=USERLOG_MESSAGES['PDB_NOT_FOUND']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath)},
                 )
                 continue
@@ -1367,11 +1360,9 @@ def calcPDBfeatures(
             except Exception as e:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
-                _emit_userlog(
-                    "error",
-                    "STRUCTURE_PARSE_FAILED",
-                    f"Failed to read structure '{pdbID}' ({format}) for feature calculation.",
-                    action="Check if the structure file is complete and readable.",
+                userlog.emit(level="error", stage="structure",
+                    message=USERLOG_MESSAGES['PDB_READ_FAILED']['message'].format(pdbID=pdbID, format=format),
+                    action=USERLOG_MESSAGES['PDB_READ_FAILED']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath), "error": str(e)},
                 )
                 obj = str(e)    
@@ -1389,12 +1380,6 @@ def calcPDBfeatures(
                 obj.savePickle(**kwargs)
             done = ndone / nSAVs
             LOGGER.info(f"PDB features: {ndone}/{nSAVs} SAVs processed [{done:.0%}]")
-    if withSAV:
-        _dtype = np.dtype([("SAV_coords", "U50")] + _dtype.descr)
-        _features = np.zeros(nSAVs, dtype=_dtype)
-        _features['SAV_coords'] = mapped_SAVs['SAV_coords']
-        for f in sel_feats:
-            _features[f] = features[f]
-        features = _features
+
     LOGGER.report('PDB features computed in %.2fs.', '_calcPDBfeatures')
     return features
