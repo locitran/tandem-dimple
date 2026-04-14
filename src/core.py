@@ -52,26 +52,41 @@ class Tandem(Features):
         df = pd.read_csv(data)
         fm = df[TANDEM_FEATS['v1.1']].values
         self.preprocess = Preprocessing(fm)
+
+    def _init_empty_predictions(self):
+        """Create placeholder prediction records for SAVs without usable structure mapping."""
+        out = np.full(self.nSAVs, np.nan, dtype=self.model2pred_dtype)
+        out["classification"] = "not available"
+        out["prob"] = None
+        out["pred"] = None
+        out["shap"] = None
+        return out
     
     def getPredictions(self, models, folder='.', filename=None):
             
-
         self.calcPredictions(models)
         SAV = self.data["SAVs"]
         tdm_data = self.data["tandem"]
         tdp_data = self.data["tandem_dimple"]
+        accept_idx = self.data["Asymmetric_PDB_resolved_length"] != 0
 
-        tdm_prob_cls = [
-            f"{p:.3f}±{sem:.3f} ({cls})"
-            for p, sem, cls in zip(
-                tdm_data["path_prob"], tdm_data["path_prob_sem"], tdm_data["classification"])
-        ]
+        tdm_prob_cls = []
+        for is_mapped, p, sem, cls in zip(
+            accept_idx, tdm_data["path_prob"], tdm_data["path_prob_sem"], tdm_data["classification"]
+        ):
+            if not is_mapped or pd.isna(p) or pd.isna(sem):
+                tdm_prob_cls.append("Not available")
+            else:
+                tdm_prob_cls.append(f"{p:.3f}±{sem:.3f} ({cls})")
         if models != TANDEM_v1dot1:
-            tdp_prob_cls = [
-                f"{p:.3f}±{sem:.3f} ({cls})"
-                for p, sem, cls in zip(
-                    tdp_data["path_prob"], tdp_data["path_prob_sem"], tdp_data["classification"])
-                ]
+            tdp_prob_cls = []
+            for is_mapped, p, sem, cls in zip(
+                accept_idx, tdp_data["path_prob"], tdp_data["path_prob_sem"], tdp_data["classification"]
+            ):
+                if not is_mapped or pd.isna(p) or pd.isna(sem):
+                    tdp_prob_cls.append("Not available")
+                else:
+                    tdp_prob_cls.append(f"{p:.3f}±{sem:.3f} ({cls})")
             df_data = {"SAV": SAV, "TANDEM": tdm_prob_cls, "TANDEM-DIMPLE": tdp_prob_cls}
             columns = ["SAV", "TANDEM", "TANDEM-DIMPLE"]
         else:
@@ -90,24 +105,29 @@ class Tandem(Features):
         assert os.path.isdir(models), f"Folder {models} does not exist."
         assert self.featMatrix is not None, 'Feature matrix not set.'
         LOGGER.timeit('_calcPredictions')
+        accept_idx = self.data["Asymmetric_PDB_resolved_length"] != 0
+        self.data["tandem"] = self._init_empty_predictions()
+        self.data["tandem_dimple"] = self._init_empty_predictions()
+        if not np.any(accept_idx):
+            LOGGER.report('Predictions computed in %.2fs.', label='_calcPredictions')
+            return
         # Convert the feature matrix to a NumPy array
         feat_names = self.featMatrix.dtype.names
         fm = np.column_stack([self.featMatrix[name] for name in feat_names])
         fm = self.preprocess(fm)
+        fm = fm[accept_idx]
         
         # Load foundation models
         fd_models = self.models
         shap_background = np.load(f"{TANDEM_v1dot1}/shap_background.npy")
-        self.data['tandem'] = self._calcPredictions(
-            fm, shap_background, fd_models
-        )
+        self.data['tandem'][accept_idx] = self._calcPredictions(fm, shap_background, fd_models)
 
         # if TANDEM-DIMPLE is provided (models not None)
         # Load tf models
         if models != TANDEM_v1dot1:
             tf_models = self.setModels(models)
             shap_background = np.load(f"{models}/shap_background.npy")
-            self.data['tandem_dimple'] = self._calcPredictions(fm, shap_background, tf_models)
+            self.data['tandem_dimple'][accept_idx] = self._calcPredictions(fm, shap_background, tf_models)
         LOGGER.report('Predictions computed in %.2fs.', label='_calcPredictions')
 
     def _calcPredictions(self, featMatrix, shap_background, models):
@@ -194,10 +214,10 @@ class Tandem(Features):
 
     ### --------- Visualization     ------- #####
     def plotSHAP(self, folder='.'):
-        assert not np.ma.is_masked(self.data['tandem']['shap']), 'SHAP has not been calculated' 
         LOGGER.timeit('_plotSHAP')
         SAVs = self.data['SAVs']
         individualSHAP_title = 'Feature contribution to model prediction on {} ({})'
+        accept_idx = self.data['Asymmetric_PDB_resolved_length'] != 0
 
         # Create folder(s) to store SHAP figure(s)
         tandem_shap = os.path.join(folder, 'tandem_shap')
@@ -205,21 +225,30 @@ class Tandem(Features):
             
         # Plot SHAP values for individual SAVs
         for i in range(self.nSAVs):
+            if not accept_idx[i]:
+                continue
             sav = str(SAVs[i])
             _featImp = self.data['tandem']['shap'][i]
             _classif = self.data['tandem']['classification'][i]
+            if _featImp is None:
+                continue
             plotSHAP_bar(_featImp, individualSHAP_title.format(sav, _classif), 
                          tandem_shap, sav, globalshap=False)
 
         # This is for TANDEM-DIMPLE in case models is not default
-        if not np.ma.is_masked(self.data['tandem_dimple']['shap']):
+        has_tandem_dimple_shap = any(value is not None for value in self.data['tandem_dimple']['shap'])
+        if has_tandem_dimple_shap:
             tandem_dimple_shap = os.path.join(folder, 'tandem_dimple_shap')
             os.makedirs(tandem_dimple_shap, exist_ok=True)
 
             for i in range(self.nSAVs):
+                if not accept_idx[i]:
+                    continue
                 sav = str(SAVs[i])
                 _featImp = self.data['tandem_dimple']['shap'][i]
                 _classif = self.data['tandem_dimple']['classification'][i]
+                if _featImp is None:
+                    continue
                 plotSHAP_bar(_featImp, individualSHAP_title.format(sav, _classif), 
                             tandem_dimple_shap, sav, globalshap=False)
         LOGGER.report('plotSHAP computed in %.2fs.', label='_plotSHAP')
