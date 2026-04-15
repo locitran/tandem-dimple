@@ -26,15 +26,15 @@ USERLOG_MESSAGES = {
 
     # PDB / structure preparation
     "PDB_PREP_FAILED": {
-        "message": "Failed to prepare structure '{pdbID}' ({format}).",
+        "message": "Failed to prepare structure '{pdbID}'.",
         "action": "Verify structure source or provide a valid custom structure.",
     },
     "PDB_NOT_FOUND": {
-        "message": "Prepared structure file not found for '{pdbID}' ({format}).",
+        "message": "Prepared structure file not found for '{pdbID}'.",
         "action": "Try rerunning with refresh or verify external structure availability.",
     },
     "PDB_READ_FAILED": {
-        "message": "Failed to read structure '{pdbID}' ({format}) for feature calculation.",
+        "message": "Failed to read structure '{pdbID}' for feature calculation.",
         "action": "Check if the structure file is complete and readable.",
     },
 }

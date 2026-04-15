@@ -262,9 +262,8 @@ class Tandem(Features):
             cfg.update({k: v for k, v in config.items() if k in cfg})
         self.config = TLConfig(**cfg)
 
-    def train(self, smin=47):
+    def train(self, smin=10):
         assert self.featMatrix is not None, "Feature matrix not set."
-        assert self._isColSet("labels"), "Labels not set."
         assert self.config is not None, "Config not set."
         
         LOGGER.timeit('_train')

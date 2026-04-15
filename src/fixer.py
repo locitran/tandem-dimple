@@ -288,12 +288,18 @@ def execCGmembrane(opm_file, folder='.', filename=None,
     exANM = os.path.join(ROOT_DIR, 'src/features/bin/cgmembrane')
     if not os.path.isfile(exANM):
         raise FileNotFoundError(f"cgmembrane executable not found at {exANM}")
-    command = f"{exANM} {opm_file} -s {radius_node} -b {lower_thick} {upper_thick} -r {radius_membrane}"
+    command = [exANM, str(opm_file), "-s", str(radius_node), "-b", str(lower_thick), str(upper_thick), "-r", str(radius_membrane),]
+    command_str = " ".join(command)
     try:
-        out = subprocess.run(command, shell=True, text=True, capture_output=True)
+        out = subprocess.run(command, text=True, capture_output=True)
     except subprocess.CalledProcessError as e:
-        LOGGER.warn(f"execCGmembrane: command failed with error: {e}")
+        LOGGER.warn(f"execCGmembrane: command {command_str} failed with error: {e}")
         return
+    if out.returncode != 0:
+        LOGGER.warn(f"execCGmembrane: non-zero return code {out.returncode}")
+        if out.stderr:
+            LOGGER.warn(out.stderr.strip())
+        raise RuntimeError(f"cgmembrane failed for {opm_file}, command {command_str}")
     # Store output in a variable
     cgmembrane_output = out.stdout
     cgmembrane_output = cgmembrane_output.split('\n')
@@ -312,7 +318,7 @@ def execCGmembrane(opm_file, folder='.', filename=None,
 
         match = ATOM_PATTERN.match(line)
         if not match:
-            LOGGER.warn(f"Malformed ATOM: {l}")
+            LOGGER.warn(f"Malformed ATOM: {line}")
             continue
 
         d = match.groupdict()
@@ -320,7 +326,7 @@ def execCGmembrane(opm_file, folder='.', filename=None,
 
         # sanity check
         if not (-1000 < x < 1000 and -1000 < y < 1000):
-            LOGGER.warn(f"Unphysical XY: {x} {y} line: {l}")
+            LOGGER.warn(f"Unphysical XY: {x} {y} line: {line}")
             continue
 
         # radial filter
@@ -336,7 +342,7 @@ def execCGmembrane(opm_file, folder='.', filename=None,
         elements.append("M")   # coarse-grained pseudo element
 
     ag = AtomGroup("NE1_atoms")
-    ag.setCoords(np.array(coords))
+    ag.setCoords(np.array(coords, dtype=float))
     ag.setNames(names)
     ag.setResnames(resnames)
     ag.setResnums(resnums)
@@ -385,33 +391,48 @@ def buildCGmembrane(opm_file, folder, filename, refresh=True):
     
     if d > 35:
         LOGGER.info('Detected TWO membrane bilayer')
-        kmeans = KMeans(n_clusters=4, random_state=0).fit(z_coords.reshape(-1, 1))
-        centers = kmeans.cluster_centers_.flatten()
-        # Sort centers to find upper and lower bilayer
-        centers.sort()
-        first_bilayer = centers[:2]
-        first_upper_dum = dumAtoms.select(f'z `{first_bilayer[1]-2} to {first_bilayer[1]+2}`')
-        first_lower_dum = dumAtoms.select(f'z `{first_bilayer[0]-2} to {first_bilayer[0]+2}`')
-        first_radius = np.max(np.linalg.norm(first_upper_dum.getCoords()[:, :2], axis=1))
-        first_CGmem = execCGmembrane(
-            opm_file, folder=folder, filename=f'{filename}-first_bilayer-ne1', radius_node=3.1,  rr=15,
-            lower_thick=first_bilayer[0], upper_thick=first_bilayer[1], radius_membrane=first_radius
-        )
-        first_ne1 = parsePDB(first_CGmem)
+        try:
+            kmeans = KMeans(n_clusters=4, random_state=0).fit(z_coords.reshape(-1, 1))
+            centers = kmeans.cluster_centers_.flatten()
+            # Sort centers to find upper and lower bilayer
+            centers.sort()
+            first_bilayer = centers[:2]
+            first_upper_dum = dumAtoms.select(f'z `{first_bilayer[1]-2} to {first_bilayer[1]+2}`')
+            first_lower_dum = dumAtoms.select(f'z `{first_bilayer[0]-2} to {first_bilayer[0]+2}`')
+            first_radius = np.max(np.linalg.norm(first_upper_dum.getCoords()[:, :2], axis=1))
+            first_CGmem = execCGmembrane(
+                opm_file, folder=folder, filename=f'{filename}-first_bilayer-ne1', radius_node=3.1,  rr=15,
+                lower_thick=first_bilayer[0], upper_thick=first_bilayer[1], radius_membrane=first_radius
+            )
+            first_ne1 = parsePDB(first_CGmem)
 
-        second_bilayer = centers[2:]
-        second_upper_dum = dumAtoms.select(f'z `{second_bilayer[1]-2} to {second_bilayer[1]+2}`')
-        second_lower_dum = dumAtoms.select(f'z `{second_bilayer[0]-2} to {second_bilayer[0]+2}`')
-        second_radius = np.max(np.linalg.norm(second_upper_dum.getCoords()[:, :2], axis=1))
-        second_CGmem = execCGmembrane(
-            opm_file, folder=folder, filename=f'{filename}-second_bilayer-ne1', radius_node=3.1, rr=15,
-            lower_thick=second_bilayer[0], upper_thick=second_bilayer[1], radius_membrane=second_radius
-        )
-        second_ne1 = parsePDB(second_CGmem)
-        protein = pdb.select('not resname DUM').copy()
-        # Combine NE1 and protein
-        combined = protein + first_ne1 + second_ne1
-        writePDB(out, combined)
+            second_bilayer = centers[2:]
+            second_upper_dum = dumAtoms.select(f'z `{second_bilayer[1]-2} to {second_bilayer[1]+2}`')
+            second_lower_dum = dumAtoms.select(f'z `{second_bilayer[0]-2} to {second_bilayer[0]+2}`')
+            second_radius = np.max(np.linalg.norm(second_upper_dum.getCoords()[:, :2], axis=1))
+            second_CGmem = execCGmembrane(
+                opm_file, folder=folder, filename=f'{filename}-second_bilayer-ne1', radius_node=3.1, rr=15,
+                lower_thick=second_bilayer[0], upper_thick=second_bilayer[1], radius_membrane=second_radius
+            )
+            second_ne1 = parsePDB(second_CGmem)
+            protein = pdb.select('not resname DUM').copy()
+            # Combine NE1 and protein
+            combined = protein + first_ne1 + second_ne1
+            writePDB(out, combined)
+        except Exception as exc:
+            LOGGER.warn(f"Two-bilayer cgmembrane build failed, falling back to one-bilayer build: {exc}")
+            lower_z = min(centers[:2])
+            upper_z = max(centers[2:])
+            upper_dum = dumAtoms.select(f'z `{upper_z-2} to {upper_z+2}`')
+            radius = np.max(np.linalg.norm(upper_dum.getCoords()[:, :2], axis=1))
+            first_CGmem = execCGmembrane(
+                opm_file, folder=folder, filename=f'{filename}-fallback-ne1', radius_node=3.1,
+                lower_thick=lower_z, upper_thick=upper_z, radius_membrane=radius, rr=15
+            )
+            first_ne1 = parsePDB(first_CGmem)
+            protein = pdb.select('not resname DUM').copy()
+            combined = protein + first_ne1
+            writePDB(out, combined)
 
     else:
         lower_z = min(centers)
@@ -579,8 +600,8 @@ def fixPDB(pdb, format='asu',
                 LOGGER.info(f"File {out} already exists")
                 LOGGER.report('PDB fixed in %.2fs.', '_fixPDB')
                 return out
-            pdbpath = fetchPDB_BiologicalAssembly(pdb, assemblyID, format='cif', 
-                                            refresh=refresh, folder=RAW_PDB_DIR)
+            pdbpath = fetchPDB_BiologicalAssembly(
+                pdb, assemblyID, format='cif', refresh=refresh, folder=RAW_PDB_DIR)
             LOGGER.info(pdbpath)
             f = LociFixer(pdbpath)
             f.fix(fix_loop=fix_loop, replaceNonstandard=replaceNonstandard)

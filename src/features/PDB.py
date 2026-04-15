@@ -1338,8 +1338,8 @@ def calcPDBfeatures(
             except Exception:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
-                userlog.emit(level="error", stage="structure", 
-                    message=USERLOG_MESSAGES['PDB_PREP_FAILED']['message'].format(pdbID=pdbID, format=format),
+                userlog.emit(level="warning", stage="calcPDBfeatures", 
+                    message=USERLOG_MESSAGES['PDB_PREP_FAILED']['message'].format(pdbID=pdbID),
                     action=USERLOG_MESSAGES['PDB_PREP_FAILED']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format)},
                 )
@@ -1347,8 +1347,8 @@ def calcPDBfeatures(
             # Check if PDB file exists 
             if not os.path.isfile(pdbPath):
                 LOGGER.warning(f"File {pdbPath} not found.")
-                userlog.emit(level="error", stage="structure",
-                    message=USERLOG_MESSAGES['PDB_NOT_FOUND']['message'].format(pdbID=pdbID, format=format),
+                userlog.emit(level="warning", stage="calcPDBfeatures",
+                    message=USERLOG_MESSAGES['PDB_NOT_FOUND']['message'].format(pdbID=pdbID),
                     action=USERLOG_MESSAGES['PDB_NOT_FOUND']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath)},
                 )
@@ -1360,8 +1360,8 @@ def calcPDBfeatures(
             except Exception as e:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
-                userlog.emit(level="error", stage="structure",
-                    message=USERLOG_MESSAGES['PDB_READ_FAILED']['message'].format(pdbID=pdbID, format=format),
+                userlog.emit(level="warning", stage="calcPDBfeatures",
+                    message=USERLOG_MESSAGES['PDB_READ_FAILED']['message'].format(pdbID=pdbID),
                     action=USERLOG_MESSAGES['PDB_READ_FAILED']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath), "error": str(e)},
                 )

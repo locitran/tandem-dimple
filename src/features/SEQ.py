@@ -62,7 +62,7 @@ class SEQfeatures(UniprotMapping):
         ]
         return full_SAVs
     
-    def _searchPfam(self,):
+    def _searchPfam(self):
         LOGGER.info('Searching Pfam...')    
         fasta_file = os.path.join(self.job_directory, f'{self.acc}.fasta')
         with open(fasta_file, 'w') as f:
@@ -365,8 +365,7 @@ class SEQfeatures(UniprotMapping):
         LOGGER.report('Sequence feature group computed in %.2fs.', '_calcSEQgroup')
         return f
 
-def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS, 
-                    withSAV=False, **kwargs):
+def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS, **kwargs):
     LOGGER.info('Computing sequence features ...')
     LOGGER.timeit('_calcSEQfeatures')
     nSAVs = len(SAV_coords)
@@ -407,14 +406,4 @@ def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS,
         done = ndone / nSAVs
         LOGGER.info(f"SEQ features: {ndone}/{nSAVs} SAVs processed, {acc} [{done:.0%}]")
     LOGGER.report('SEQ features computed in %.2fs.', label='_calcSEQfeatures')
-    if withSAV:
-        # Concatenate SAV_coords with structured features
-        dtype = SAV_coords.dtype.descr + _dtype.descr
-        _dtype = np.dtype(dtype)
-        _features = np.zeros(nSAVs, dtype=_dtype)
-        for f in SAV_coords.dtype.names:
-            _features[f] = SAV_coords[f]
-        for f in sel_feats:
-            _features[f] = features[f]
-        return _features
     return features
