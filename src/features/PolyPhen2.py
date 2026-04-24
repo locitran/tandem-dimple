@@ -6,213 +6,39 @@ classifiers.
 
 import os
 import requests
-import datetime
 import numpy as np
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
-from math import log
-from .UniProt_API import searchUniprot
 from ..utils.logger import LOGGER
 
-
-__author__ = "Luca Ponzoni"
-__date__ = "December 2019"
-__maintainer__ = "Luca Ponzoni"
-__email__ = "lponzoni@pitt.edu"
-__status__ = "Production"
-
-__all__ = ['PP2_FEATS', 'queryPolyPhen2', 'parsePolyPhen2output',
-           'getSAVcoords', 'printSAVlist', 'calcPolyPhen2']
+__all__ = ['PP2_FEATS', 'printSAVlist', 'calcPolyPhen2']
 
 PP2_FEATS = ['wt_PSIC', 'Delta_PSIC']
 """List of features derived from PolyPhen-2's output."""
 
-pph2_columns = ['o_acc', 'o_pos', 'o_aa1', 'o_aa2', 'rsid',
-                'acc', 'pos', 'aa1', 'aa2', 'nt1', 'nt2',
-                'prediction', 'based_on', 'effect', 'pph2_class',
-                'pph2_prob', 'pph2_FPR', 'pph2_TPR', 'pph2_FDR',
-                'site', 'region', 'PHAT', 'dScore', 'Score1',
-                'Score2', 'MSAv', 'Nobs', 'Nstruct', 'Nfilt',
-                'PDB_id', 'PDB_pos', 'PDB_ch', 'ident', 'length',
-                'NormASA', 'SecStr', 'MapReg', 'dVol', 'dProp',
-                'B-fact', 'H-bonds', 'AveNHet', 'MinDHet', 'AveNInt',
-                'MinDInt', 'AveNSit', 'MinDSit', 'Transv', 'CodPos',
-                'CpG', 'MinDJxn', 'PfamHit', 'IdPmax', 'IdPSNP',
-                'IdQmin', 'other']
-
-def _requests_retry_session(retries=10, timeout=1, backoff_factor=0.3,
-                            status_forcelist=(404,), session=None):
-    # https://www.peterbe.com/plog/best-practice-with-retries-with-requests
-    # time intervals (in minutes) between retry can be found with:
-    # [min((backoff_factor*(2**(retries - 1))), 120) / 60 for i in range(30)]
-    # total time after 12 retries --> ~6 minutes
-    # total time after 16 retries --> ~14 minutes
-    # total time after 30 retries --> ~42 minutes
-    # total time after 60 retries --> ~102 minutes
-    # total time after 100 retries --> ~182 minutes
-    # total time after 200 retries --> ~6 hours
-    session = session or requests.Session()
-    retry = Retry(total=retries, read=retries, connect=retries,
-                  backoff_factor=backoff_factor,
-                  status_forcelist=status_forcelist)
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
-
-def _check_log_errors(text):
-    error_strings = [
-        'ERROR: Neither AA1',
-        'ERROR: Invalid variation position',
-        'WARNING: Swapped input residues AA1'
-    ]
-    accs = []
-    for line in text.split('\n'):
-        if any([s in line for s in error_strings]):
-            acc = line.split(':')[0][1:]
-            accs.append(acc)
-    Uniprot_accs = set(accs)
-    if Uniprot_accs:
-        LOGGER.warn('Wrong SAV coordinates detected for '
-                    f'the following Uniprot sequences: {Uniprot_accs}')
-    return Uniprot_accs
-
-def _print_fasta_file(Uniprot_accs, filename='custom_sequences.fasta'):
-    date = datetime.date.today().strftime('%Y%m%d')
-    new_accs = {}
+def printSAVlist(input_SAVs, filename):
+    if isinstance(input_SAVs, str):
+        input_SAVs = [input_SAVs]
     with open(filename, 'w', 1) as f:
-        for acc in Uniprot_accs:
-            new_acc = f"{acc}-{date}"
-            f.write(f">{new_acc}")
-            urecord = searchUniprot(acc)
-            sequence = urecord.getSequence()
-            f.write(sequence)
-            # store new temporary accession numbers
-            new_accs[acc] = new_acc
-    return filename, new_accs
+        for i, line in enumerate(input_SAVs):
+            m = f'error in SAV {i}: '
+            assert isinstance(line, str), f'{m} not a string'
+            assert len(line) < 25, f'{m} too many characters'
+            print(line.upper(), file=f)
+    LOGGER.info(f'SAVs saved to {filename}')
+    return filename
 
-def _replace_strings_in_text(text, dict_substitutions):
-    for old_str, new_str in dict_substitutions.items():
-        text = text.replace(old_str, new_str)
-    return text
+def parsePolyPhen2(file):
+    assert os.path.exists(file), "parsePolyPhen2 input is a file."
 
-def _replace_strings_in_file(fname, new_fname, dict_substitutions):
-    with open(fname, 'r') as f:
-        text = f.read()
-    for old_str, new_str in dict_substitutions.items():
-        text = text.replace(old_str, new_str)
-    with open(new_fname, 'w') as f:
-        f.write(text)
-    return new_fname
-
-def queryPolyPhen2(filename, dump=True, prefix='pph2',
-                   fasta_file=None, fix_isoforms=False,
-                   ignore_errors=False, folder='.', **kwargs):
-    # original PolyPhen-2 curl command (see:
-    # http://genetics.bwh.harvard.edu/pph2/dokuwiki/faq ):
-    #
-    # curl  -F _ggi_project=PPHWeb2  -F _ggi_origin=query         \
-    # -F _ggi_target_pipeline=1  -F MODELNAME=HumDiv              \
-    # -F UCSCDB=hg19  -F SNPFUNC=m  -F NOTIFYME=myemail@myisp.com \
-    # -F _ggi_batch_file=@example_batch.txt                       \
-    # -D - http://genetics.bwh.harvard.edu/cgi-bin/ggi/ggi2.cgi
-
-    assert type(dump) is bool
-    assert type(prefix) is str
-
-    LOGGER.info('Submitting query to PolyPhen-2...')
-    num_lines = sum(1 for line in open(filename, 'rb') if line[0] != '#')
-    input_file = open(filename, 'rb')
-    # submit query
-    address = 'http://genetics.bwh.harvard.edu/ggi/cgi-bin/ggi2.cgi'
-    files = {
-        '_ggi_project': (None, 'PPHWeb2'),
-        '_ggi_origin': (None, 'query'),
-        '_ggi_target_pipeline': (None, '1'),
-        '_ggi_batch_file': ('query.txt', input_file),
-        'MODELNAME': (None, kwargs.get('MODELNAME', 'HumDiv')),
-        'UCSCDB': (None, kwargs.get('UCSCDB', 'hg19')),
-        'SNPFUNC': (None, kwargs.get('SNPFUNC', 'm'))
-    }
-    if fasta_file is not None:
-        # upload custom sequences
-        custom_fasta = open(fasta_file, 'rb')
-        files['uploaded_sequences_1'] = ('sequences.fa', custom_fasta)
-    response = requests.post(address, files=files)
-    # parse job ID from response page
-    jobID = response.cookies['polyphenweb2']
-    # results and semaphore files
-    results_dir = f'http://genetics.bwh.harvard.edu/ggi/pph2/{jobID}/1/'
-    files = {'started':   results_dir + 'started.txt',
-             'completed': results_dir + 'completed.txt',
-             'short':     results_dir + 'pph2-short.txt',
-             'full':      results_dir + 'pph2-full.txt',
-             'log':       results_dir + 'pph2-log.txt',
-             'snps':      results_dir + 'pph2-snps.txt'}
-    # keep checking if the job has started/completed and,
-    # when done, fetch output files
-    output = {}
-    exts = ['started', 'completed', 'short', 'full', 'log', 'snps']
-    for k in exts:
-        # delay = timeout + backoff_factor*[2^(total_retries - 1)]
-        if k == 'started':
-            r = _requests_retry_session(retries=16).get(files[k])
-            LOGGER.info('PolyPhen-2 is running...')
-        elif k == 'completed':
-            r = _requests_retry_session(
-                retries=200, timeout=log(num_lines)/2).get(files[k])
-        else:
-            r = _requests_retry_session(retries=12).get(files[k])
-        output[k] = r.text
-        # print to file, if requested
-        if dump:
-            output_file = f'{folder}/{prefix}-{k}.txt'
-            with open(output_file, 'w', 1) as f:
-                print(r.text, file=f)
-
-    # check for conflicts between Uniprot sequences and isoforms used
-    # by Polyhen-2 (which are sometimes outdated)
-    Uniprot_accs = _check_log_errors(output['log'])
-    if Uniprot_accs:
-        if fix_isoforms:
-            LOGGER.info('PolyPhen-2 may have picked the wrong isoforms.')
-            LOGGER.info('Resubmitting query with correct isoforms --- '
-                        'it may take up to a few hours to complete...')
-            # print file with freshly downloaded Uniprot sequences
-            fasta_fname, new_accs = _print_fasta_file(Uniprot_accs)
-            # replace accession numbers in list of SAVs
-            tmp_fname = filename + '.tmp'
-            _replace_strings_in_file(filename, tmp_fname, new_accs)
-            # resubmit query by manually uploading fasta sequences
-            output = queryPolyPhen2(
-                tmp_fname, dump=dump, prefix=prefix,
-                fasta_file=fasta_fname, fix_isoforms=False, **kwargs)
-            os.remove(tmp_fname)
-            # restore original accession numbers in output
-            orig_accs = dict([[v, k] for k, v in new_accs.items()])
-            for k in exts:
-                output[k] = _replace_strings_in_text(output[k], orig_accs)
-                if dump:
-                    outfile = f'{folder}/pph2-{k}.txt'
-                    _replace_strings_in_file(outfile, outfile, orig_accs)
-        elif not ignore_errors:
-            LOGGER.warn('Please check PolyPhen-2 log file')
-        else:
-            LOGGER.error('Please check PolyPhen-2 log file')
-
-    return output
-
-def parsePolyPhen2output(pph2_output):
-    '''Import PolyPhen-2 results directly from the output of
-    'queryPolyPhen2' or from a file (in 'full' format).
-    '''
-    assert type(pph2_output) in [dict, str]
-    if type(pph2_output) is dict:
-        lines = pph2_output['full'].split('\n')
-    else:
-        with open(pph2_output, 'r') as file:
-            lines = file.readlines()
-    # discard invalid lines
+    with open(file, 'r') as f:
+        lines = f.readlines()
+    
+    # find header line
+    header = next((l.strip() for l in lines if l.strip() and l[0] == "#"), None)
+    if header is None:
+        raise ValueError("Cannot find PolyPhen-2 header line starting with '#'.")
+    # parse header columns
+    pph2_columns = [w.strip().lstrip("#") for w in header.split("\t")]
+    # keep only non-empty non-header lines
     lines = [l for l in lines if l.strip() and l[0] != '#']
     if not lines:
         msg = (
@@ -248,78 +74,77 @@ def parsePolyPhen2output(pph2_output):
     LOGGER.info("PolyPhen-2's output parsed.")
     return parsed_lines
 
-def getSAVcoords(parsed_lines):
-    """Extracts SAV Uniprot coordinates as provided by the user. If not
-    possible, the Uniprot coordinates computed by PolyPhen-2 will be returned.
-    A string containing the original submitted SAV is returned as well.
+def calcPolyPhen2(SAV_coords, filename='SAVs.txt', folder='.', timeout=3700):
+    """Run PolyPhen-2 through the local PolyPhen-2 container service."""
     """
-    SAV_dtype = np.dtype([('acc', 'U15'), ('pos', 'i'),
-                          ('aa_wt', 'U1'), ('aa_mut', 'U1'),
-                          ('text', 'U25')])
-    SAV_coords = np.empty(len(parsed_lines), dtype=SAV_dtype)
-    for i, line in enumerate(parsed_lines):
-        o_acc = line['o_acc']
-        if o_acc.startswith('rs') or o_acc.startswith('chr'):
-            # recover Uniprot accession number from PolyPhen-2 output
-            acc = line['acc']
-            pos = int(line['pos'])
-            aa1 = line['aa1']
-            aa2 = line['aa2']
-            SAV_str = o_acc
-        else:
-            acc = line['o_acc']
-            pos = int(line['o_pos'])
-            aa1 = line['o_aa1']
-            aa2 = line['o_aa2']
-            SAV_str = '{} {} {} {}'.format(acc, pos, aa1, aa2)
-        SAV_coords[i] = (acc, pos, aa1, aa2, SAV_str)
-    return SAV_coords
+    from src.features.PolyPhen2 import calcPolyPhen2, parsePolyPhen2
 
-def printSAVlist(input_SAVs, filename):
-    if isinstance(input_SAVs, str):
-        input_SAVs = [input_SAVs]
-    with open(filename, 'w', 1) as f:
-        for i, line in enumerate(input_SAVs):
-            m = f'error in SAV {i}: '
-            assert isinstance(line, str), f'{m} not a string'
-            assert len(line) < 25, f'{m} too many characters'
-            print(line.upper(), file=f)
-    LOGGER.info(f'SAVs saved to {filename}')
-    return filename
-
-def calcPolyPhen2(SAV_coords, filename='SAVs.txt', dump=False,
-                  prefix='pph2', folder='.', **kwargs):
+    output_file = 'SAVs-pph2output.txt'
+    parse = parsePolyPhen2(output_file)
+    f = calcPolyPhen2(SAV_coords)
+    SAV_coords = ["Q8TDI8 2 S P",
+        "Q8TDI8 4 K Q",
+        "Q8TDI8 8 I V",
+        "Q8TDI8 8 I N",
+        "O00255 176 R Q",
+        "O00255 177 D Y",
+        "Q9P2D1 72 Y C",
+        "Q9P2D1 86 P R",
+        ]
+    """
+    service_url='http://polyphen2:5001/run_pph2'
     _dtype = np.dtype([('wtPSIC', 'f'), ('deltaPSIC', 'f')])
-    def _normalize_sav(sav):
-        return " ".join(str(sav).upper().split())
-    if isinstance(SAV_coords, str):
-        input_savs = [SAV_coords]
-    else:
-        input_savs = list(SAV_coords)
-    input_keys = [_normalize_sav(s) for s in input_savs]
-    # print SAVs to file
-    SAV_file = printSAVlist(input_savs, f'{folder}/{filename}')
-    # query PolyPhen-2
+    os.makedirs(folder, exist_ok=True)
+
+    # Print SAVs to a shared path visible from the tandem and polyphen2 containers.
+    SAV_file = printSAVlist(SAV_coords, f'{folder}/{filename}')
     LOGGER.timeit('_pph2')
-    PolyPhen2output = queryPolyPhen2(SAV_file, dump=dump, prefix=prefix,
-                                     folder=folder, **kwargs)
-    os.remove(SAV_file)
-    # parse PolyPhen-2 output
-    parsed_lines = parsePolyPhen2output(PolyPhen2output)
-    # Extract features from PolyPhen-2 output and align to input order
-    features = np.full(len(input_keys), np.nan, dtype=_dtype)
-    index_map = {}
-    for i, key in enumerate(input_keys):
-        index_map.setdefault(key, []).append(i)
-    parsed_savs = getSAVcoords(parsed_lines)
+    payload = {"input_file": os.path.abspath(SAV_file), "job_dir": folder}
+
+    try:
+        LOGGER.info(f"Submitting query to local PolyPhen-2 service: {service_url}")
+        response = requests.post(service_url, json=payload, timeout=timeout)
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Failed to connect to local PolyPhen-2 service: {exc}") from exc
+    finally:
+        if os.path.exists(SAV_file):
+            os.remove(SAV_file)
+
+    if response.status_code != 200:
+        error_text = response.text.strip()
+        try:
+            error_json = response.json()
+            error_text = error_json.get("error", error_text)
+        except ValueError:
+            pass
+        raise RuntimeError(f"Local PolyPhen-2 service failed: {error_text}")
+
+    try:
+        response_json = response.json()
+    except ValueError as exc:
+        raise RuntimeError("Local PolyPhen-2 service returned invalid JSON.") from exc
+
+    output_file = response_json.get("output")
+    log_file = response_json.get("log")
+    returncode = response_json.get("returncode")
+
+    if returncode != 0:
+        message = "Local PolyPhen-2 finished with a non-zero exit code."
+        if log_file:
+            message += f" Please check '{log_file}'."
+        raise RuntimeError(message)
+
+    if not output_file or not os.path.exists(output_file):
+        raise RuntimeError("Local PolyPhen-2 output file was not created.")
+
+    LOGGER.info("PolyPhen-2 is running through the local container service...")
+    parsed_lines = parsePolyPhen2(output_file)
+
     f_l = parsed_lines[['Score1', 'dScore']]
-    for row, sav in zip(f_l, parsed_savs):
-        key = _normalize_sav(sav['text'])
-        if key in index_map and index_map[key]:
-            idx = index_map[key].pop(0)
-            features[idx] = tuple(np.nan if x == '?' else x for x in row)
-    missing = int(np.isnan(features['wtPSIC']).sum())
-    if missing:
-        LOGGER.warn(f"PolyPhen-2 returned {len(parsed_lines)}/{len(input_keys)} results; {missing} SAV(s) missing.")
+    f_t = [tuple(np.nan if x == '' else x for x in l) for l in f_l]
+    features = np.array(f_t, dtype=_dtype)
+
+    if log_file and os.path.exists(log_file):
+        LOGGER.info(f"PolyPhen-2 log saved to {log_file}")
     LOGGER.report("PolyPhen-2 features have been calculated in %.2fs.", '_pph2')
     return features

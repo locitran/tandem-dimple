@@ -6,6 +6,7 @@ This code was copied from Prody package and modified by Loci Tran
 import sys
 import math
 import time
+import json
 import os.path
 import logging
 import datetime
@@ -373,5 +374,29 @@ class PackageLogger(object):
         else:
             self._reports[label] += elapsed
             self._report_times[label] += 1
+
+    def dump_time(self, output_path, extra_data=None):
+        """Dump logger timing summaries to a JSON file.
+
+        Inputs:
+        - output_path: file path to write JSON
+        - extra_data: optional dict to merge into output
+        """
+        report_data = {}
+
+        for label in sorted(getattr(self, "_reports", {})):
+            seconds = getattr(self, "_reports", {}).get(label)
+            count = getattr(self, "_report_times", {}).get(label, 1)
+            report_data[label] = {
+                "seconds": round(float(seconds), 6),
+                "count": int(count),
+            }
+
+        if isinstance(extra_data, dict):
+            report_data.update(extra_data)
+
+        with open(output_path, "w", encoding="utf-8") as handle:
+            json.dump(report_data, handle, indent=2)
+
 
 LOGGER = PackageLogger('.prody')

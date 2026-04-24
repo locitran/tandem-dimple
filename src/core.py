@@ -14,6 +14,7 @@ from .features import TANDEM_FEATS
 from .features.features import Features
 from .utils.settings import TANDEM_v1dot1, TANDEM_R20000
 from .utils.logger import LOGGER
+from .utils.user_log import MODEL_STAGE, USERLOG_MESSAGES
 from .model.data_processing import Preprocessing, onehot_encoding, np2ds
 from .model.train import TLConfig, train_model, evaluate_model
 from .model.plot import plotSHAP_bar, plotLoss
@@ -95,7 +96,7 @@ class Tandem(Features):
 
         df = pd.DataFrame(df_data, columns=columns)
         if filename:
-            filepath = os.path.join(folder, f"{filename}.csv")
+            filepath = os.path.join(folder, filename)
             df.to_csv(filepath, index=False)
             LOGGER.info(f"Predictions saved to {filepath}")
         
@@ -106,8 +107,17 @@ class Tandem(Features):
         assert self.featMatrix is not None, 'Feature matrix not set.'
         LOGGER.timeit('_calcPredictions')
         accept_idx = self.data["Asymmetric_PDB_resolved_length"] != 0
+        savs = np.asarray(self.data["SAVs"])
+        skipped_savs = savs[~accept_idx].tolist()
         self.data["tandem"] = self._init_empty_predictions()
         self.data["tandem_dimple"] = self._init_empty_predictions()
+
+        if skipped_savs:
+            self.userlog.emit(level="warning", stage=MODEL_STAGE,
+                message=USERLOG_MESSAGES["INF_DUMP_SAVS"]["message"],
+                action=USERLOG_MESSAGES["INF_DUMP_SAVS"]["action"],
+                context={"savs": skipped_savs},
+            )
         if not np.any(accept_idx):
             LOGGER.report('Predictions computed in %.2fs.', label='_calcPredictions')
             return
@@ -280,6 +290,14 @@ class Tandem(Features):
         # Check indices no mapping -> ignore these SAVs
         # If resolved length is 0  -> no structure model
         accept_idx = self.data['Asymmetric_PDB_resolved_length'] != 0
+        all_savs = np.asarray(self.data["SAVs"])
+        skipped_savs = all_savs[~accept_idx].tolist()
+        if skipped_savs:
+            self.userlog.emit(level="warning", stage=MODEL_STAGE,
+                message=USERLOG_MESSAGES["TF_DUMP_SAVS"]["message"],
+                action=USERLOG_MESSAGES["TF_DUMP_SAVS"]["action"],
+                context={"savs": skipped_savs},
+            )
         all_idx    = np.arange(self.nSAVs)[accept_idx]
         X = X[all_idx]
         y = y[all_idx]
@@ -288,7 +306,7 @@ class Tandem(Features):
 
         # ----- hold-out test split first -----
         train_idx, test_idx = train_test_split(
-            all_idx,
+            np.arange(len(all_idx)),
             test_size=cfg.test_size,
             random_state=cfg.seed,
             stratify=y

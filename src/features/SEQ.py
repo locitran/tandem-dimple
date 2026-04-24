@@ -80,7 +80,7 @@ class SEQfeatures(UniprotMapping):
         return self.Pfam
 
     def _sliceMSA(self, msa: MSA):
-        acc_name = self.uniq_acc
+        acc_name = self.fullRecord.getName()
         # find sequences in MSA related to the given Uniprot name
         indexes = msa.getIndex(acc_name)
         if indexes is None:
@@ -242,37 +242,12 @@ class SEQfeatures(UniprotMapping):
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
         try:
-            f = calcPolyPhen2(self.SAV_coords, folder=self.job_directory, filename='_temp_PolyPhen2.txt')
-        except Exception as e:
+            f = calcPolyPhen2(self.SAV_coords, folder=f'{self.job_directory}/{self.acc}', filename=f'{self.uniq_acc}.txt')
+        except Exception:
             msg = traceback.format_exc()
             LOGGER.warn(msg)
         LOGGER.report('PolyPhen-2 features computed in %.2fs.', '_calcPSICfeatures')
         return f
-
-        # if all([f in self.feats for f in features]):
-        #     if all([isinstance(self.feats[f], np.ndarray) for f in features]):
-        #         return
-        # try:
-        #     # Calculate PolyPhen-2 features for the full list of SAVs
-        #     f = calcPolyPhen2(self.full_SAVs) 
-        #     # Reshape (n, ) --> (n/19, 19, )
-        #     f = f.reshape(-1, 19, )
-        #     # Insert a column of zero at the end
-        #     f_exd = np.insert(f, 19, 0, axis=1)
-        #     # Insert -999 at the corresponding position
-        #     for row, idx in enumerate(self.wt_indices):
-        #         for col in range(19):
-        #             if col >= idx:
-        #                 f_exd[row, col+1] = f[row, col]
-        #         f_exd[row, idx] = -999
-        #     # Extract features
-        #     self.feats['wtPSIC'] = f_exd['wtPSIC'][:, 0]
-        #     self.feats['deltaPSIC'] = f_exd['deltaPSIC']
-        # except Exception as e:
-        #     msg = traceback.format_exc()
-        #     LOGGER.warn(msg)
-        #     for f in features:
-        #         self.feats[f] = str(e)
 
     def calcBLOSUMfeature(self):
         LOGGER.timeit('_calcBLOSUMfeature')

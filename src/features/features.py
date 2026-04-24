@@ -7,7 +7,7 @@ from .Uniprot import seqScanning, mapSAVs2PDB, SAV_coord2SAV
 from .PDB import calcPDBfeatures
 from .SEQ import calcSEQfeatures
 from ..utils.logger import LOGGER
-from ..utils.user_log import UserLog, USERLOG_MESSAGES
+from ..utils.user_log import UserLog, USERLOG_MESSAGES, FEATURE_STAGE
 
 class Features:
 
@@ -118,6 +118,7 @@ class Features:
         data['SAVs'] = SAV_coord2SAV(SAV_list)
         self.data = data
         self.nSAVs = nSAVs
+        self.userlog.emit(level="important", stage="Validating SAVs", message=f"Validating {nSAVs} SAVs",)
     
     def setLabels(self, labels):
         if labels is None:
@@ -179,7 +180,7 @@ class Features:
 
         # Mapping SAVs to structure: summarize by failure pattern.
         pattern_no_hits = "Cannot map, no hits found"
-        pattern_wt_mismatch = re.compile(r"^Cannot map, wt residue is ([A-Z]) not ([A-Z])$")
+        pattern_wt_mismatch = re.compile(r"^Cannot map, wild type residue is ([A-Z]) not ([A-Z])$")
         pattern_low_confidence = re.compile(r"^Cannot map, very low confidence region (\d+(?:\.\d+)?)$")
 
         no_hits_savs = []
@@ -187,11 +188,10 @@ class Features:
         low_confidence_savs = []
 
         for i, row in enumerate(Uniprot2PDBmap):
+            sav = self.data["SAVs"][i]
             asu = row["Asymmetric_PDB_coords"]
             if not isinstance(asu, str) or "Cannot map" not in asu:
                 continue
-
-            sav = self.data["SAVs"][i]
 
             if asu == pattern_no_hits:
                 no_hits_savs.append(sav)
@@ -207,65 +207,104 @@ class Features:
 
         # Emit one message per pattern (if any).
         if no_hits_savs:
-            self.userlog.emit(level="warning", stage="Uniprot2PDB",
+            self.userlog.emit(level="warning", stage="Mapping SAVs to structures",
                 message=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['message'],
                 action=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['action'],
                 context={"savs": no_hits_savs, "reason": pattern_no_hits},
             )
 
         if wt_mismatch_savs:
-            self.userlog.emit(level="warning", stage="Uniprot2PDB",
+            self.userlog.emit(level="warning", stage="Mapping SAVs to structures",
                 message=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['message'],
                 action=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['action'],
-                context={"savs": wt_mismatch_savs, "reason": "Cannot map, wt residue is X not Y"},
+                context={"savs": wt_mismatch_savs, "reason": "Cannot map, wild type residue is X not Y"},
             )
         
         if low_confidence_savs:
-            self.userlog.emit(level="warning", stage="Uniprot2PDB",
+            self.userlog.emit(level="warning", stage="Mapping SAVs to structures",
                 message=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['message'],
                 action=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['action'],
                 context={"savs": low_confidence_savs, "reason": "Cannot map, low confidence region pLDDT<50"},
             )
-
-        mapped_total = int(np.sum(Uniprot2PDBmap["Asymmetric_PDB_resolved_length"] != 0))
-        self.userlog.emit(level="info", stage="Uniprot2PDB",
-            message=f"Mapped {mapped_total}/{len(Uniprot2PDBmap)} SAVs to structures.",
-            context={"mapped": mapped_total, "unmapped": int(len(Uniprot2PDBmap) - mapped_total),},
-        )
+        
         self.custom_PDB = custom_PDB
         self.Uniprot2PDBmap = Uniprot2PDBmap
+
+        n = np.sum(Uniprot2PDBmap['Asymmetric_PDB_length'] != 0)
+        s = np.unique([c.split()[0] for c in Uniprot2PDBmap['Asymmetric_PDB_coords'] if "Cannot map" not in c]).__len__()
+        self.userlog.emit(level="important", stage="Mapping SAVs to structures",
+            message=f"Mapping {n}/{self.nSAVs} SAVs to {s} structures",
+        )
+        if s == 0 and n == 0:
+            self.userlog.emit(level="error", stage="Mapping SAVs to structures",
+                message=USERLOG_MESSAGES["SAV2PDB_FAILED"]["message"]
+            )
 
     def getUniprot2PDBmap(self, **kwargs):
         """Maps each SAV to the corresponding resid in a PDB chain.
         """
         if self.Uniprot2PDBmap is None:
             self.mapUniprot2PDB()
+        Uniprot2PDBmap = self.Uniprot2PDBmap
         folder = kwargs.get('folder', '.')
         filename = kwargs.get('filename', None)
         os.makedirs(folder, exist_ok=True)
-        # print to file, if requested
-        if filename is not None:
-            # filename = filename + '-Uniprot2PDB.txt'
+        if filename is not None: # print to file, if requested
             filepath = os.path.join(folder, filename)
             SAVs = self.data['SAVs']
-            coord_values = [str(s['Asymmetric_PDB_coords']) for s in self.data] # type: ignore
-            sav_width = max(len("SAV"), max(len(str(sav)) for sav in SAVs))
-            coord_width = max(len("pdbid/chid/resid/aa"), max(len(value) for value in coord_values))
-            resolved_header = "resolved_len/total_len"
-            with open(filepath, 'w') as f:
-                f.write(' '.join([
-                    f"{'SAV':<{sav_width}}",
-                    f"{'pdbid/chid/resid/aa':<{coord_width}}",
-                    resolved_header,
-                ]) + '\n')
-                for i, s in enumerate(self.data): # type: ignore
-                    coord_text = str(s['Asymmetric_PDB_coords'])
-                    resolved_text = f"{s['Asymmetric_PDB_resolved_length']}/{s['Uniprot_sequence_length']}"
-                    f.write(' '.join([
-                        f"{SAVs[i]:<{sav_width}}",
-                        f"{coord_text:<{coord_width}}",
-                        resolved_text,
+
+            rows = []
+            for i, s in enumerate(Uniprot2PDBmap):  # type: ignore
+                pdbid = ""
+                chid = ""
+                resid = ""
+                note = ""
+
+                coord_text = str(s['Asymmetric_PDB_coords'])
+                if coord_text.startswith("Cannot map"):
+                    note = coord_text
+                else:
+                    parts = coord_text.split()
+                    if len(parts) >= 4:
+                        pdbid = parts[0]
+                        chid = parts[1]
+                        resid = parts[2]
+                    else:
+                        note = coord_text
+
+                rows.append({"sav": SAVs[i], "pdbid": pdbid, "chid": chid, "resid": resid, "note": note,
+                    "resolved_len": str(s['Asymmetric_PDB_resolved_length']),
+                    "total_len": str(s['Uniprot_sequence_length']),
+                })
+
+                sav_width = max(len("SAV"), max(len(r["sav"]) for r in rows))
+                pdbid_width = max(len("pdbid"), max(len(r["pdbid"]) for r in rows))
+                chid_width = max(len("chid"), max(len(r["chid"]) for r in rows))
+                resid_width = max(len("resid"), max(len(r["resid"]) for r in rows))
+                note_width = max(len("note"), max(len(r["note"]) for r in rows))
+
+                with open(filepath, 'w') as f:
+                    f.write('   '.join([
+                        f"{'SAV':<{sav_width}}",
+                        f"{'pdbid':<{pdbid_width}}",
+                        f"{'chid':<{chid_width}}",
+                        f"{'resid':<{resid_width}}",
+                        f"{'resolved_len':<12}",
+                        f"{'total_len':<9}",
+                        f"{'note':<{note_width}}",
                     ]) + '\n')
+
+                    for r in rows:
+                        f.write('   '.join([
+                            f"{r['sav']:<{sav_width}}",
+                            f"{r['pdbid']:<{pdbid_width}}",
+                            f"{r['chid']:<{chid_width}}",
+                            f"{r['resid']:<{resid_width}}",
+                            f"{r['resolved_len']:<12}",
+                            f"{r['total_len']:<9}",
+                            f"{r['note']:<{note_width}}",
+                        ]) + '\n')
+
             LOGGER.info(f'Uniprot2PDB map saved to {filepath}')
         return self.Uniprot2PDBmap
 
@@ -289,7 +328,7 @@ class Features:
         filename = kwargs.get('filename', None)
         os.makedirs(folder, exist_ok=True)
         # Concate SAV_coords, labels and features
-        sav_coords = np.array(self.data['SAV_coords'])
+        sav_coords = np.array(self.data['SAVs'])
         labels = np.array(self.data['labels'])
         # Create a new structured array with the desired columns
         dtype = [('SAV_coords', 'U50'), ('labels', 'f')] + \
@@ -313,11 +352,29 @@ class Features:
             # Remove the labels and SAV_coords columns from arr
             arr = arr[list(self.featSet)]
 
-        # Save the structured array to a CSV file
+        # Save the structured array to a TXT file
         if filename is not None:
             filepath = os.path.join(folder, filename)
-            np.savetxt(filepath, arr, delimiter=',', fmt='%s',
-                    header=','.join(arr.dtype.names), comments='')
+
+            headers = list(arr.dtype.names)
+            rows = []
+            for row in arr:
+                row_values = []
+                for col in headers:
+                    value = row[col]
+                    row_values.append(str(value))
+                rows.append(row_values)
+
+            col_widths = []
+            for i, header in enumerate(headers):
+                max_value_width = max(len(r[i]) for r in rows) if rows else 0
+                col_widths.append(max(len(header), max_value_width))
+
+            with open(filepath, 'w') as f:
+                f.write('   '.join(f"{header:<{col_widths[i]}}" for i, header in enumerate(headers)) + '\n')
+
+                for row in rows:
+                    f.write('   '.join(f"{row[i]:<{col_widths[i]}}" for i in range(len(headers))) + '\n')
             LOGGER.info(f'Feature matrix saved to {filepath}')
         return arr
     
@@ -358,3 +415,33 @@ class Features:
             all_feats.append(f)
         # build matrix of selected features
         self.featMatrix = self._buildFeatMatrix(self.featSet, all_feats)
+
+        savs = np.asarray(self.data['SAVs'])
+        no_structure_mask = np.asarray(self.data['Asymmetric_PDB_resolved_length'] == 0, dtype=bool)
+        no_structure_savs = savs[no_structure_mask].tolist()
+        if no_structure_savs:
+            msg = USERLOG_MESSAGES["FEATURE_NO_STRUCTURE"]
+            self.userlog.emit(level="warning", stage=FEATURE_STAGE,
+                message=msg["message"], action=msg["action"],
+                context={"savs": no_structure_savs, "reason": "No structure available"},
+            )
+
+        missing_feature_groups = {}
+        for idx, sav in enumerate(savs):
+            if no_structure_mask[idx]:
+                continue
+            missing_feats = tuple(
+                feature_name for feature_name in self.featSet
+                if np.isnan(self.featMatrix[feature_name][idx])
+            )
+            if not missing_feats:
+                continue
+            missing_feature_groups.setdefault(missing_feats, []).append(str(sav))
+
+        for missing_feats, group_savs in missing_feature_groups.items():
+            feat_text = "-".join(missing_feats)
+            msg = USERLOG_MESSAGES["MISSING_FEATURE"]
+            self.userlog.emit(level="warning", stage=FEATURE_STAGE,
+                message=msg["message"].format(feature_text=feat_text), action=msg["action"],
+                context={"savs": group_savs, "missing_features": list(missing_feats)},
+            )

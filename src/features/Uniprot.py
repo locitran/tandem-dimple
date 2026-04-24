@@ -307,7 +307,7 @@ class UniprotMapping:
             # Skip if a given wt_aa is not the same as the residue in uniprot sequence.
             u_aa = self.sequence[resid-1]
             if wt_aa != u_aa:
-                hits[idx]['>asu:PDB_coords'] = f'Cannot map, wt residue is {u_aa} not {wt_aa}'
+                hits[idx]['>asu:PDB_coords'] = f'Cannot map, wild type residue is {u_aa} not {wt_aa}'
                 continue
             # Loop over all PDBs: coverage_perc >= 0.5
             for PDBID, chainID, c_seq_len, c_resolved_len, coverage_perc, resolution in matches:

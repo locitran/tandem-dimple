@@ -18,6 +18,7 @@ Main_Predictions.csv : Main prediction output table.
   Each row is one SAV; columns report model prediction values and classification summaries.
 
 log.txt : Execution log for this job (steps, timings, warnings, and errors).
+report.txt : Stage-wise summary of user-facing warnings/errors and overall status.
 params.json : Job parameter snapshot stored by the worker (mode, SAV/model/STR, status, timestamps).
 
 loss.png : Training/validation loss curve for transfer learning jobs.
