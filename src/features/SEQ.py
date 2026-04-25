@@ -6,7 +6,7 @@ from prody import MSA, parseMSA, refineMSA
 from prody import calcShannonEntropy, buildMutinfoMatrix
 from Bio.Align import substitution_matrices
 
-from ..utils.logger import LOGGER
+from ..utils.logger import LOGGER, USERLOG_MESSAGES, FEATURE_STAGE
 from .Pfam import run_hmmscan, parse_hmmscan, read_pfam_data, fetchPfamMSA
 from .PolyPhen2 import calcPolyPhen2
 from .Uniprot import UniprotMapping
@@ -209,7 +209,7 @@ class SEQfeatures(UniprotMapping):
                 entropy += Pfam['entropy'][idx]
                 rankdMI += self.calcEvolNormRank(np.sum(Pfam['MutInfo'], axis=0), idx)
         if n == 0:
-            raise ValueError("Position couldn't be mapped on any Pfam domain")
+            raise ValueError(f"No Pfam domain could map to resid {resid}")
         else:
             return entropy/n, rankdMI/n
 
@@ -218,6 +218,7 @@ class SEQfeatures(UniprotMapping):
         features = ['entropy', 'ranked_MI']
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
+        no_pfam_domain_savs = []
         if not self.Pfam:
             pfam = self._searchPfam()
         else:
@@ -231,8 +232,16 @@ class SEQfeatures(UniprotMapping):
                 f[i]['entropy'] = entropy
                 f[i]['ranked_MI'] = ranked_MI
             except Exception as e:
-                # msg = traceback.format_exc()
-                LOGGER.warn(str(e))
+                msg = str(e)
+                sav = self.SAV_coords[i]
+                LOGGER.warn(f"{sav}: {msg}")
+                if msg.startswith("No Pfam domain"):
+                    no_pfam_domain_savs.append(sav)
+        
+        if no_pfam_domain_savs:
+            LOGGER.emit(level="warning", stage=FEATURE_STAGE, savs=no_pfam_domain_savs,
+                message=USERLOG_MESSAGES["PFAM_NO_DOMAIN"]["message"],
+            )
         LOGGER.report('Pfam features computed in %.2fs.', '_calcPfamfeatures')
         return f
     
@@ -340,20 +349,18 @@ class SEQfeatures(UniprotMapping):
         LOGGER.report('Sequence feature group computed in %.2fs.', '_calcSEQgroup')
         return f
 
-def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS, **kwargs):
+def calcSEQfeatures(mapped_SAVs, refresh=False, sel_feats=SEQ_FEATS, **kwargs):
     LOGGER.info('Computing sequence features ...')
     LOGGER.timeit('_calcSEQfeatures')
-    nSAVs = len(SAV_coords)
-    # Convert to numpy array
-    SAV_coords = np.array(SAV_coords, dtype=[('SAV_coords', 'U50')])
+    nSAVs = len(mapped_SAVs)
 
     # Initialize features
     _dtype = np.dtype([(f, 'f') for f in sel_feats])
     features = np.full(nSAVs, np.nan, dtype=_dtype)
     # Group SAVs by Uniprot ID
     groups = {}
-    for i, ele in enumerate(SAV_coords):
-        acc = ele['SAV_coords'].split()[0]
+    for i, ele in enumerate(mapped_SAVs):
+        acc = ele['UniProtID']
         if acc not in groups:
             groups[acc] = []
         groups[acc].append(i)
@@ -361,9 +368,16 @@ def calcSEQfeatures(SAV_coords: list, refresh=False, sel_feats=SEQ_FEATS, **kwar
     # Compute features for each group of Uniprot ID
     for acc, indices in groups.items():
         ndone += len(indices)
+        
+        rows = mapped_SAVs[indices]
+        nMappedSAVs = sum(rows['Asymmetric_PDB_length'] != 0)
+        if not nMappedSAVs:
+            continue
+        
         try:
-            seq = SEQfeatures(acc, SAV_coords[indices]['SAV_coords'], 
-                              recover_pickle=not(refresh), **kwargs)
+            seq = SEQfeatures(
+                acc, mapped_SAVs[indices]['SAV_coords'], recover_pickle=not(refresh), **kwargs
+            )
         except Exception as e:
             # msg = traceback.format_exc()
             seq = str(e)

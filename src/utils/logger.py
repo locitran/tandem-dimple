@@ -14,8 +14,16 @@ import logging.handlers
 import numbers
 import warnings
 import re
+import textwrap
+# from datetime import datetime, timezone
+from threading import Lock
 
-__all__ = ['PackageLogger', 'LOGGING_LEVELS', 'LOGGER']
+__all__ = [
+    'PackageLogger', 'LOGGING_LEVELS', 'LOGGER',
+    'VALIDATING_STAGE', 'MAPPING_STAGE', 'FEATURE_STAGE',
+    'MODEL_STAGE', 'REPORT_STAGE', 'STAGE_LABELS',
+    'USERLOG_MESSAGES',
+]
 
 LOGGING_PROGRESS = logging.INFO + 5
 
@@ -34,6 +42,129 @@ now = datetime.datetime.now
 
 warnings.filterwarnings("ignore", message=".*failed to parse occupancy.*")
 warnings.filterwarnings("ignore", message=".*failed to parse beta-factor.*")
+
+
+"""
+A0FGR8 S638G
+O00189 R271H
+O00189 R27111H
+Q8XXXXI8 S2P
+Q8TDI8 I8N
+O00255 D177Y
+Q9P2D1 Y72C
+
+---
+"""
+
+VALIDATING_STAGE = "Validating SAVs"
+MAPPING_STAGE = "Mapping SAVs to structures"
+FEATURE_STAGE = "Feature calculation"
+MODEL_STAGE = "Model inferencing/Training"
+REPORT_STAGE = "Summary"
+
+STAGE_LABELS = [
+    VALIDATING_STAGE,
+    MAPPING_STAGE,
+    FEATURE_STAGE,
+    MODEL_STAGE,
+    REPORT_STAGE,
+]
+
+USERLOG_MESSAGES = {
+    "SAV2PDB_NO_HITS": {
+        "message": "Cannot find an experimental structure or AlphaFold2 structure for these SAVs below.\nIf you want to predict the pathogenicity of these SAVs, please upload your own structure.",
+        "example": ["Q9P2D1 Y72C", "Q9P2D1 P86R"]
+    },
+    "SAV2PDB_WT_MISMATCH": {
+        "message": "Cannot map these SAVs below due to residue mismatch.\nPlease ensure that the mutation is defined on the UniProt canonical sequence.",
+        "example": ["O00255 R176Q", "O00255 D177Y"]
+    },
+    "SAV2PDB_OUT_RANGE": {
+        "message": "Cannot map these SAVs below due to residue index out of UniProt sequence.",
+        "example": ["O00189 R27111H"]
+    },
+    "SAV2PDB_LOW_CONFIDENCE": {
+        "message": "These SAVs fall in low-confidence regions (pLDDT < 50):",
+        "example": ["Q8TDI8 S2P", "Q8TDI8 K4Q", "Q8TDI8 I8V", "Q8TDI8 I8N"]
+    },
+    "PFAM_NO_DOMAIN": {
+        "message": "Cannot find any Pfam domain for these SAVs below.",
+        "example": ["O00189 R271H"]
+    },
+    "SAV2PDB_FAILED": {
+        "message": "None could be mapped. Your job is stopped.",
+        "action": "",
+    },
+    "NOT_RECOGNIZE_UNIPROT": {
+        "message": "a",
+        "action": "a",
+        "example": []
+    },
+    "NOT_RECOGNIZE_RESID": {
+        "message": "a",
+        "action": "a",
+        "example": []
+    },
+    "SAV2PDB_INVALID_CUSTOM_ID": {
+        "message": "The provided custom PDB or AlphaFold identifier is not valid.",
+        "example": [],
+    },
+    "SAV2PDB_CUSTOM_STRUCTURE_UNREADABLE": {
+        "message": "The uploaded custom structure could not be read.",
+        "example": [],
+    },
+
+
+
+    
+    "PDB_PREP_FAILED": {
+        "message": "Failed to prepare structure '{pdbID}'.",
+    },
+    "PDB_NOT_FOUND": {
+        "message": "Prepared structure file not found for '{pdbID}'.",
+    },
+    "PDB_READ_FAILED": {
+        "message": "Failed to read structure '{pdbID}' for feature calculation.",
+    },
+    "FEATURE_NO_STRUCTURE": {
+        "message": "No feature calculation for these SAVs:",
+    },
+    "MISSING_FEATURE": {
+        "message": "Missing {feature_text} features for these SAVs:",
+    },
+    "INF_DUMP_SAVS": {
+        "message": "No prediction for these SAVs:",
+        "action": "",
+    },
+    "TF_DUMP_SAVS": {
+        "message": "No transfer learning for these SAVs:",
+        "action": "",
+    },
+    "MODEL_NO_SAVS_AFTER_FILTERING": {
+        "message": "No SAVs remain after filtering.",
+        "action": "Please check the mapping and feature-calculation warnings above.",
+        "example": [],
+    },
+    "MODEL_TOO_FEW_SAVS": {
+        "message": "Too few SAVs remain for transfer learning.",
+        "action": "Please provide more SAVs with usable structure mapping.",
+        "example": [],
+    },
+    "MODEL_SINGLE_CLASS_LABELS": {
+        "message": "Transfer learning requires at least two label classes, but only one class is present.",
+        "action": "Please provide both benign and pathogenic labels for training.",
+        "example": [],
+    },
+    "MODEL_BACKEND_FAILED": {
+        "message": "Model inferencing or training failed after feature calculation.",
+        "action": "Please check log.txt for detailed traceback.",
+        "example": [],
+    },
+    "JOB_FAILED": {
+        "message": "Job '{job_name}' failed: {error}",
+        "action": "Please check log.txt for detailed traceback.",
+    },
+}
 
 # Patterns to strip from log files on close.
 _LOG_FILTER_PATTERNS = [
@@ -100,6 +231,10 @@ class PackageLogger(object):
         self._times = {}
         self._reports = {}
         self._report_times = {}
+        self._userlog_path = None
+        self._userlog_defaults = {}
+        self._emit_list = []
+        self._emit_lock = Lock()
 
     # ====================
     # Attributes
@@ -152,25 +287,25 @@ class PackageLogger(object):
         """Log *msg* with severity 'INFO'."""
 
         self.clear()
-        self._logger.info(msg)
+        self._logger.info(str(msg))
 
     def critical(self, msg):
         """Log *msg* with severity 'CRITICAL'."""
 
         self.clear()
-        self._logger.critical(msg)
+        self._logger.critical(str(msg))
 
     def debug(self, msg):
         """Log *msg* with severity 'DEBUG'."""
 
         self.clear()
-        self._logger.debug(msg)
+        self._logger.debug(str(msg))
 
     def warning(self, msg):
         """Log *msg* with severity 'WARNING'."""
 
         self.clear()
-        self._logger.warning(self._warning + msg)
+        self._logger.warning(self._warning + str(msg))
 
     warn = warning
 
@@ -178,8 +313,148 @@ class PackageLogger(object):
         """Log *msg* with severity 'ERROR' and terminate with status 2."""
 
         self.clear()
-        self._logger.error(self._error + msg)
+        self._logger.error(self._error + str(msg))
         self.exit(2)
+
+    def _normalize_for_json(self, value):
+        if isinstance(value, dict):
+            return {str(k): self._normalize_for_json(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [self._normalize_for_json(v) for v in value]
+        if hasattr(value, "item") and callable(getattr(value, "item")):
+            try:
+                return value.item()
+            except Exception:
+                pass
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        return str(value)
+
+    def start_userlog(self, path, defaults=None, mode="w"):
+        self._userlog_path = os.path.abspath(path)
+        self._userlog_defaults = defaults.copy() if defaults else {}
+        self._emit_list = []
+        os.makedirs(os.path.dirname(self._userlog_path), exist_ok=True)
+        with open(self._userlog_path, mode, encoding="utf-8"):
+            pass
+
+    def emit(self, level, stage, message, savs=None, action=None, context=None, exit_on_error=True):
+        context = self._normalize_for_json({**self._userlog_defaults, **(context or {})})
+        row = {
+            "timestamp": now(datetime.timezone.utc).isoformat(),
+            "level": str(level),
+            "stage": str(stage),
+            "message": str(message),
+            "savs": savs,
+            "action": action,
+            "context": context,
+        }
+        with self._emit_lock:
+            self._emit_list.append(row)
+            if self._userlog_path:
+                with open(self._userlog_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+        level_lower = str(level).lower()
+        if level_lower == "debug":
+            self.debug(str(message))
+        elif level_lower == "info":
+            self.info(str(message))
+        elif level_lower == "important":
+            self.info(str(message))
+        elif level_lower == "warning":
+            self.warning(str(message))
+        elif level_lower == "error":
+            self.clear()
+            self._logger.error(self._error + str(message))
+            if exit_on_error:
+                self.exit(2)
+        elif level_lower == "critical":
+            self.clear()
+            self._logger.critical(str(message))
+            if exit_on_error:
+                self.exit(2)
+        else:
+            self.info(str(message))
+
+    def format_time(self, seconds):
+        seconds = max(0.0, float(seconds))
+        if seconds >= 3600:
+            return f"{seconds / 3600:.1f} h"
+        if seconds >= 60:
+            return f"{seconds / 60:.1f} min"
+        return f"{seconds:.1f} s"
+
+    def report_userlog(self, label, stage, file):
+        timer_label = str(label)
+        started_at = self._times.get(timer_label)
+        if started_at is None:
+            return None
+
+        elapsed_seconds = max(0.0, time.time() - started_at)
+        context = {
+            "timer_label": timer_label,
+            "duration_seconds": elapsed_seconds,
+            "duration_text": self.format_time(elapsed_seconds),
+            "file": file,
+        }
+        message = f"{timer_label} completed."
+        self.emit(level="info", stage=stage, message=message, context=context)
+        return elapsed_seconds
+
+    def format_stage_message(self, stage_events):
+        warning_events = [event for event in stage_events if str(event.get("level", "")).lower() == "warning"]
+        error_events = [event for event in stage_events if str(event.get("level", "")).lower() == "error"]
+        info_events = [event for event in stage_events if str(event.get("level", "")).lower() in {"info", "important"}]
+
+        if not warning_events and not error_events:
+            return "OK" if info_events else "Not reached"
+
+        lines = []
+        for event in warning_events + error_events:
+            level = str(event.get("level", "")).upper().strip()
+            message = str(event.get("message", "")).strip()
+            savs = event.get("savs", [])
+        
+            message_line = f"> {level} {message}" if message else level
+            
+            if isinstance(savs, list):
+                sav_text = ", ".join(str(sav).strip() for sav in savs)
+            else:
+                sav_text = str(savs or "").strip()
+            if sav_text:
+                message_line += f" {sav_text}"
+            lines.extend(
+                textwrap.wrap(message_line, width=100,
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                    subsequent_indent="  ",
+                ) or [message_line]
+            )
+
+        return "\n".join(lines)
+
+    def dump_userlog(self, report_path, stage_labels):
+        with self._emit_lock:
+            events = list(self._emit_list)
+
+        blocks = []
+        for stage_label in stage_labels:
+            stage_events = [event for event in events if str(event.get("stage", "")) == stage_label]
+            stage_summary = self.format_stage_message(stage_events)
+            blocks.append(
+                "\n".join(
+                    [
+                        "--------------------------",
+                        stage_label,
+                        "--------------------------",
+                        stage_summary,
+                    ]
+                )
+            )
+
+        with open(report_path, "w", encoding="utf-8") as handle:
+            handle.write("\n\n".join(blocks) + "\n")
 
     def write(self, line):
         """Write *line* into ``sys.stderr``."""

@@ -11,8 +11,7 @@ from prody import parsePDB, writePDB
 from prody import calcPerturbResponse, calcMechStiff, sliceModel
 from prody.atomic import sliceAtoms
 
-from ..utils.logger import LOGGER
-from ..utils.user_log import UserLog, USERLOG_MESSAGES
+from ..utils.logger import LOGGER, USERLOG_MESSAGES
 from ..utils.settings import one2three
 from ..dynamics.ENM import GNM, envGNM, ANM, envANM
 from ..dynamics.entropy import calcSpectralEntropy
@@ -1261,7 +1260,7 @@ def calcPDBfeatures(
     """
     
     job_directory = kwargs["job_directory"] if "job_directory" in kwargs else '.'
-    userlog: UserLog = kwargs.get("userlog") or UserLog(path=f"{job_directory}/log.jsonl")
+    userlog = kwargs.get("userlog") or LOGGER
     
     LOGGER.info('Computing strutural and dynamics features from PDB structures...')
     LOGGER.timeit('_calcPDBfeatures')
@@ -1340,7 +1339,6 @@ def calcPDBfeatures(
                 LOGGER.warn(msg)
                 userlog.emit(level="warning", stage="Feature calculation", 
                     message=USERLOG_MESSAGES['PDB_PREP_FAILED']['message'].format(pdbID=pdbID),
-                    action=USERLOG_MESSAGES['PDB_PREP_FAILED']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format)},
                 )
                 continue
@@ -1349,7 +1347,6 @@ def calcPDBfeatures(
                 LOGGER.warning(f"File {pdbPath} not found.")
                 userlog.emit(level="warning", stage="Feature calculation",
                     message=USERLOG_MESSAGES['PDB_NOT_FOUND']['message'].format(pdbID=pdbID),
-                    action=USERLOG_MESSAGES['PDB_NOT_FOUND']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath)},
                 )
                 continue
@@ -1362,7 +1359,6 @@ def calcPDBfeatures(
                 LOGGER.warn(msg)
                 userlog.emit(level="warning", stage="Feature calculation",
                     message=USERLOG_MESSAGES['PDB_READ_FAILED']['message'].format(pdbID=pdbID),
-                    action=USERLOG_MESSAGES['PDB_READ_FAILED']['action'],
                     context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath), "error": str(e)},
                 )
                 obj = str(e)    

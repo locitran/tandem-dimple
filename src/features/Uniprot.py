@@ -16,7 +16,7 @@ from prody import parsePDB
 from Bio.pairwise2 import align as bioalign
 from Bio.pairwise2 import format_alignment
 
-from ..utils.logger import LOGGER
+from ..utils.logger import LOGGER, MAPPING_STAGE
 from ..download import fetchPDB, fetchPDB_BiologicalAssembly, fetchAF2, customPDB2AFID, verifyAF
 from ..utils.settings import RAW_PDB_DIR, one2three
 from .UniProt_API import searchUniprot
@@ -998,10 +998,11 @@ def mapSAVs2PDB(SAV_coords, custom_PDB=None, refresh=False, **kwargs):
             U2P_map = UniprotMapping(acc, recover_pickle=not(refresh), **kwargs)
             if custom_PDB is not None:
                 custom_PDB = U2P_map.alignCustomPDB(custom_PDB)
-        except Exception:
+        except Exception as e:
             msg = traceback.format_exc()
             LOGGER.warn(f'Error while mapping {acc}: {msg}')
             U2P_map = "Cannot map, unable to run " + acc
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE, message=e)
 
         if isinstance(U2P_map, str):
             uniq_coords = U2P_map

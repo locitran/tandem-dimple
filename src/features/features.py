@@ -6,8 +6,7 @@ from . import TANDEM_FEATS
 from .Uniprot import seqScanning, mapSAVs2PDB, SAV_coord2SAV
 from .PDB import calcPDBfeatures
 from .SEQ import calcSEQfeatures
-from ..utils.logger import LOGGER
-from ..utils.user_log import UserLog, USERLOG_MESSAGES, FEATURE_STAGE
+from ..utils.logger import LOGGER, USERLOG_MESSAGES, FEATURE_STAGE, MAPPING_STAGE
 
 class Features:
 
@@ -65,7 +64,7 @@ class Features:
         # options
         self.options = kwargs
         self.job_directory = kwargs["job_directory"] if "job_directory" in kwargs else '.'
-        self.userlog: UserLog = kwargs.get("userlog") or UserLog(path=f"{self.job_directory}/log.jsonl")
+        self.userlog = kwargs.get("userlog") or LOGGER
         self.refresh = refresh
         self.saturation_mutagenesis = None
         self.setSAVs(query)
@@ -180,10 +179,12 @@ class Features:
 
         # Mapping SAVs to structure: summarize by failure pattern.
         pattern_no_hits = "Cannot map, no hits found"
+        pattern_out_range = re.compile(r"^Cannot map, resid \d+ out of range \d+$")
         pattern_wt_mismatch = re.compile(r"^Cannot map, wild type residue is ([A-Z]) not ([A-Z])$")
         pattern_low_confidence = re.compile(r"^Cannot map, very low confidence region (\d+(?:\.\d+)?)$")
 
         no_hits_savs = []
+        out_range_savs = []
         wt_mismatch_savs = []
         low_confidence_savs = []
 
@@ -197,6 +198,10 @@ class Features:
                 no_hits_savs.append(sav)
                 continue
 
+            if pattern_out_range.fullmatch(asu):
+                out_range_savs.append(sav)
+                continue
+
             if pattern_wt_mismatch.fullmatch(asu):
                 wt_mismatch_savs.append(sav)
                 continue
@@ -207,24 +212,23 @@ class Features:
 
         # Emit one message per pattern (if any).
         if no_hits_savs:
-            self.userlog.emit(level="warning", stage="Mapping SAVs to structures",
-                message=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['message'],
-                action=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['action'],
-                context={"savs": no_hits_savs, "reason": pattern_no_hits},
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
+                message=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['message'], savs=no_hits_savs
+            )
+
+        if out_range_savs:
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
+                message=USERLOG_MESSAGES['SAV2PDB_OUT_RANGE']['message'], savs=out_range_savs
             )
 
         if wt_mismatch_savs:
-            self.userlog.emit(level="warning", stage="Mapping SAVs to structures",
-                message=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['message'],
-                action=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['action'],
-                context={"savs": wt_mismatch_savs, "reason": "Cannot map, wild type residue is X not Y"},
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
+                message=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['message'], savs=wt_mismatch_savs
             )
         
         if low_confidence_savs:
-            self.userlog.emit(level="warning", stage="Mapping SAVs to structures",
-                message=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['message'],
-                action=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['action'],
-                context={"savs": low_confidence_savs, "reason": "Cannot map, low confidence region pLDDT<50"},
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
+                message=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['message'], savs=low_confidence_savs
             )
         
         self.custom_PDB = custom_PDB
@@ -232,13 +236,11 @@ class Features:
 
         n = np.sum(Uniprot2PDBmap['Asymmetric_PDB_length'] != 0)
         s = np.unique([c.split()[0] for c in Uniprot2PDBmap['Asymmetric_PDB_coords'] if "Cannot map" not in c]).__len__()
-        self.userlog.emit(level="important", stage="Mapping SAVs to structures",
+        LOGGER.emit(level="important", stage=MAPPING_STAGE,
             message=f"Mapping {n}/{self.nSAVs} SAVs to {s} structures",
         )
         if s == 0 and n == 0:
-            self.userlog.emit(level="error", stage="Mapping SAVs to structures",
-                message=USERLOG_MESSAGES["SAV2PDB_FAILED"]["message"]
-            )
+            LOGGER.emit(level="error", stage=MAPPING_STAGE, message=USERLOG_MESSAGES["SAV2PDB_FAILED"]["message"])
 
     def getUniprot2PDBmap(self, **kwargs):
         """Maps each SAV to the corresponding resid in a PDB chain.
@@ -271,10 +273,15 @@ class Features:
                         resid = parts[2]
                     else:
                         note = coord_text
+                
+                resolved_len = s['Asymmetric_PDB_resolved_length']
+                resolved_len = "" if resolved_len==0 else str(resolved_len)
+                total_len = s['Uniprot_sequence_length']
+                total_len = "" if total_len==0 else str(total_len)
 
-                rows.append({"sav": SAVs[i], "pdbid": pdbid, "chid": chid, "resid": resid, "note": note,
-                    "resolved_len": str(s['Asymmetric_PDB_resolved_length']),
-                    "total_len": str(s['Uniprot_sequence_length']),
+                rows.append({
+                    "sav": SAVs[i], "pdbid": pdbid, "chid": chid, "resid": resid, "note": note,
+                    "resolved_len": resolved_len, "total_len": total_len,
                 })
 
                 sav_width = max(len("SAV"), max(len(r["sav"]) for r in rows))
@@ -327,29 +334,29 @@ class Features:
         folder = kwargs.get('folder', '.')
         filename = kwargs.get('filename', None)
         os.makedirs(folder, exist_ok=True)
-        # Concate SAV_coords, labels and features
-        sav_coords = np.array(self.data['SAVs'])
+        # Concate SAVs, labels and features
+        SAVs = np.array(self.data['SAVs'])
         labels = np.array(self.data['labels'])
         # Create a new structured array with the desired columns
-        dtype = [('SAV_coords', 'U50'), ('labels', 'f')] + \
+        dtype = [('SAVs', 'U50'), ('labels', 'f')] + \
                 [(name, 'f') for name in self.featSet]
-        arr = np.zeros(len(sav_coords), dtype=dtype)
-        arr['SAV_coords'] = sav_coords
+        arr = np.zeros(len(SAVs), dtype=dtype)
+        arr['SAVs'] = SAVs
         arr['labels'] = labels
         arr[list(self.featSet)] = self.featMatrix
 
         if withLabels and withSAVs:
             # Keep all columns
-            arr = arr[['SAV_coords', 'labels'] + list(self.featSet)]
+            arr = arr[['SAVs', 'labels'] + list(self.featSet)]
         elif withLabels:
             # Remove the SAV_coords column from arr
             arr = arr[['labels'] + list(self.featSet)]
         elif withSAVs:
             # Remove the labels column from arr
-            arr = arr[['SAV_coords'] + list(self.featSet)]
-            LOGGER.info('SAV_coords column removed from feature matrix.')
+            arr = arr[['SAVs'] + list(self.featSet)]
+            LOGGER.info('SAVs column removed from feature matrix.')
         else:
-            # Remove the labels and SAV_coords columns from arr
+            # Remove the labels and SAVs columns from arr
             arr = arr[list(self.featSet)]
 
         # Save the structured array to a TXT file
@@ -362,7 +369,12 @@ class Features:
                 row_values = []
                 for col in headers:
                     value = row[col]
-                    row_values.append(str(value))
+                    if isinstance(value, (float, np.floating)) and np.isnan(value):
+                        row_values.append("")
+                    elif isinstance(value, (float, np.floating)):
+                        row_values.append(f"{float(value):.3f}".rstrip("0").rstrip("."))
+                    else:
+                        row_values.append(str(value))
                 rows.append(row_values)
 
             col_widths = []
@@ -410,7 +422,7 @@ class Features:
         sel_SEQfeats = TANDEM_FEATS['SEQ'].intersection(self.featSet)
         if sel_SEQfeats:
             # compute sequence features
-            f = calcSEQfeatures(self.Uniprot2PDBmap['SAV_coords'], 
+            f = calcSEQfeatures(self.Uniprot2PDBmap, 
                 refresh=False, sel_feats=sel_SEQfeats, **self.options) # refresh=False because of mapSAVs2PDB
             all_feats.append(f)
         # build matrix of selected features
@@ -421,10 +433,7 @@ class Features:
         no_structure_savs = savs[no_structure_mask].tolist()
         if no_structure_savs:
             msg = USERLOG_MESSAGES["FEATURE_NO_STRUCTURE"]
-            self.userlog.emit(level="warning", stage=FEATURE_STAGE,
-                message=msg["message"], action=msg["action"],
-                context={"savs": no_structure_savs, "reason": "No structure available"},
-            )
+            self.userlog.emit(level="warning", stage=FEATURE_STAGE, message=msg["message"], savs=no_structure_savs)
 
         missing_feature_groups = {}
         for idx, sav in enumerate(savs):
@@ -442,6 +451,5 @@ class Features:
             feat_text = "-".join(missing_feats)
             msg = USERLOG_MESSAGES["MISSING_FEATURE"]
             self.userlog.emit(level="warning", stage=FEATURE_STAGE,
-                message=msg["message"].format(feature_text=feat_text), action=msg["action"],
-                context={"savs": group_savs, "missing_features": list(missing_feats)},
+                message=msg["message"].format(feature_text=feat_text), savs=group_savs
             )

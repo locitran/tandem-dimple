@@ -14,7 +14,7 @@ from .features import TANDEM_FEATS
 from .features.features import Features
 from .utils.settings import TANDEM_v1dot1, TANDEM_R20000
 from .utils.logger import LOGGER
-from .utils.user_log import MODEL_STAGE, USERLOG_MESSAGES
+from .utils.logger import MODEL_STAGE, USERLOG_MESSAGES
 from .model.data_processing import Preprocessing, onehot_encoding, np2ds
 from .model.train import TLConfig, train_model, evaluate_model
 from .model.plot import plotSHAP_bar, plotLoss
@@ -113,10 +113,8 @@ class Tandem(Features):
         self.data["tandem_dimple"] = self._init_empty_predictions()
 
         if skipped_savs:
-            self.userlog.emit(level="warning", stage=MODEL_STAGE,
-                message=USERLOG_MESSAGES["INF_DUMP_SAVS"]["message"],
-                action=USERLOG_MESSAGES["INF_DUMP_SAVS"]["action"],
-                context={"savs": skipped_savs},
+            LOGGER.emit(level="warning", stage=MODEL_STAGE,
+                message=USERLOG_MESSAGES["INF_DUMP_SAVS"]["message"], savs=skipped_savs
             )
         if not np.any(accept_idx):
             LOGGER.report('Predictions computed in %.2fs.', label='_calcPredictions')
@@ -293,10 +291,8 @@ class Tandem(Features):
         all_savs = np.asarray(self.data["SAVs"])
         skipped_savs = all_savs[~accept_idx].tolist()
         if skipped_savs:
-            self.userlog.emit(level="warning", stage=MODEL_STAGE,
-                message=USERLOG_MESSAGES["TF_DUMP_SAVS"]["message"],
-                action=USERLOG_MESSAGES["TF_DUMP_SAVS"]["action"],
-                context={"savs": skipped_savs},
+            LOGGER.emit(level="warning", stage=MODEL_STAGE,
+                message=USERLOG_MESSAGES["TF_DUMP_SAVS"]["message"], savs=skipped_savs
             )
         all_idx    = np.arange(self.nSAVs)[accept_idx]
         X = X[all_idx]
