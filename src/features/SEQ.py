@@ -9,7 +9,7 @@ from Bio.Align import substitution_matrices
 from ..utils.logger import LOGGER, USERLOG_MESSAGES, FEATURE_STAGE
 from .Pfam import run_hmmscan, parse_hmmscan, read_pfam_data, fetchPfamMSA
 from .PolyPhen2 import calcPolyPhen2
-from .Uniprot import UniprotMapping
+from .Uniprot import UniprotMapping, SAV_coord2SAV
 
 __author__ = "Loci Tran"
 
@@ -34,6 +34,9 @@ class SEQfeatures(UniprotMapping):
     def __init__(self, acc, SAV_coords, recover_pickle=False, **kwargs):
         super(SEQfeatures, self).__init__(acc, recover_pickle, **kwargs)
         self.SAV_coords = SAV_coords
+        self._noPfamDomain = []
+        self._noPfamSearch = False
+        self._noPSIC = []
         self.resids, self.wt_aas, self.mut_aas = zip(*[ele.split()[1:4] for ele in SAV_coords])
         self.resids = list(map(int, self.resids))
         self.full_SAVs = self.seqScanning()
@@ -43,7 +46,7 @@ class SEQfeatures(UniprotMapping):
             self.job_directory = kwargs["job_directory"]
         else:
             self.job_directory = '.'
-        
+
     def seqScanning(self):
         """
         Perform sequence scanning for a given Uniprot ID.
@@ -62,7 +65,7 @@ class SEQfeatures(UniprotMapping):
         ]
         return full_SAVs
     
-    def _searchPfam(self):
+    def searchPfam(self):
         LOGGER.info('Searching Pfam...')    
         fasta_file = os.path.join(self.job_directory, f'{self.acc}.fasta')
         with open(fasta_file, 'w') as f:
@@ -76,6 +79,7 @@ class SEQfeatures(UniprotMapping):
             msg = traceback.format_exc()
             LOGGER.warn(msg)
             self.Pfam = str(e)
+            self._noPfamSearch = True
         os.remove(fasta_file)
         return self.Pfam
 
@@ -218,9 +222,8 @@ class SEQfeatures(UniprotMapping):
         features = ['entropy', 'ranked_MI']
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
-        no_pfam_domain_savs = []
         if not self.Pfam:
-            pfam = self._searchPfam()
+            pfam = self.searchPfam()
         else:
             pfam = self.Pfam
         if isinstance(pfam, str):
@@ -233,15 +236,9 @@ class SEQfeatures(UniprotMapping):
                 f[i]['ranked_MI'] = ranked_MI
             except Exception as e:
                 msg = str(e)
-                sav = self.SAV_coords[i]
-                LOGGER.warn(f"{sav}: {msg}")
+                LOGGER.warn(f"{self.SAV_coords[i]}: {msg}")
                 if msg.startswith("No Pfam domain"):
-                    no_pfam_domain_savs.append(sav)
-        
-        if no_pfam_domain_savs:
-            LOGGER.emit(level="warning", stage=FEATURE_STAGE, savs=no_pfam_domain_savs,
-                message=USERLOG_MESSAGES["PFAM_NO_DOMAIN"]["message"],
-            )
+                    self._noPfamDomain.append(self.SAV_coords[i])
         LOGGER.report('Pfam features computed in %.2fs.', '_calcPfamfeatures')
         return f
     
@@ -255,6 +252,7 @@ class SEQfeatures(UniprotMapping):
         except Exception:
             msg = traceback.format_exc()
             LOGGER.warn(msg)
+            self._noPSIC.append(self.SAV_coords)
         LOGGER.report('PolyPhen-2 features computed in %.2fs.', '_calcPSICfeatures')
         return f
 
@@ -364,6 +362,10 @@ def calcSEQfeatures(mapped_SAVs, refresh=False, sel_feats=SEQ_FEATS, **kwargs):
         if acc not in groups:
             groups[acc] = []
         groups[acc].append(i)
+        
+    noPfamDomain = []
+    noPfamSearch = []
+    noPSIC = []
     ndone = 0
     # Compute features for each group of Uniprot ID
     for acc, indices in groups.items():
@@ -378,21 +380,42 @@ def calcSEQfeatures(mapped_SAVs, refresh=False, sel_feats=SEQ_FEATS, **kwargs):
             seq = SEQfeatures(
                 acc, mapped_SAVs[indices]['SAV_coords'], recover_pickle=not(refresh), **kwargs
             )
-        except Exception as e:
-            # msg = traceback.format_exc()
-            seq = str(e)
-            LOGGER.warn(e)
+        except Exception:
+            msg = traceback.format_exc()
+            LOGGER.warn(msg)
             continue
         try:
             features[indices] = seq.calcFeatures(sel_feats)
-        except Exception as e:
+        except Exception:
             msg = traceback.format_exc()
             LOGGER.warn(msg)
             for f in sel_feats:
                 features[indices][f] = np.nan
+        
+        if {'entropy', 'ranked_MI'}.intersection(set(sel_feats)):
+            noPfamDomain.extend(seq._noPfamDomain)
+            if seq._noPfamSearch:
+                noPfamSearch.extend(acc)
+        if {'wtPSIC', 'deltaPSIC'}.intersection(set(sel_feats)):
+            noPSIC.extend(seq._noPSIC)
         if not isinstance(seq, str):
             seq.savePickle(**kwargs)
         done = ndone / nSAVs
         LOGGER.info(f"SEQ features: {ndone}/{nSAVs} SAVs processed, {acc} [{done:.0%}]")
+    
+    if noPfamDomain:
+        msg = f"these SAVs below." if len(noPfamDomain)>1 else f"this SAV."
+        LOGGER.emit(level="warning", stage=FEATURE_STAGE, savs=SAV_coord2SAV(noPfamDomain),
+            message=f"Cannot find any Pfam domain for {msg}",
+        )
+    if noPfamSearch:
+        msg = f"these UniProt IDs below." if len(noPfamSearch)>1 else f"this UniProt ID."
+        LOGGER.emit(level="warning", stage=FEATURE_STAGE, savs=noPfamSearch,
+            message=f"Cannot search Pfam domains for {msg}",
+        )
+    if noPSIC:
+        LOGGER.emit(level="warning", stage=FEATURE_STAGE, savs=SAV_coord2SAV(noPSIC),
+            message="Failed to calculate PolyPhen-2 features for these SAVs below.",
+        )
     LOGGER.report('SEQ features computed in %.2fs.', label='_calcSEQfeatures')
     return features

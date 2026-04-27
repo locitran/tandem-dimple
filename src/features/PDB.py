@@ -11,7 +11,7 @@ from prody import parsePDB, writePDB
 from prody import calcPerturbResponse, calcMechStiff, sliceModel
 from prody.atomic import sliceAtoms
 
-from ..utils.logger import LOGGER, USERLOG_MESSAGES
+from ..utils.logger import LOGGER, FEATURE_STAGE
 from ..utils.settings import one2three
 from ..dynamics.ENM import GNM, envGNM, ANM, envANM
 from ..dynamics.entropy import calcSpectralEntropy
@@ -24,6 +24,7 @@ from .naccess import calcAccessibility
 from .consurf import calcConSurf
 from .hbplus import calcHbond
 from .PropKa import calcChargepH7
+from .Uniprot import SAV_coord2SAV
 
 MAX_NUM_RESIDUES = 21000
 """Hard-coded maximum size of PDB structures that can be handled by the
@@ -1258,12 +1259,10 @@ def calcPDBfeatures(
             - bas: BioUnit PDB coordinates are available
             - asu: Asymmetric PDB coordinates are available
     """
-    
-    job_directory = kwargs["job_directory"] if "job_directory" in kwargs else '.'
-    userlog = kwargs.get("userlog") or LOGGER
-    
     LOGGER.info('Computing strutural and dynamics features from PDB structures...')
     LOGGER.timeit('_calcPDBfeatures')
+
+    job_dir = kwargs["job_directory"] if "job_directory" in kwargs else '.'
 
     # Convert to numpy array
     if isinstance(mapped_SAVs, pd.DataFrame):
@@ -1274,7 +1273,6 @@ def calcPDBfeatures(
     # Initialize features
     _dtype = np.dtype([(f, 'f') for f in sel_feats])
     features = np.full(nSAVs, np.nan, dtype=_dtype)
-    
     # Group SAVs by PDB ID and format
     groups = defaultdict(lambda: defaultdict(list))
     # Given custom_PDB file
@@ -1305,7 +1303,6 @@ def calcPDBfeatures(
                 groups[pdbID][f'bas{assemblyID}'].append(i)
             else:
                 groups[pdbID]['asu'].append(i)
-    
     # Compute features for each group
     ndone = 0
     for pdbID, formats in groups.items():
@@ -1317,15 +1314,15 @@ def calcPDBfeatures(
             try:
                 # Non-AF custom PDB
                 if format == 'custom':
-                    pdbPath = fixPDB(custom_PDB, format, folder=job_directory, refresh=refresh)
+                    pdbPath = fixPDB(custom_PDB, format, folder=job_dir, refresh=refresh)
                     pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                 # AF custom PDB file
                 elif custom_PDB is not None and format == 'af':
-                    pdbPath = fixPDB(custom_PDB, format='af', folder=job_directory, refresh=refresh)
+                    pdbPath = fixPDB(custom_PDB, format='af', folder=job_dir, refresh=refresh)
                     pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                 # Not custom PDB
                 else:
-                    pdbPath = fixPDB(pdbID, format, folder=job_directory, refresh=refresh)
+                    pdbPath = fixPDB(pdbID, format, folder=job_dir, refresh=refresh)
                     if format == 'asu':
                         pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                     elif format == 'opm':
@@ -1334,20 +1331,20 @@ def calcPDBfeatures(
                         pdb_coords = mapped_SAVs[indices]['Asymmetric_PDB_coords']
                     else:# format.startswith('bas'):
                         pdb_coords = mapped_SAVs[indices]['BioUnit_PDB_coords']
-            except Exception:
+            except Exception as e:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
-                userlog.emit(level="warning", stage="Feature calculation", 
-                    message=USERLOG_MESSAGES['PDB_PREP_FAILED']['message'].format(pdbID=pdbID),
-                    context={"pdb_id": str(pdbID), "format": str(format)},
+                LOGGER.emit(level="warning", stage=FEATURE_STAGE,
+                    message=f"Failed to prepare structure '{pdbID}'.", 
+                    savs=SAV_coord2SAV(mapped_SAVs[indices]['SAV_coords']),
                 )
                 continue
             # Check if PDB file exists 
             if not os.path.isfile(pdbPath):
                 LOGGER.warning(f"File {pdbPath} not found.")
-                userlog.emit(level="warning", stage="Feature calculation",
-                    message=USERLOG_MESSAGES['PDB_NOT_FOUND']['message'].format(pdbID=pdbID),
-                    context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath)},
+                LOGGER.emit(level="warning", stage=FEATURE_STAGE,
+                    message=f"Prepared structure file not found for '{pdbID}'.",
+                    savs=SAV_coord2SAV(mapped_SAVs[indices]['SAV_coords']),
                 )
                 continue
             try:
@@ -1357,9 +1354,9 @@ def calcPDBfeatures(
             except Exception as e:
                 msg = traceback.format_exc()
                 LOGGER.warn(msg)
-                userlog.emit(level="warning", stage="Feature calculation",
-                    message=USERLOG_MESSAGES['PDB_READ_FAILED']['message'].format(pdbID=pdbID),
-                    context={"pdb_id": str(pdbID), "format": str(format), "path": str(pdbPath), "error": str(e)},
+                LOGGER.emit(level="warning", stage=FEATURE_STAGE,
+                    message=f"Failed to read structure '{pdbID}' for feature calculation.",
+                    savs=SAV_coord2SAV(mapped_SAVs[indices]['SAV_coords']),
                 )
                 obj = str(e)    
             # Extract features for SAVs

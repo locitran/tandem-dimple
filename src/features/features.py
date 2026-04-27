@@ -117,7 +117,7 @@ class Features:
         data['SAVs'] = SAV_coord2SAV(SAV_list)
         self.data = data
         self.nSAVs = nSAVs
-        self.userlog.emit(level="important", stage="Validating SAVs", message=f"Validating {nSAVs} SAVs",)
+        LOGGER.emit(level="important", stage="Validating SAVs", message=f"Validating {nSAVs} SAVs",)
     
     def setLabels(self, labels):
         if labels is None:
@@ -212,35 +212,34 @@ class Features:
 
         # Emit one message per pattern (if any).
         if no_hits_savs:
-            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
-                message=USERLOG_MESSAGES['SAV2PDB_NO_HITS']['message'], savs=no_hits_savs
-            )
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE, savs=no_hits_savs,
+                message="Cannot find an experimental structure or AlphaFold2 structure for these SAVs below.\nIf you want to predict the pathogenicity of these SAVs, please upload your own structure."
+            ) # eg., ["Q9P2D1 Y72C", "Q9P2D1 P86R"]
 
         if out_range_savs:
-            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
-                message=USERLOG_MESSAGES['SAV2PDB_OUT_RANGE']['message'], savs=out_range_savs
-            )
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE, savs=out_range_savs, 
+                message="Cannot map these SAVs below due to residue index out of UniProt sequence."
+            ) # eg., ["O00189 R27111H"]
 
         if wt_mismatch_savs:
-            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
-                message=USERLOG_MESSAGES['SAV2PDB_WT_MISMATCH']['message'], savs=wt_mismatch_savs
-            )
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE, savs=wt_mismatch_savs,
+                message="Cannot map these SAVs below due to residue mismatch.\nPlease ensure that the mutation is defined on the UniProt canonical sequence.", 
+            ) # eg., ["O00255 R176Q", "O00255 D177Y"]
         
         if low_confidence_savs:
-            LOGGER.emit(level="warning", stage=MAPPING_STAGE,
-                message=USERLOG_MESSAGES['SAV2PDB_LOW_CONFIDENCE']['message'], savs=low_confidence_savs
-            )
+            LOGGER.emit(level="warning", stage=MAPPING_STAGE, savs=low_confidence_savs,
+                message="These SAVs fall in low-confidence regions (pLDDT < 50):",  
+            ) # eg., ["Q8TDI8 S2P", "Q8TDI8 K4Q", "Q8TDI8 I8V", "Q8TDI8 I8N"]
         
         self.custom_PDB = custom_PDB
         self.Uniprot2PDBmap = Uniprot2PDBmap
 
         n = np.sum(Uniprot2PDBmap['Asymmetric_PDB_length'] != 0)
         s = np.unique([c.split()[0] for c in Uniprot2PDBmap['Asymmetric_PDB_coords'] if "Cannot map" not in c]).__len__()
-        LOGGER.emit(level="important", stage=MAPPING_STAGE,
-            message=f"Mapping {n}/{self.nSAVs} SAVs to {s} structures",
-        )
+        msg = "structures" if s>1 else "structure"
+        LOGGER.emit(level="important", stage=MAPPING_STAGE, message=f"Mapping {n}/{self.nSAVs} SAVs to {s} {msg}",)
         if s == 0 and n == 0:
-            LOGGER.emit(level="error", stage=MAPPING_STAGE, message=USERLOG_MESSAGES["SAV2PDB_FAILED"]["message"])
+            LOGGER.emit(level="error", stage=MAPPING_STAGE, message="None could be mapped. Your job is stopped.")
 
     def getUniprot2PDBmap(self, **kwargs):
         """Maps each SAV to the corresponding resid in a PDB chain.
@@ -427,29 +426,3 @@ class Features:
             all_feats.append(f)
         # build matrix of selected features
         self.featMatrix = self._buildFeatMatrix(self.featSet, all_feats)
-
-        savs = np.asarray(self.data['SAVs'])
-        no_structure_mask = np.asarray(self.data['Asymmetric_PDB_resolved_length'] == 0, dtype=bool)
-        no_structure_savs = savs[no_structure_mask].tolist()
-        if no_structure_savs:
-            msg = USERLOG_MESSAGES["FEATURE_NO_STRUCTURE"]
-            self.userlog.emit(level="warning", stage=FEATURE_STAGE, message=msg["message"], savs=no_structure_savs)
-
-        missing_feature_groups = {}
-        for idx, sav in enumerate(savs):
-            if no_structure_mask[idx]:
-                continue
-            missing_feats = tuple(
-                feature_name for feature_name in self.featSet
-                if np.isnan(self.featMatrix[feature_name][idx])
-            )
-            if not missing_feats:
-                continue
-            missing_feature_groups.setdefault(missing_feats, []).append(str(sav))
-
-        for missing_feats, group_savs in missing_feature_groups.items():
-            feat_text = "-".join(missing_feats)
-            msg = USERLOG_MESSAGES["MISSING_FEATURE"]
-            self.userlog.emit(level="warning", stage=FEATURE_STAGE,
-                message=msg["message"].format(feature_text=feat_text), savs=group_savs
-            )

@@ -270,7 +270,7 @@ class Tandem(Features):
             cfg.update({k: v for k, v in config.items() if k in cfg})
         self.config = TLConfig(**cfg)
 
-    def train(self, smin=10):
+    def train(self, smin=10, filename='test_evaluation.txt'):
         assert self.featMatrix is not None, "Feature matrix not set."
         assert self.config is not None, "Config not set."
         
@@ -399,7 +399,7 @@ class Tandem(Features):
 
         final_df.insert(0, "Metric", final_df.index)
         final_df.reset_index(drop=True, inplace=True)
-        final_df.to_csv(f"{job_dir}/test_evaluation.csv", index=False)
+        final_df.to_csv(f"{job_dir}/{filename}", index=False)
         
         # Save SAVs splitting schemes for cross-validation
         with open(f'{job_dir}/cross_validation_SAVs.json', 'w') as f:

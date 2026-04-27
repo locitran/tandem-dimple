@@ -99,7 +99,7 @@ def run(
             LOGGER.timeit(label="_training")
             t.setLabels(labels)
             t.setConfig(config)
-            t.train()
+            t.train(filename='test_evaluation.txt')
             LOGGER.report_userlog(label="_training", stage=MODEL_STAGE, file='test_evaluation.txt')
         else:
             LOGGER.timeit("_prediction")
@@ -131,8 +131,6 @@ def run(
         job_failed = USERLOG_MESSAGES["JOB_FAILED"]
         LOGGER.emit(level="error", stage=current_stage,
             message=job_failed["message"].format(job_name=job_name, error=str(e)),
-            action=job_failed["action"],
-            context={"error": str(e)},
             exit_on_error=False,
         )
         LOGGER.dump_userlog(report_path, STAGE_LABELS)

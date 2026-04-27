@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import os 
 import pandas as pd 
+import threading
 import traceback
 from src.main import run as run_tandem
 from src.features.Uniprot import SAV2SAV_coord
@@ -10,6 +11,7 @@ from src.features import TANDEM_FEATS
 
 tandem_jobs = os.path.join(ROOT_DIR, 'jobs')
 app = Flask(__name__)
+tandem_job_lock = threading.Lock()
 
 @app.route("/run_tandem_job", methods=["POST"])
 def run_tandem_job():
@@ -21,6 +23,10 @@ def run_tandem_job():
         LOGGER.error("No JSON received")
 
         return jsonify({"error": "No JSON received"}), 400
+
+    if not tandem_job_lock.acquire(blocking=False):
+        LOGGER.warning("Tandem container is busy; rejecting concurrent job request")
+        return jsonify({"error": "Tandem container is busy"}), 409
 
     try:
         session_id = params["session_id"]
@@ -62,10 +68,21 @@ def run_tandem_job():
         LOGGER.error(f"Error in inference: {e}")
 
         return jsonify({"error": str(e)}), 500
+    
+    finally:
+        tandem_job_lock.release()
 
 @app.route("/health")
 def health():
     return "OK", 200
+
+@app.route("/available")
+def available():
+    if not tandem_job_lock.acquire(blocking=False):
+        return jsonify({"available": False}), 409
+
+    tandem_job_lock.release()
+    return jsonify({"available": True}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

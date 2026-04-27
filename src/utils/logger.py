@@ -71,40 +71,7 @@ STAGE_LABELS = [
 ]
 
 USERLOG_MESSAGES = {
-    "SAV2PDB_NO_HITS": {
-        "message": "Cannot find an experimental structure or AlphaFold2 structure for these SAVs below.\nIf you want to predict the pathogenicity of these SAVs, please upload your own structure.",
-        "example": ["Q9P2D1 Y72C", "Q9P2D1 P86R"]
-    },
-    "SAV2PDB_WT_MISMATCH": {
-        "message": "Cannot map these SAVs below due to residue mismatch.\nPlease ensure that the mutation is defined on the UniProt canonical sequence.",
-        "example": ["O00255 R176Q", "O00255 D177Y"]
-    },
-    "SAV2PDB_OUT_RANGE": {
-        "message": "Cannot map these SAVs below due to residue index out of UniProt sequence.",
-        "example": ["O00189 R27111H"]
-    },
-    "SAV2PDB_LOW_CONFIDENCE": {
-        "message": "These SAVs fall in low-confidence regions (pLDDT < 50):",
-        "example": ["Q8TDI8 S2P", "Q8TDI8 K4Q", "Q8TDI8 I8V", "Q8TDI8 I8N"]
-    },
-    "PFAM_NO_DOMAIN": {
-        "message": "Cannot find any Pfam domain for these SAVs below.",
-        "example": ["O00189 R271H"]
-    },
-    "SAV2PDB_FAILED": {
-        "message": "None could be mapped. Your job is stopped.",
-        "action": "",
-    },
-    "NOT_RECOGNIZE_UNIPROT": {
-        "message": "a",
-        "action": "a",
-        "example": []
-    },
-    "NOT_RECOGNIZE_RESID": {
-        "message": "a",
-        "action": "a",
-        "example": []
-    },
+    
     "SAV2PDB_INVALID_CUSTOM_ID": {
         "message": "The provided custom PDB or AlphaFold identifier is not valid.",
         "example": [],
@@ -114,24 +81,6 @@ USERLOG_MESSAGES = {
         "example": [],
     },
 
-
-
-    
-    "PDB_PREP_FAILED": {
-        "message": "Failed to prepare structure '{pdbID}'.",
-    },
-    "PDB_NOT_FOUND": {
-        "message": "Prepared structure file not found for '{pdbID}'.",
-    },
-    "PDB_READ_FAILED": {
-        "message": "Failed to read structure '{pdbID}' for feature calculation.",
-    },
-    "FEATURE_NO_STRUCTURE": {
-        "message": "No feature calculation for these SAVs:",
-    },
-    "MISSING_FEATURE": {
-        "message": "Missing {feature_text} features for these SAVs:",
-    },
     "INF_DUMP_SAVS": {
         "message": "No prediction for these SAVs:",
         "action": "",
