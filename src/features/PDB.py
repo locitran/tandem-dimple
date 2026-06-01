@@ -1341,9 +1341,9 @@ def calcPDBfeatures(
                 continue
             # Check if PDB file exists 
             if not os.path.isfile(pdbPath):
+                msg=f"Prepared structure file not found for '{pdbID}'."
                 LOGGER.warning(f"File {pdbPath} not found.")
-                LOGGER.emit(level="warning", stage=FEATURE_STAGE,
-                    message=f"Prepared structure file not found for '{pdbID}'.",
+                LOGGER.emit(level="warning", stage=FEATURE_STAGE, message=msg,
                     savs=SAV_coord2SAV(mapped_SAVs[indices]['SAV_coords']),
                 )
                 continue
@@ -1352,10 +1352,9 @@ def calcPDBfeatures(
                 LOGGER.info(f"Loading PDB {pdbPath}...")
                 obj = PDBfeatures(pdbPath, format=format, recover_pickle=not(refresh), **kwargs)
             except Exception as e:
-                msg = traceback.format_exc()
-                LOGGER.warn(msg)
-                LOGGER.emit(level="warning", stage=FEATURE_STAGE,
-                    message=f"Failed to read structure '{pdbID}' for feature calculation.",
+                msg = f"Failed to read structure '{pdbID}' for feature calculation."
+                LOGGER.warn(traceback.format_exc())
+                LOGGER.emit(level="warning", stage=FEATURE_STAGE, message=msg,
                     savs=SAV_coord2SAV(mapped_SAVs[indices]['SAV_coords']),
                 )
                 obj = str(e)    

@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -769,3 +770,624 @@ def pl_gene_specific_performance(
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()
     plt.close()
+
+
+SAV_PATTERN = re.compile(r"^(\S+)\s+([A-Z])(\d+)([A-Z])$")
+
+def _parse_sav_label(sav):
+    """Parse compact SAV labels such as 'Q46897 M1A'."""
+    match = SAV_PATTERN.match(str(sav).strip().upper())
+    if match is None:
+        raise ValueError(f"Cannot parse SAV label: {sav}")
+    acc, wt_aa, resid, mut_aa = match.groups()
+    return acc, int(resid), wt_aa, mut_aa
+
+def _parse_prediction_value(value):
+    """Parse prediction strings such as '0.769±0.026 (pathogenic)'."""
+    if value is None or pd.isna(value):
+        return np.nan
+    text = str(value).strip()
+    if not text or text.lower().startswith("not available"):
+        return np.nan
+    try:
+        return float(text.split("±", 1)[0])
+    except ValueError:
+        match = re.search(r"[-+]?\d*\.?\d+", text)
+        return float(match.group(0)) if match else np.nan
+
+def _model_to_data_key(model):
+    model_name = str(model).strip().upper()
+    if model_name in {"TANDEM", "FOUNDATION"}:
+        return "tandem"
+    if model_name in {"TANDEM-DIMPLE", "TANDEM_DIMPLE", "DIMPLE"}:
+        return "tandem_dimple"
+    raise ValueError("model must be 'TANDEM' or 'TANDEM-DIMPLE'.")
+
+def _extract_saturation_from_data(data, model):
+    model_key = _model_to_data_key(model)
+    if model_key not in data.dtype.names:
+        raise ValueError(f"Cannot find model predictions in self.data: {model_key}")
+    savs = np.asarray(data["SAVs"]).astype(str)
+    scores = np.asarray(data[model_key]["path_prob"], dtype=float)
+    return savs, scores
+
+def _extract_saturation_from_file(prediction_file, model):
+    df = pd.read_csv(prediction_file)
+    if "SAV" not in df.columns:
+        raise ValueError(f"Prediction file must contain a SAV column: {prediction_file}")
+    if model not in df.columns:
+        raise ValueError(
+            f"Prediction file does not contain '{model}'. "
+            f"Available columns: {', '.join(df.columns)}"
+        )
+    savs = df["SAV"].astype(str).values
+    scores = df[model].map(_parse_prediction_value).astype(float).values
+    return savs, scores
+
+def _build_saturation_matrix(savs, scores, aa_order):
+    aa_to_row = {aa: i for i, aa in enumerate(aa_order)}
+    parsed = []
+    wt_by_resid = {}
+    accs = set()
+    max_resid = 0
+
+    for sav, score in zip(savs, scores):
+        acc, resid, wt_aa, mut_aa = _parse_sav_label(sav)
+        if mut_aa not in aa_to_row:
+            continue
+        parsed.append((acc, resid, wt_aa, mut_aa, score))
+        accs.add(acc)
+        wt_by_resid[resid] = wt_aa
+        max_resid = max(max_resid, resid)
+
+    if not parsed:
+        raise ValueError("No valid saturation mutagenesis SAVs were found.")
+
+    matrix = np.full((len(aa_order), max_resid), np.nan, dtype=float)
+    for _, resid, _, mut_aa, score in parsed:
+        matrix[aa_to_row[mut_aa], resid - 1] = score
+
+    acc = sorted(accs)[0] if len(accs) == 1 else "multiple proteins"
+    return matrix, wt_by_resid, acc
+
+def saturation_mutagenesis(
+    data=None,
+    prediction_file=None,
+    model="TANDEM",
+    folder=".",
+    filename="saturation_mutagenesis_heatmap.png",
+    aa_order="ACDEFGHIKLMNPQRSTVWY",
+    title=None,
+    figsize=None,
+    dpi=300,
+    cmap="coolwarm",
+    vmin=0,
+    vmax=1,
+):
+    """Plot a saturation mutagenesis pathogenicity heatmap.
+
+    The function accepts either a Tandem self.data array or a saved
+    Main_Predictions.txt file. If both are provided, self.data is used.
+    """
+    if data is not None:
+        savs, scores = _extract_saturation_from_data(data, model)
+    elif prediction_file is not None:
+        savs, scores = _extract_saturation_from_file(prediction_file, model)
+    else:
+        raise ValueError("Provide either data or prediction_file.")
+
+    matrix, wt_by_resid, acc = _build_saturation_matrix(savs, scores, aa_order)
+    n_resid = matrix.shape[1]
+    if figsize is None:
+        figsize = (max(8, min(30, n_resid / 10)), 6)
+
+    masked = np.ma.masked_invalid(matrix)
+    plot_cmap = plt.get_cmap(cmap).copy()
+    plot_cmap.set_bad(color="lightgray")
+
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    im = ax.imshow(masked, cmap=plot_cmap, vmin=vmin, vmax=vmax, aspect="auto", interpolation="none")
+
+    ax.set_yticks(np.arange(len(aa_order)))
+    ax.set_yticklabels(list(aa_order))
+    tick_step = max(1, int(np.ceil(n_resid / 20)))
+    xticks = np.arange(0, n_resid, tick_step)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticks + 1)
+    ax.set_xlabel("Residue position")
+    ax.set_ylabel("Mutant amino acid")
+    ax.set_title(title or f"Saturation mutagenesis: {acc} ({model})")
+
+    aa_to_row = {aa: i for i, aa in enumerate(aa_order)}
+    for resid, wt_aa in wt_by_resid.items():
+        row = aa_to_row.get(wt_aa)
+        if row is None:
+            continue
+        ax.add_patch(
+            plt.Rectangle(
+                (resid - 1.5, row - 0.5), 1, 1,
+                linewidth=0.8,
+                edgecolor="black",
+                facecolor="none",
+            )
+        )
+
+    cbar = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
+    cbar.set_label("Pathogenic probability")
+    cbar.set_ticks([0, 0.5, 1])
+
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.tick_params(axis="both", which="both", length=0)
+    fig.tight_layout()
+
+    filepath = None
+    if filename:
+        os.makedirs(folder, exist_ok=True)
+        filepath = os.path.join(folder, filename)
+        fig.savefig(filepath, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
+
+    return {
+        "figure": filepath,
+        "matrix": matrix,
+        "wt_by_resid": wt_by_resid,
+        "accession": acc,
+    }
+
+    # import matplotlib.pyplot as plt
+    # import matplotlib.colors as mcolors
+    # from matplotlib.colors import ListedColormap, BoundaryNorm
+    # import matplotlib.pyplot as plt
+    # import seaborn as sns
+    # from matplotlib import gridspec as gridspec
+    # from matplotlib.colors import LinearSegmentedColormap
+    # import numpy as np
+    # from matplotlib import colors
+    # import matplotlib.patches as patches
+    # import numpy as np
+
+    # import matplotlib.patches as mpatches
+    # from matplotlib.legend_handler import HandlerPatch
+
+    # def plot_ax_patho(ax, data, mask_col=[221, 222, 223, 224, 225], xlim=None):
+    #     # data for these columns is masked
+    #     data[:, mask_col] = np.nan
+        
+    #     aa_list = 'ACDEFGHIKLMNPQRSTVWY'
+    #     # new_aa_list = 'WYFLIVMCAGPSTNQHRKDE'    
+        
+    #     # Create a mapping from aa_list to row indices
+    #     # aa_to_index = {aa: i for i, aa in enumerate(aa_list)}
+
+    #     # Create a list of indices to reorder the data
+    #     # new_order = [aa_to_index[aa] for aa in new_aa_list]
+
+    #     # Reorder the data
+    #     # data = data[new_order, :]
+        
+    #     im = ax.imshow(data, cmap='coolwarm', vmin=0, vmax=1, aspect='auto')
+    #     ax.imshow(np.ma.getmask(data), cmap='Greys', alpha=0.0, aspect='auto')
+    
+    #     # Assuming masked_data is a numpy.ma.MaskedArray
+    #     mask = np.ma.getmask(data)
+    #     # Loop through the mask and add borders where mask is True
+    #     n_rows, n_cols = mask.shape
+    #     for row in range(n_rows):
+    #         for col in range(n_cols):
+    #             if col in mask_col:
+    #                 continue
+    #             if mask[row, col]:
+    #                 rect = patches.Rectangle(
+    #                     (col - 0.5, row - 0.5), 1, 1,  # (x, y), width, height
+    #                     linewidth=0.5,
+    #                     edgecolor='black',
+    #                     facecolor='none'
+    #                 )
+    #                 ax.add_patch(rect)
+                    
+    #     # Set y-axis labels
+        
+    #     ax.set_yticks(np.arange(data.shape[0]))
+    #     ax.set_yticklabels(list(aa_list), rotation=0, fontsize=15)
+    #     # ax.set_yticklabels(list(new_aa_list), rotation=0, fontsize=15)
+    #     # Set x-axis labels
+    #     ax.set_xticks([]) # Hide x-axis ticks
+    #     ax.set_ylabel('Pathogenic Probability', fontsize=20)
+    #     if xlim is not None:
+    #         ax.set_xlim(xlim)
+    #     # Remove spines
+    #     for spine in ax.spines.values():
+    #         spine.set_visible(False)
+    #     return im
+
+    # def mark_heatmap(ax, resids, aa_indices, labels, pathogenic='red', benign='blue'):
+    #     for resid, idx, label in zip(resids, aa_indices, labels):
+    #         if label == 1:
+    #             edgecolor = pathogenic
+    #         elif label == 0:
+    #             edgecolor = benign
+    #         ax.add_patch(
+    #             plt.Rectangle(
+    #                 (resid-0.5, idx-0.5), 1, 1,
+    #                 linewidth=2,
+    #                 edgecolor=edgecolor,
+    #                 facecolor='none'
+    #             )
+    #         )
+
+    # def plot_ax_avg(ax, data, label, color, linewidth=2, linestyle='solid',
+    #                 min_max=True, setup=True, get_xlim=None,
+    #                 plot_peaks=True):
+        
+    #     avg_data = np.nanmean(data, axis=0)
+    #     min_data = np.nanmin(data, axis=0)
+    #     max_data = np.nanmax(data, axis=0)
+        
+    #     ax.plot(avg_data, color=color, label=label, linewidth=linewidth, linestyle=linestyle)
+    #     if min_max:
+    #         # Fill from lowest to highest
+    #         ax.fill_between(np.arange(len(avg_data)), min_data, max_data, color=color, alpha=0.2)
+    #     if setup:
+    #         ax.set_xlim(get_xlim)
+    #         ax.set_xticks([])
+    #         ax.set_ylim(-0.1, 1.1)
+    #         ax.set_yticks([0, 0.5, 1])
+    #         ax.set_yticklabels([0, 0.5, 1], fontsize=15)
+    #         ax.axhline(0.5, color='gray', linestyle='--', linewidth=0.5)
+    #         ax.set_ylabel('Average', fontsize=20)
+            
+    #     if plot_peaks:
+    #         # Peaks and troughs
+    #         peaks = np.where(np.diff(np.sign(np.diff(avg_data))) < 0)[0] + 1
+    #         # top x peaks > 0.8
+    #         topxpeaks = np.where(avg_data[peaks] > 0.5)[0]
+    #         troughs = np.where(np.diff(np.sign(np.diff(avg_data))) > 0)[0] + 1
+    #         # top 20 troughs < 0.2
+    #         top20troughs = np.where(avg_data[troughs] < 0.5)[0]
+    #         # Plot peaks and troughs
+    #         ax.plot(peaks[topxpeaks], avg_data[peaks][topxpeaks], 'o', color='red', markersize=6)
+    #         ax.plot(troughs[top20troughs], avg_data[troughs][top20troughs], 'o', color='blue', markersize=6)
+
+    # # Custom handler to scale the patch size in the legend
+    # class TallRectangleHandler(HandlerPatch):
+    #     def create_artists(self, legend, orig_handle,
+    #                     xdescent, ydescent, width, height, fontsize, trans):
+    #         # Custom rectangle with scaled width and height
+    #         w = width * 0.3
+    #         h = height * 1.5
+    #         rect = mpatches.Rectangle(
+    #             [xdescent + (width - w) / 2, ydescent + (height - h) / 2],
+    #             w, h,
+    #             edgecolor=orig_handle.get_edgecolor(),
+    #             facecolor=orig_handle.get_facecolor(),
+    #             linewidth=orig_handle.get_linewidth(),
+    #             transform=trans
+    #         )
+    #         return [rect]
+
+
+    # def plot_ax_V1(ax, data, get_xlim=None):
+    #     white_to_darkred = LinearSegmentedColormap.from_list(
+    #     'white_to_darkred', ['white', 'darkred'])
+
+    #     ax.imshow(data,
+    #             cmap=white_to_darkred,
+    #             vmin=0.0, 
+    #             vmax=100,
+    #             aspect='auto',
+    #             interpolation='none')
+    #     ax.set_xlim(get_xlim)
+    #     ax.set_xticks([])
+    #     ax.set_yticks([])
+    #     ax.set_ylabel(r'$‖V_{1,i}‖$', fontsize=15, rotation=0, labelpad=5)
+    #     bbox = ax.get_position()
+    #     ax.yaxis.set_label_coords(bbox.x0-0.15, 0)  # y=0.5 is always vertical center
+
+    # def plot_ax_consurf(ax, data, get_xlim=None):
+    #     # Define hex colors for cons1 to cons10 (as given before)
+    #     hex_colors = [
+    #         "#0A7D82",  # cons1
+    #         "#4AB0BF",  # cons2
+    #         "#A6DBE6",  # cons3
+    #         "#D6EFEF",  # cons4
+    #         "#FFFFFF",  # cons5
+    #         "#FAEAF5",  # cons6
+    #         "#FAC7DB",  # cons7
+    #         "#F07DAB",  # cons8
+    #         "#A02960",  # cons9
+    #         "#FFFF96",  # cons10
+    #     ]
+    #     # Create discrete colormap and normalization
+    #     cmap = ListedColormap(hex_colors)
+    #     bounds = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    #     norm = BoundaryNorm(bounds, cmap.N)
+
+    #     # Plot with the custom discrete colormap
+    #     ax.imshow(data, cmap=cmap, aspect='auto', interpolation='none')
+    #     ax.set_xlim(get_xlim)
+    #     ax.set_xticks([])
+    #     ax.set_yticks([])
+    #     # Set label text and rotation
+    #     ax.set_ylabel('ConSurf', fontsize=15, rotation=0, labelpad=5)
+    #     bbox = ax.get_position()
+    #     ax.yaxis.set_label_coords(bbox.x0-0.15, 0)  # y=0.5 is always vertical center
+        
+    # def plot_ax_dssp(ax, data, get_xlim=None):
+    #     x = 0
+    #     i = 0
+    #     while i < len(data):
+    #         s = data[i]
+    #         # s nan continue
+    #         if np.isnan(s):
+    #             i += 1
+    #             continue
+    #         # Group consecutive H, E, or -
+    #         start = i
+    #         current = s
+    #         while i < len(dssp) and dssp[i] == current:
+    #             i += 1
+    #         length = i - start
+    #         if current == 0.5:
+    #             # # Draw helix as a sine wave
+    #             # xs = np.linspace(x, x + length, 100)
+    #             # ys = 0.2 * np.sin(10 * np.linspace(0, 2 * np.pi, 100))
+    #             # ax_dssp.plot(xs, ys, color='navy', linewidth=2)
+    #             # Control frequency: N full sine cycles per residue
+    #             cycles_per_residue = 1  # e.g., 1 wave per residue
+    #             total_cycles = cycles_per_residue * length
+    #             xs = np.linspace(x, x + length, 100)
+    #             phase = np.linspace(0, 2 * np.pi * total_cycles, 100)
+    #             ys = 0.2 * np.sin(phase)
+    #             ax.plot(xs, ys, color='navy', linewidth=2)
+                
+    #         elif current == 0:
+    #             # Draw sheet as a single yellow arrow
+    #             rect = patches.FancyArrow(
+    #                 x, 0,
+    #                 length, 0,
+    #                 width=0.5,
+    #                 head_width=1,
+    #                 head_length=1,
+    #                 length_includes_head=True,
+    #                 color='darkblue',
+    #                 linewidth=0
+    #             )
+    #             ax.add_patch(rect)
+    #         else:
+    #             # Draw loop as straight black line
+    #             ax.plot([x, x + length], [0, 0], color='black', linewidth=1)
+    #         x += length
+
+    #     ax.set_xlim(get_xlim)
+    #     ax.set_yticks([])
+    #     # # Set label text and rotation
+    #     ax.set_ylabel('Sec. Str.', fontsize=15, rotation=0, labelpad=5)
+    #     bbox = ax.get_position()
+    #     ax.yaxis.set_label_coords(bbox.x0-0.15, 0)  # y=0.5 is always vertical center
+    #     # Remove spines
+    #     for spine in ax.spines.values():
+    #         spine.set_visible(False)
+
+    #     # # Domain information
+    #     cx26_domains_dict = {
+    #         (1, 13): {"name": "NTH", "type": "Intramembrane"},
+    #         # (14, 20): {"name": "TD1", "type": "Topological domain", "location": "Cytoplasmic"},
+    #         (14, 20): {"name": "CL1", "type": "Topological domain", "location": "Cytoplasmic"},
+    #         (21, 40): {"name": "TM1", "type": "Transmembrane", "structure": "Helical"},
+    #         (41, 73): {"name": "EL1", "type": "Topological domain", "location": "Extracellular"},
+    #         (74, 94): {"name": "TM2", "type": "Transmembrane", "structure": "Helical"},
+    #         (95, 135): {"name": "CL2", "type": "Topological domain", "location": "Cytoplasmic"},
+    #         (136, 156): {"name": "TM3", "type": "Transmembrane", "structure": "Helical"},
+    #         (157, 189): {"name": "EL2", "type": "Topological domain", "location": "Extracellular"},
+    #         (190, 210): {"name": "TM4", "type": "Transmembrane", "structure": "Helical"},
+    #         (211, 226): {"name": "CT", "type": "Topological domain", "location": "Cytoplasmic"},
+    #     }
+    #     # Separate the domains by drawing rectangles
+    #     for (start, end), domain_info in cx26_domains_dict.items():
+    #         # Plot the name in the center of the rectangle
+    #         # Plot a vertical line at the start and end of the domain
+    #         if end < get_xlim[0]:
+    #             continue
+    #         # if start >= get_xlim[1]+0.5:
+    #         #     continue
+    #         ax.axvline(start-1.0, color='black', linewidth=0.5)
+    #         if end == data.shape[0]:
+    #             ax.axvline(end-1, color='black', linewidth=0.5)
+    #         ax.text(
+    #             (start + end) / 2 - 0.5, 1.3,
+    #             domain_info["name"],
+    #             ha='center', va='center',
+    #             fontsize=12,
+    #             color='black',
+    #             bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3')
+    #         )
+    #         # 94.5
+    #     xticks = np.array([1, 14, 21, 41, 74, 95, 136, 157, 190, 211, 226, 27, 34, 197, 203 ])
+    #     show_xticks = xticks[(xticks-0.5 >= get_xlim[0]) & (xticks-0.5 <= get_xlim[1])]
+
+    #     xticks = np.array(show_xticks)
+    #     ax.set_xticks(xticks-1)
+    #     ax.set_xticklabels(xticks, rotation=0, fontsize=15)
+    #     # ax x title
+    #     ax.set_xlabel('Residue number', fontsize=20) # 
+    #     # Shift x label upper
+    #     # bbox = ax.get_position()
+    #     # ax.xaxis.set_label_coords(bbox.x0+0.5, -0.15)  # x=0.5 is always horizontal center
+    #     # ax.xaxis.set_label_coords(bbox.x0+0.5, -0.15)  # x=0.5 is always horizontal center
+
+    # import matplotlib.pyplot as plt
+    # from matplotlib import gridspec as gridspec
+    # import numpy as np
+
+
+    # # # AlphaMissense data
+    # # avg_aln_preds, masked_aln_preds
+    # # # TANDEM_GJB2 data
+    # # masked_td_GJB2_preds, avg_td_GJB2_preds, min_td_GJB2_preds, max_td_GJB2_preds
+    # fig_height=8
+    # fig_width=25
+    # fig_width=30
+    # dpi=300
+    # num_intervals=9
+    # fig = plt.figure(figsize=(fig_width, fig_height), dpi=dpi)
+    # # Create GridSpec with custom row and column size ratios
+    # gs = gridspec.GridSpec(
+    #     # nrows=7, ncols=2, 
+    #     nrows=7, ncols=1, 
+    #     height_ratios=[7.8, 0.02, 2, 0.3, 0.3, 0.1, 0.3], 
+    #     # width_ratios=[9.9, 0.15],
+    #     hspace=0.1,  # global hspace for others
+    #     # wspace=0.02
+    # )
+
+    # # Create axes individually
+    # ax_patho = fig.add_subplot(gs[0, 0])     # Heatmap
+    # ax_avg = fig.add_subplot(gs[2, 0])       # Line plot (avg, sem)
+    # ax_consurf = fig.add_subplot(gs[3, 0])   # ConSurf
+    # ax_V1 = fig.add_subplot(gs[4, 0])        # V1
+    # ax_dssp = fig.add_subplot(gs[6, 0])      # Secondary Structure
+    # # ax_cb = fig.add_subplot(gs[0, 1])        # Colorbar
+    # ax_spacer = fig.add_subplot(gs[1, 0])       # Spacer for bottom
+    # ax_spacer.axis('off')  # Hide the spacer axis
+    # ax_spacer = fig.add_subplot(gs[5, 0])       # Spacer for bottom
+    # ax_spacer.axis('off')  # Hide the spacer axis
+
+    # # # Pathogenicity heatmap
+    # im = plot_ax_patho(ax_patho, masked_td_GJB2_preds, xlim=(-0.5, 225+8))
+
+    # # xlim1 = (-0.5, 94+0.5)
+    # # xlim2 = (95+0.5, 225+8)
+    # # ax_patho.set_xlim(-0.5, 94+0.5)
+    # # ax_patho.set_xlim(xlim2[0], xlim2[1])
+    # # ax_patho.set_xlim(xlim1[0], xlim1[1])
+
+    # # Draw first so layout settles
+    # plt.draw()
+
+    # # Get ax_patho position to calculate where to place colorbar
+    # x0, y0, width, height = ax_patho.get_position().bounds
+
+    # # Now place a new inset Axes inside that region for colorbar
+    # cbar_ax = fig.add_axes([
+    #     x0 + width - 0.035,  # push a bit inward from right edge
+    #     y0 + 0.095 * height,  # start from ~15% up
+    #     0.012,               # narrow width
+    #     0.7 * height         # about 70% of the heatmap height
+    # ])
+
+    # # Now draw the colorbar in the inset axes
+    # cbar = fig.colorbar(im, cax=cbar_ax)
+    # # Customize appearance
+    # cbar.set_ticks([0, 0.5, 1])
+    # cbar.set_ticklabels([0, 0.5, 1], fontsize=15)
+    # cbar.ax.text(0.5, 0.25, 'B', ha='center', va='center', fontsize=15)
+    # cbar.ax.text(0.5, 0.75, 'P', ha='center', va='center', fontsize=15)
+    # cbar.ax.axhline(0.5, color='black', linestyle='--')
+
+
+    # # Mark known SAVs on the heaxtmap
+    # mark_heatmap(ax_patho, resids, mut_aa_indices, labels)
+    # # Add legend to the heatmap
+    # # Define handles
+    # red_rect = mpatches.Rectangle((0, 0), 1, 1, edgecolor='red', facecolor='none', linewidth=2, label='knwP')
+    # blue_rect = mpatches.Rectangle((0, 0), 1, 1, edgecolor='blue', facecolor='none', linewidth=2, label='knwB')
+    # white_rect = mpatches.Rectangle((0, 0), 1, 1, edgecolor='black', facecolor='none', linewidth=2, label='WT')
+    # # Add legend with custom handler
+    # ax_patho.legend(
+    #     handles=[red_rect, blue_rect, white_rect],
+    #     handler_map={mpatches.Rectangle: TallRectangleHandler()},
+    #     # bbox_to_anchor=(1.05, -0.05),
+    #     # bbox_to_anchor=(1.05, -0.05),
+    #     loc='upper right',
+    #     frameon=False,
+    #     handletextpad=0.1,
+    #     fontsize=12,
+    #     labelspacing=0.5
+    # )
+    # # Plot avg
+    # plot_ax_avg(ax_avg, masked_td_GJB2_preds, label=r'TANDEM$_{GJB2}$', color='red', linewidth=2, linestyle='solid', min_max=True, setup=True, get_xlim=ax_patho.get_xlim(), plot_peaks=True)
+    # # Plot avg for AlphaMissense
+    # plot_ax_avg(ax_avg, masked_aln_preds, label='AlphaMissense', color='darkgreen', linewidth=2, linestyle=(5, (10,3)), min_max=False, setup=False, get_xlim=ax_patho.get_xlim(), plot_peaks=False)
+    # ax_avg.legend(
+    #     loc='upper right', 
+    #     fontsize=15,
+    #     bbox_to_anchor=(0.4, 0.41),
+    #     bbox_transform=ax_avg.transAxes,
+    #     frameon=False,
+    #     handlelength=1.5,
+    #     handletextpad=0.5,
+    #     borderpad=0.5,
+    #     borderaxespad=0.5,
+    #     labelspacing=0.5,
+    #     ncol=2,
+    #     # ncol=1,
+    # )
+    # # Plot V1
+    # plot_ax_V1(ax_V1, V1_normalized, get_xlim=ax_patho.get_xlim())
+    # # Plot ConSurf
+    # plot_ax_consurf(ax_consurf, consurf_color, get_xlim=ax_patho.get_xlim())
+    # # Plot DSSP
+    # dssp = df_feat.dssp.values[:-1:19]
+    # dssp[-5:-1] = 1
+    # # plot_ax_dssp(ax_dssp, dssp, get_xlim=(-0.5, 225))
+    # plot_ax_dssp(ax_dssp, dssp, get_xlim=ax_patho.get_xlim())
+
+    # arrow_style = dict(shrink=0.01, width=1, headwidth=8, headlength=5)
+    # x_pos = [ 34,  37,  44,  44,  50,  59,  75,  75,  84,  90,  95, 143, 143, 161, 163, 179, 184, 195, 197, 202, 205, 206]
+    # x_pos = [v for v in x_pos if v-0.5 >= ax_patho.get_xlim()[0] and v-0.5 <= ax_patho.get_xlim()[1]]
+    # for pos in x_pos:
+    #     pos -= 1
+    #     y_base = ax_patho.get_ylim()[1] - 0.2
+    #     dy = 0.1  # same relative arrow length
+    #     ax_patho.annotate(
+    #         '',
+    #         xy=(pos, y_base + dy),         # arrow tip
+    #         xytext=(pos, y_base - dy),     # arrow tail
+    #         arrowprops={**arrow_style, 'facecolor': 'red', 'edgecolor': 'red'},
+    #         annotation_clip=False
+    #     )
+
+    # x_pos = [217, 215, 214, 210, 203, 197, 170, 170, 168, 156, 153, 127, 123, 121, 115, 114, 111, 107, 100,  83,  27,  16,   4,   4, 165]
+    # x_pos = [v for v in x_pos if v-0.5 >= ax_patho.get_xlim()[0] and v-0.5 <= ax_patho.get_xlim()[1]]
+    # for pos in x_pos:
+    #     pos -= 1
+    #     y_base = ax_patho.get_ylim()[1] - 0.2
+    #     dy = 0.1  # same relative arrow length
+    #     ax_patho.annotate(
+    #         '',
+    #         xy=(pos, y_base + dy),         # arrow tip
+    #         xytext=(pos, y_base - dy),     # arrow tail
+    #         arrowprops={**arrow_style, 'facecolor': 'blue', 'edgecolor': 'blue'},
+    #         annotation_clip=False
+    #     )
+        
+    # x_pos = [27, 34, 197, 203]
+    # x_pos = [v for v in x_pos if v >= ax_patho.get_xlim()[0] and v <= ax_patho.get_xlim()[1]]
+    # for pos in x_pos:
+    #     pos -= 1
+    #     y_base = ax_patho.get_ylim()[0] + 0.2
+    #     # dy = 0.1  # fixed relative length
+
+    #     # y_pos = ax_patho.get_ylim()[0]+1  # bottom of the y-axis
+    #     ax_patho.annotate(
+    #         '',
+    #         xy=(pos, y_base - dy),        # arrow tip
+    #         xytext=(pos, y_base + dy),    # arrow start (a bit above)
+    #         arrowprops={**arrow_style, 'facecolor': 'black', 'edgecolor': 'black'},
+    #         annotation_clip=False
+    #     )
+    #     y_pos = ax_dssp.get_ylim()[1]-0.2  # top of the y-axis
+    #     ax_dssp.annotate(
+    #         '',
+    #         xy=(pos, y_pos -0.1),        # arrow tip
+    #         xytext=(pos, y_pos +0.1),    # arrow start (a bit above)
+    #         arrowprops={**arrow_style, 'facecolor': 'black', 'edgecolor': 'black'},
+    #         annotation_clip=False
+    #     )
+
+    # # plt.suptitle(r'$\it{In\ silico}$ Saturation Mutagenesis of GJB2', fontsize=20, y=0.95)
+    # plt.subplots_adjust(top=0.9)  # adjust as needed (smaller = closer)
+    # # plt.savefig('/mnt/nas_1/YangLab/loci/tandem/models/saturation_mutagenesis_GJB2.png', dpi=300, bbox_inches='tight')
+    # # plt.close()
+    # plt.show()

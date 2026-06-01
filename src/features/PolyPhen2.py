@@ -74,7 +74,14 @@ def parsePolyPhen2(file):
     LOGGER.info("PolyPhen-2's output parsed.")
     return parsed_lines
 
-def calcPolyPhen2(SAV_coords, filename='SAVs.txt', folder='.', timeout=3700):
+def calcPolyPhen2(
+    SAV_coords,
+    filename='SAVs.txt',
+    folder='.',
+    timeout=3700,
+    nonhuman=False,
+    fasta_file=None,
+):
     """Run PolyPhen-2 through the local PolyPhen-2 container service."""
     """
     from src.features.PolyPhen2 import calcPolyPhen2, parsePolyPhen2
@@ -99,7 +106,13 @@ def calcPolyPhen2(SAV_coords, filename='SAVs.txt', folder='.', timeout=3700):
     # Print SAVs to a shared path visible from the tandem and polyphen2 containers.
     SAV_file = printSAVlist(SAV_coords, f'{folder}/{filename}')
     LOGGER.timeit('_pph2')
-    payload = {"input_file": os.path.abspath(SAV_file), "job_dir": folder}
+    payload = {
+        "input_file": os.path.abspath(SAV_file),
+        "job_dir": folder,
+        "nonhuman": bool(nonhuman),
+    }
+    if fasta_file is not None:
+        payload["fasta_file"] = os.path.abspath(fasta_file)
 
     try:
         LOGGER.info(f"Submitting query to local PolyPhen-2 service: {service_url}")

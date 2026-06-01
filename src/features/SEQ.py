@@ -10,6 +10,7 @@ from ..utils.logger import LOGGER, USERLOG_MESSAGES, FEATURE_STAGE
 from .Pfam import run_hmmscan, parse_hmmscan, read_pfam_data, fetchPfamMSA
 from .PolyPhen2 import calcPolyPhen2
 from .Uniprot import UniprotMapping, SAV_coord2SAV
+from ..download import fetch_fasta
 
 __author__ = "Loci Tran"
 
@@ -46,6 +47,33 @@ class SEQfeatures(UniprotMapping):
             self.job_directory = kwargs["job_directory"]
         else:
             self.job_directory = '.'
+
+    def _get_taxonomy_id(self):
+        """Return the UniProt taxonomy ID when it is available."""
+        try:
+            organism = self.fullRecord.getOrganism() or {}
+        except Exception as e:
+            LOGGER.warn(f"Cannot read organism information for {self.acc}: {e}")
+            return None
+        return organism.get("taxonomy_id")
+
+    def _is_nonhuman_protein(self):
+        """PolyPhen-2 needs a custom FASTA/config for non-human proteins."""
+        taxonomy_id = self._get_taxonomy_id()
+        if taxonomy_id is None:
+            LOGGER.warn(
+                f"Cannot determine taxonomy ID for {self.acc}; "
+                "running PolyPhen-2 with the default human configuration."
+            )
+            return False
+        try:
+            return int(taxonomy_id) != 9606
+        except (TypeError, ValueError):
+            LOGGER.warn(
+                f"Unexpected taxonomy ID for {self.acc}: {taxonomy_id}; "
+                "running PolyPhen-2 with the default human configuration."
+            )
+            return False
 
     def seqScanning(self):
         """
@@ -248,7 +276,21 @@ class SEQfeatures(UniprotMapping):
         _dtype = np.dtype([(f, 'f') for f in features])
         f = np.full(len(self.resids), np.nan, dtype=_dtype)
         try:
-            f = calcPolyPhen2(self.SAV_coords, folder=f'{self.job_directory}/{self.acc}', filename=f'{self.uniq_acc}.txt')
+            pph2_folder = f'{self.job_directory}/{self.acc}'
+            nonhuman = self._is_nonhuman_protein()
+            fasta_file = fetch_fasta(accs=self.acc, filename=self.acc, folder=pph2_folder) if nonhuman else None
+            if nonhuman:
+                LOGGER.info(
+                    f"{self.acc} is non-human; running PolyPhen-2 with "
+                    "nonhuman_config and a custom FASTA sequence."
+                )
+            f = calcPolyPhen2(
+                self.SAV_coords,
+                folder=pph2_folder,
+                filename=f'{self.uniq_acc}.txt',
+                nonhuman=nonhuman,
+                fasta_file=fasta_file,
+            )
         except Exception:
             msg = traceback.format_exc()
             LOGGER.warn(msg)

@@ -17,7 +17,7 @@ from .utils.logger import LOGGER
 from .utils.logger import MODEL_STAGE, USERLOG_MESSAGES
 from .model.data_processing import Preprocessing, onehot_encoding, np2ds
 from .model.train import TLConfig, train_model, evaluate_model
-from .model.plot import plotSHAP_bar, plotLoss
+from .model.plot import plotSHAP_bar, plotLoss, saturation_mutagenesis
 
 import logging
 logging.getLogger("shap").setLevel(logging.ERROR)
@@ -260,6 +260,29 @@ class Tandem(Features):
                 plotSHAP_bar(_featImp, individualSHAP_title.format(sav, _classif), 
                             tandem_dimple_shap, sav, globalshap=False)
         LOGGER.report('plotSHAP computed in %.2fs.', label='_plotSHAP')
+
+    def plotSaturationMutagenesis(
+        self,
+        folder='.',
+        filename='saturation_mutagenesis_heatmap.png',
+        model='TANDEM',
+        prediction_file=None,
+        **kwargs,
+    ):
+        LOGGER.timeit('_plotSaturationMutagenesis')
+        result = saturation_mutagenesis(
+            data=None if prediction_file else self.data,
+            prediction_file=prediction_file,
+            model=model,
+            folder=folder,
+            filename=filename,
+            **kwargs,
+        )
+        LOGGER.report(
+            'Saturation mutagenesis heatmap plotted in %.2fs.',
+            label='_plotSaturationMutagenesis',
+        )
+        return result
             
     #### -------- Transfer learning ------- #####
 

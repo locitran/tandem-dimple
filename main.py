@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import fcntl
 import os 
 import pandas as pd 
 import threading
@@ -15,22 +16,28 @@ tandem_job_lock = threading.Lock()
 
 @app.route("/run_tandem_job", methods=["POST"])
 def run_tandem_job():
-    params = request.get_json()
-
-    LOGGER.info(f"Received input: {params}")
-
+    params = request.get_json(silent=True)
     if not params:
-        LOGGER.error("No JSON received")
-
         return jsonify({"error": "No JSON received"}), 400
 
     if not tandem_job_lock.acquire(blocking=False):
-        LOGGER.warning("Tandem container is busy; rejecting concurrent job request")
         return jsonify({"error": "Tandem container is busy"}), 409
 
+    job_lock = None
     try:
         session_id = params["session_id"]
         job_name   = params["job_name"]
+        job_directory = os.path.join(tandem_jobs, session_id, job_name)
+        os.makedirs(job_directory, exist_ok=True)
+        job_lock = open(os.path.join(job_directory, ".execution.lock"), "a")
+        completion_marker = os.path.join(job_directory, ".execution.complete")
+        try:
+            fcntl.flock(job_lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return jsonify({"error": "Job is already executing"}), 409
+        if os.path.exists(completion_marker):
+            return jsonify({"error": "Job output already exists"}), 409
+
         model      = params["model"]
         GJB2_test  = params.get("GJB2_test", None)
         refresh    = params.get("refresh", False)
@@ -58,6 +65,8 @@ def run_tandem_job():
             refresh=refresh,
             uniref90="/tandem/data/consurf/uniref90.fasta",
         )
+        with open(completion_marker, "w") as marker:
+            marker.write("completed\n")
         LOGGER.info(f"Inference result: ok")
 
         return jsonify({"output": 'ok'})
@@ -70,6 +79,11 @@ def run_tandem_job():
         return jsonify({"error": str(e)}), 500
     
     finally:
+        if job_lock is not None:
+            try:
+                fcntl.flock(job_lock.fileno(), fcntl.LOCK_UN)
+            finally:
+                job_lock.close()
         tandem_job_lock.release()
 
 @app.route("/health")

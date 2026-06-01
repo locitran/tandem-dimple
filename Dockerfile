@@ -21,6 +21,9 @@ RUN apt update --quiet \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Step 3: Create Conda environment + install Python deps ---
+# Remove any checked-in pyRONN binaries so pip builds a fresh extension for this image.
+RUN find ./pyRONN/ronn -maxdepth 1 -name 'libronn*.so' -delete
+
 RUN conda create -n tandem python=3.11.11 \
     && echo "source activate tandem" > ~/.bashrc \
     && /bin/bash -c "source activate tandem && pip install --upgrade pip && pip install -r requirements.txt" \

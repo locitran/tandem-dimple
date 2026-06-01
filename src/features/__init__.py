@@ -67,6 +67,7 @@ rhapsody_feat = {
     'BLOSUM': r'BLOSUM$^*$', 'entropy': r'Entropy$^*$', 'ranked_MI': r'Ranked MI$^*$',
 }
 
+# 18
 dynamics_feat = {
     'GNM_Ventropy_full': r'Entropy$_v$', 'GNM_rmsf_overall_full': r'RMSF$_{all}$', 
     'GNM_Eigval1_full': r'$\lambda_1$', 'GNM_Eigval2_full': r'$\lambda_2$',
@@ -78,8 +79,9 @@ dynamics_feat = {
     'GNM_MC2_full': r'MC${_2}$', 'ANM_effectiveness_chain': r'Effectiveness$^*$',
     'ANM_sensitivity_chain': r'Sensitivity$^*$',
     'ANM_stiffness_chain': r'Stiffness$^*$'
-    # 'wtBJCE': r'wtBJCE', 'deltaBJCE': r'$\Delta$BJCE'
+    # 'wtBJCE': r'wtBJCE', 'deltaBJCE': r'$\Delta$BJCE',
 }
+# 25
 structure_feat = {
     'chain_length': r'Protein Size', 
     'Rg': r'R$_g$', 'DELTA_Rg': r'$\Delta$R$_g$',
@@ -93,6 +95,7 @@ structure_feat = {
     'Hbond': r'N$_{H-bond}$', 'DELTA_Hbond': r'$\Delta$N$_{H-bond}$',
     'SSbond': r'N$_{SS-bond}$', 'DELTA_DSS': r'$\Delta$N$_{SS-bond}$',
 }
+# 17
 sequence_feat = {
     'wtPSIC': r'wtPSIC$^*$', 'deltaPSIC': r'$\Delta$PSIC$^*$', 
     'BLOSUM': r'BLOSUM$^*$', 'entropy': r'Entropy$^*$', 'ranked_MI': r'Ranked MI$^*$',
@@ -103,4 +106,22 @@ sequence_feat = {
     'polarity': r'Polarity', 'deltaPolarity': r'$\Delta$Polarity', 
     'charge_pH7': r'Charge$_{pH7}$', 'DELTA_charge_pH7': r'$\Delta$Charge$_{pH7}$',
 }
+
+evolution_feat = {
+    'wtPSIC': r'wtPSIC$^*$', 'deltaPSIC': r'$\Delta$PSIC$^*$', 
+    'BLOSUM': r'BLOSUM$^*$', 'entropy': r'Entropy$^*$', 'ranked_MI': r'Ranked MI$^*$',
+    'consurf': r'ConSurf', 'ACNR': r'ACNR',
+}
+
+chemical_feat = {
+    'phobic_percent': r'%Hydrophobic', 'delta_phobic_percent': r'$\Delta$%Hydrophobic',
+    # 'philic_percent': r'%Hydrophilic', 'delta_philic_percent': r'$\Delta$%Hydrophilic',
+    'charge': r'Charge', 'deltaCharge': r'$\Delta$Charge', 
+    'polarity': r'Polarity', 'deltaPolarity': r'$\Delta$Polarity', 
+    'charge_pH7': r'Charge$_{pH7}$', 'DELTA_charge_pH7': r'$\Delta$Charge$_{pH7}$',
+}
+
+
+
+
 all_feat = {**dynamics_feat, **structure_feat, **sequence_feat}

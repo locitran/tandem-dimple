@@ -78,6 +78,17 @@ def check_local_executable(path):
     return False, f"FAIL bundled executable: {relative_path} is missing"
 
 
+def check_pyronn_runtime():
+    try:
+        from ronn import ronn
+        scores = ronn.calc_ronn("ACDEFGHIKLMNPQRSTVWY")
+        if len(scores) != 20:
+            return False, f"FAIL pyRONN runtime: expected 20 scores, got {len(scores)}"
+        return True, "OK pyRONN runtime: loaded native library and predicted sequence"
+    except Exception as exc:
+        return False, f"FAIL pyRONN runtime: {exc}"
+
+
 def run_checks():
     print("=== TANDEM installation check ===")
     failures = []
@@ -105,6 +116,11 @@ def run_checks():
         print(message)
         if not ok:
             failures.append(message)
+
+    ok, message = check_pyronn_runtime()
+    print(message)
+    if not ok:
+        failures.append(message)
 
     pip_check = subprocess.run(
         [sys.executable, "-m", "pip", "check"],

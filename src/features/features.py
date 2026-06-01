@@ -6,7 +6,7 @@ from . import TANDEM_FEATS
 from .Uniprot import seqScanning, mapSAVs2PDB, SAV_coord2SAV
 from .PDB import calcPDBfeatures
 from .SEQ import calcSEQfeatures
-from ..utils.logger import LOGGER, USERLOG_MESSAGES, FEATURE_STAGE, MAPPING_STAGE
+from ..utils.logger import LOGGER, MAPPING_STAGE
 
 class Features:
 
@@ -83,7 +83,7 @@ class Features:
         if isinstance(query, str):
             if os.path.isfile(query):
                 # 'query' is a filename, with line format 'P17516 135 G E'
-                SAVs = np.loadtxt(query, dtype=SAV_dtype)
+                SAVs = np.atleast_1d(np.loadtxt(query, dtype=SAV_dtype))
                 SAV_list = ['{} {} {} {}'.format(*s).upper() for s in SAVs]
             elif len(query.split()) < 3:
                 # single Uniprot acc (+ pos), e.g. 'P17516' or 'P17516 135'
@@ -91,7 +91,7 @@ class Features:
                 self.saturation_mutagenesis = True
             else:
                 # single SAV
-                SAV = np.array(query.upper().split(), dtype=SAV_dtype)
+                SAV = np.array(tuple(query.upper().split()), dtype=SAV_dtype)
                 SAV_list = ['{} {} {} {}'.format(*SAV)]
         else:
             query = list(query)

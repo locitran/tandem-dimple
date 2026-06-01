@@ -105,6 +105,11 @@ def run(
             LOGGER.timeit("_prediction")
             t.getPredictions(models=pretrained_model_folder, folder=job_directory, filename='Main_Predictions.txt')
             t.plotSHAP(folder=job_directory)
+            if t.saturation_mutagenesis:
+                try:
+                    t.plotSaturationMutagenesis(folder=job_directory)
+                except Exception:
+                    LOGGER.warn(traceback.format_exc())
             LOGGER.report_userlog("_prediction", stage=MODEL_STAGE, file='Main_Predictions.txt')
 
         current_stage = REPORT_STAGE

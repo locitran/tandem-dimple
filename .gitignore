@@ -181,3 +181,6 @@ PolyPhen-2/polyphen-2.2.3/
 PolyPhen-2/polyphen-2.2.3-databases-2021_05.tar.bz2
 PolyPhen-2/polyphen-2.2.3-alignments-multiz-2009_10.tar.bz2
 PolyPhen-2/polyphen-2.2.3-alignments-mlc-2011_12.tar.bz2
+
+diffusion-models/
+runs/

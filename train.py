@@ -10,7 +10,7 @@ from src.train.train import train_foundation_model, train_transfer_learning_mode
 from src.train.train import reproduce_foundation_model, reproduce_transfer_learning_model, reproduce_direct_learning_model
 from src.utils.settings import TANDEM_GJB2, TANDEM_RYR1, TANDEM_v1dot1, TANDEM_R20000, CLUSTER, TANDEM_RYR1_V2026
 from src.utils.settings import RHAPSODY_R20000, RHAPSODY_GJB2, RHAPSODY_RYR1, RHAPSODY_FEATS, RHAPSODY_RYR1_V2026
-from src.features import TANDEM_FEATS
+from src.features import TANDEM_FEATS, all_feat, dynamics_feat, structure_feat, sequence_feat
 
 from src.model.plot import pl_gene_general_performance, pl_gene_specific_performance
 from src.utils.settings import ROOT_DIR
@@ -23,13 +23,25 @@ if __name__ == "__main__":
     #     seed=100,
     # )
     # featset = list(dynamics_feat.keys())
+
     # reproduce_foundation_model(
-    #     name='reproduce_foundation_model_RYR1_v2026',
+    #     name='feature-selection/seq-str-dyn',
+    #     featset=list(sequence_feat.keys())+list(dynamics_feat.keys())+list(structure_feat.keys()),
     #     featds=TANDEM_R20000,
     #     gjb2ds=TANDEM_GJB2,
-    #     ryr1ds=TANDEM_RYR1_V2026,
+    #     ryr1ds=TANDEM_RYR1,
     #     clstr=CLUSTER,
     # )
+
+    reproduce_foundation_model(
+        name='feature-selection/seq-str-dyn',
+        featset=list(sequence_feat.keys())+list(dynamics_feat.keys())+list(structure_feat.keys()),
+        featds=TANDEM_R20000,
+        gjb2ds=TANDEM_GJB2,
+        ryr1ds=TANDEM_RYR1,
+        clstr=CLUSTER,
+    )
+
     # train_foundation_model(
     #     name='train_plus_val_foundation_model',
     #     featds=TANDEM_R20000,
@@ -66,8 +78,8 @@ if __name__ == "__main__":
     #     name="TANDEM-DIMPLE-RYR1-90",
     #     seed=73,
     # )
-    train_transfer_learning_model(base_model=TANDEM_v1dot1, TANDEM_testSet=TANDEM_GJB2, name="TANDEM-DIMPLE-GJB2-90", seed=73)
-    train_transfer_learning_model(base_model=TANDEM_v1dot1, TANDEM_testSet=TANDEM_RYR1, name="TANDEM-DIMPLE-RYR1-90", seed=0)
+    # train_transfer_learning_model(base_model=TANDEM_v1dot1, TANDEM_testSet=TANDEM_GJB2, name="TANDEM-DIMPLE-GJB2-90", seed=73)
+    # train_transfer_learning_model(base_model=TANDEM_v1dot1, TANDEM_testSet=TANDEM_RYR1, name="TANDEM-DIMPLE-RYR1-90", seed=0)
     
     # train_transfer_learning_model(
     #     base_model='/home/loci/tandem_website/tandem/logs/train_plus_val_foundation_model/20251230-1711/model_train_plus_val.h5',
@@ -141,41 +153,4 @@ if __name__ == "__main__":
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=100)
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=16, seed=27)
     # reproduce_direct_learning_model(TANDEM_testSet=TANDEM_GJB2, name="Direct_train_GJB2", nHidden=2, nNeurons=33, seed=27)
-
-# from src.train.train import reproduce_transfer_learning_model, reproduce_foundation_model
-# import pandas as pd 
-# from src.features import TANDEM_FEATS
-# feat_names = TANDEM_FEATS['v1.1']
-# feat_path = '/mnt/nas_1/YangLab/loci/tandem/data/GJB2/final_features.csv'
-# df = pd.read_csv(feat_path)
-# df = df[~df['labels'].isna()]
-# features = df[feat_names].values
-# labels = df['labels'].values
-
-# reproduce_transfer_learning_model(
-#     features, 
-#     labels, 
-#     name='reproduce_transfer_learned_model', 
-#     model_input=None, 
-#     seed=73, 
-#     patience = 50
-# )
-
-# reproduce_foundation_model(name='weight_initialization')
-
-"""
-write new function(s) / module. 
-
-Take three inputs 
-
-
-
-goal: execute the file automatically. 
-
-input: SAVs and labels
-hyper-parameters (default) advance options
-
-
-
-"""
 

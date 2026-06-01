@@ -138,6 +138,9 @@ def get_config(input_shape=33, n_hidden=5, patience=50, dropout_rate=0.,
     
     for item in cfg.model.hidden:
         del cfg['model']['hidden'][item]
+    
+    n_neuron_last_hidden = 10
+    n_neuron = 33
     for i in range(n_hidden):
         n_neuron = n_neuron_last_hidden if i == n_hidden - 1 else n_neuron_per_hidden
         hidden_name = f'hidden_{i:02d}'

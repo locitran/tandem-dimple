@@ -726,6 +726,10 @@ def reproduce_transfer_learning_model(
     cfg.training.callbacks.EarlyStopping.start_from_epoch = 10
     cfg.training.n_epochs = 1000
     LOGGER.info(f"Start from epoch: {cfg.training.callbacks.EarlyStopping.start_from_epoch}")
+    
+    cfg_json = os.path.join(log_dir, "config.json")
+    with open(cfg_json, "w") as f:
+        json.dump(cfg, f, indent=2)
 
     ##################### 5. Split test data #####################
     # 1. Split 3 folds (60% – 30% – 10%)

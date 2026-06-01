@@ -338,4 +338,12 @@ bin/run_weka.pl -l models/HumVar.UniRef100.NBd.f11.model test.pph.output >test.h
 diff test.humdiv.output sets/test.humdiv.output
 diff test.humvar.output sets/test.humvar.output
 
+
+bin/run_pph.pl \
+  -c nonhuman_config \
+  -s /pph2/Q46897.fasta \
+  -d /pph2/Q46897_scratch \
+  /pph2/SAVs.txt \
+  > Q46897_pph2.tsv \
+  2> Q46897_pph2.log
 ```

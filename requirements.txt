@@ -24,5 +24,4 @@ more_itertools==10.8.0
 ipynbname==2025.8.0.0
 openpyxl==3.1.5
 pymongo==4.16.0
-# Editable Git install with no remote (PyRONN==4.0rc0)
--e ./pyRONN
+./pyRONN
