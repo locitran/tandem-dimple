@@ -2,7 +2,7 @@
 
 import os
 import sys
-from typing import Dict, Optional, Sequence
+from typing import Dict, Sequence
 
 import numpy as np
 import pandas as pd
@@ -27,10 +27,10 @@ R20000_CV_SAVS = os.path.join(ROOT_DIR, "data", "R20000", "R20000_5fold_CV.npz")
 class R20000Dataset(Dataset):
     """Wrap feature arrays, labels, and SAV names as a PyTorch Dataset."""
 
-    def __init__(self, x, y, savs: Optional[Sequence[str]] = None):
+    def __init__(self, x, y, savs):
         self.x = torch.as_tensor(x, dtype=torch.float32)
         self.y = torch.as_tensor(y, dtype=torch.long)
-        self.savs = None if savs is None else np.asarray(savs)
+        self.savs = np.asarray(savs)
 
         if len(self.x) != len(self.y):
             raise ValueError("x and y must contain the same number of samples.")
@@ -44,9 +44,8 @@ class R20000Dataset(Dataset):
         item = {
             "x": self.x[index],
             "y": self.y[index],
+            "sav": str(self.savs[index])
         }
-        if self.savs is not None:
-            item["sav"] = str(self.savs[index])
         return item
 
 
@@ -59,29 +58,17 @@ def get_r20000_dataloaders(
     batch_size: int = 512,
     num_workers: int = 0,
     seed: int = 17,
-) -> Dict[str, DataLoader]:
-    """Create train/val/test dataloaders from saved R20000 fold SAVs.
+) -> Dict[str, object]:
 
-    Normalization is fitted on the training split only. The same train mean and
-    standard deviation are then applied to validation and test splits.
-
-    If input_dim is given, selected features are placed in the first
-    columns and the remaining columns are filled with zeros. This is useful for
-    fair ablation experiments where every model should receive the same input
-    dimension even when only a few features are active.
-    """
-    if len(feat_names) > input_dim:
-        raise ValueError(
-            f"input_dim={input_dim} is smaller than the number of "
-            f"selected features ({len(feat_names)})."
-        )
+    assert len(feat_names) <= input_dim, f"input_dim={input_dim} is smaller than the number of selected features ({len(feat_names)})."
 
     data = np.load(fold_path, allow_pickle=True)[f"fold{fold}"].item()
     df_feat = pd.read_csv(feat_path)
+    mean, std = get_r20000_normalizer(feat_path=feat_path,feat_names=feat_names)
 
     df_by_sav = df_feat.set_index("SAV_coords", drop=False)
     split_data = {}
-    for split in ["train", "val", "test"]:
+    for split in ["train", "val"]:
         savs = np.asarray(data[split])
         
         split_df = df_by_sav.loc[savs]
@@ -91,31 +78,108 @@ def get_r20000_dataloaders(
             "y": split_df["labels"].to_numpy(dtype=np.int64),
         }
 
-    train_mean = np.nanmean(split_data["train"]["x"], axis=0)
-    train_std = np.nanstd(split_data["train"]["x"], axis=0)
-    train_std[train_std == 0] = 1.0
-
-    for split in ["train", "val", "test"]:
-        x = split_data[split]["x"].copy()
-        nan_rows, nan_cols = np.where(np.isnan(x))
-        x[nan_rows, nan_cols] = train_mean[nan_cols]
-        x = (x - train_mean) / train_std
-
-        padded_x = np.zeros((x.shape[0], input_dim), dtype=np.float32)
-        padded_x[:, : x.shape[1]] = x
-        x = padded_x
-
-        split_data[split]["x"] = x
+    for split in ["train", "val"]:
+        split_data[split]["x"] = _normalize_and_pad(split_data[split]["x"],mean,std,input_dim,)
 
     train_ds = R20000Dataset(split_data["train"]["x"], split_data["train"]["y"], split_data["train"]["savs"])
     val_ds = R20000Dataset(split_data["val"]["x"], split_data["val"]["y"], split_data["val"]["savs"])
-    test_ds = R20000Dataset(split_data["test"]["x"], split_data["test"]["y"], split_data["test"]["savs"])
 
     generator = torch.Generator()
     generator.manual_seed(seed)
-    loaders = {
+    return {
         "train": DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, generator=generator,),
         "val": DataLoader(val_ds,batch_size=batch_size,shuffle=False,num_workers=num_workers,),
-        "test": DataLoader(test_ds,batch_size=batch_size,shuffle=False,num_workers=num_workers,),
     }
-    return loaders
+
+
+def _normalize_and_pad(x, mean, std, input_dim):
+    x = x.copy()
+    nan_rows, nan_cols = np.where(np.isnan(x))
+    x[nan_rows, nan_cols] = mean[nan_cols]
+    x = (x - mean) / std
+
+    padded_x = np.zeros((x.shape[0], input_dim), dtype=np.float32)
+    padded_x[:, : x.shape[1]] = x
+    return padded_x
+
+
+def get_r20000_normalizer(
+    feat_path: str = TANDEM_R20000,
+    feat_names: Sequence[str] = TANDEM_FEATS["v1.1"],
+):
+    """Return mean/std for the selected features using the full R20000 table."""
+    df_feat = pd.read_csv(feat_path)
+    x = df_feat[list(feat_names)].to_numpy(dtype=np.float32)
+
+    mean = np.nanmean(x, axis=0)
+    std = np.nanstd(x, axis=0)
+    std[std == 0] = 1.0
+    return mean, std
+
+
+def prepare_r20000_test_arrays(
+    fold_path: str = R20000_CV_SAVS,
+    feat_path: str = TANDEM_R20000,
+    feat_names: Sequence[str] = TANDEM_FEATS["v1.1"],
+    input_dim: int = 50,
+    fold: int = 0,
+):
+    """Prepare the held-out R20000 test split as normalized arrays."""
+    assert len(feat_names) <= input_dim, f"input_dim={input_dim} is smaller than the number of selected features ({len(feat_names)})."
+
+    data = np.load(fold_path, allow_pickle=True)[f"fold{fold}"].item()
+    df_feat = pd.read_csv(feat_path)
+    df_by_sav = df_feat.set_index("SAV_coords", drop=False)
+
+    savs = np.asarray(data["test"]).astype(str)
+    test_df = df_by_sav.loc[savs]
+    mean, std = get_r20000_normalizer(feat_path=feat_path, feat_names=feat_names)
+
+    x = test_df[list(feat_names)].to_numpy(dtype=np.float32)
+    x = _normalize_and_pad(x, mean, std, input_dim)
+    y = test_df["labels"].to_numpy(dtype=np.int64)
+
+    output = {
+        "x": x,
+        "y": y,
+        "savs": savs,
+        "dataframe": test_df.reset_index(drop=True),
+    }
+    if "test_SASA" in data:
+        output["SASA"] = np.asarray(data["test_SASA"], dtype=np.float32)
+    if "test_exposure_group" in data:
+        output["exposure_group"] = np.asarray(data["test_exposure_group"]).astype(str)
+    return output
+
+
+def prepare_external_test_arrays(
+    test_feat_path: str,
+    r20000_feat_path: str = TANDEM_R20000,
+    feat_names: Sequence[str] = TANDEM_FEATS["v1.1"],
+    input_dim: int = 50,
+    label_col: str = "labels",
+):
+    """Prepare an external test set, such as GJB2, for model prediction.
+
+    The external feature table must contain ``SAV_coords`` and the selected
+    ``feat_names``.
+
+    Normalization always uses the full R20000 feature table. External/gene-
+    specific test data should not fit its own mean and standard deviation.
+    """
+    assert len(feat_names) <= input_dim, f"input_dim={input_dim} is smaller than the number of selected features ({len(feat_names)})."
+
+    df_test = pd.read_csv(test_feat_path)
+    savs = df_test["SAV_coords"].to_numpy().astype(str)
+
+    mean, std = get_r20000_normalizer(feat_path=r20000_feat_path,feat_names=feat_names,)
+    x = df_test[list(feat_names)].to_numpy(dtype=np.float32)
+    x = _normalize_and_pad(x, mean, std, input_dim)
+    y = df_test[label_col].to_numpy(dtype=np.int64) if label_col in df_test.columns else None
+
+    return {
+        "x": x,
+        "y": y,
+        "savs": savs,
+        "dataframe": df_test.reset_index(drop=True),
+    }

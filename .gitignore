@@ -184,3 +184,7 @@ PolyPhen-2/polyphen-2.2.3-alignments-mlc-2011_12.tar.bz2
 
 diffusion-models/
 runs/
+RFdiffusion/
+rhapsody-2/
+foldingdiff/
+stride/
